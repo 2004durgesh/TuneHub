@@ -1,0 +1,7 @@
+{
+  "name": "tunehub",
+  "displayName": "TuneHub",
+  "android": {
+    "package": "com.TuneHub"
+  }
+}
