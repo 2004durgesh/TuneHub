@@ -9,11 +9,11 @@ const ScreenContainer = ({ children }) => {
     return (
         <SafeAreaView style={[tw`flex-1`, { backgroundColor: theme.colors.primary }]}>
             {children}
-            <FAB
+            {/* <FAB
                 icon="plus"
                 style={tw`absolute bottom-2 right-0 w-full`}
                 onPress={() => console.log('Pressed')}
-            />
+            /> */}
         </SafeAreaView>
     );
 };

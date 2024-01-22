@@ -1,4 +1,4 @@
-import React from 'react';
+import React,{Suspense} from 'react';
 import { useSegmentedButton } from '../../context/SegmentedButtonContext';
 import { useTheme, SegmentedButtons } from 'react-native-paper';
 import ItemListCards from '../ItemListCards';
@@ -8,6 +8,7 @@ import { useSearch } from '../../context/SearchContext';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
+import Loading from '../Loading';
 
 const SegmentedItemList = ({ dataType, navigateTo }) => {
     const { activeSegment, setActiveSegment } = useSegmentedButton();
@@ -55,7 +56,9 @@ const SegmentedItemList = ({ dataType, navigateTo }) => {
                     ]}
                     style={tw`m-4`}
                 />
-                <ItemListCards data={results} dataType={dataType.toLowerCase()} navigateTo={navigateTo} />
+                <Suspense fallback={<Loading/>}>
+                    <ItemListCards data={results} dataType={dataType.toLowerCase()} navigateTo={navigateTo} />
+                </Suspense>
             </ScreenContainer>
         </>
     );
