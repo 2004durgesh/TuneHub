@@ -1,6 +1,6 @@
 import 'react-native-gesture-handler';
-import React from 'react';
-import { StatusBar} from 'react-native';
+import React,{useState,useEffect} from 'react';
+import { StatusBar,ActivityIndicator,SafeAreaView} from 'react-native';
 import tw from 'twrnc';
 import { NavigationContainer } from '@react-navigation/native';
 import { createMaterialBottomTabNavigator } from '@react-navigation/material-bottom-tabs';
@@ -13,8 +13,11 @@ import Screens from './components/Screens/Screens';
 const Tab = createMaterialBottomTabNavigator();
 
 const App = () => {
+ 
   const theme = useTheme();
   SystemNavigationBar.setNavigationColor(theme.colors.primaryContainer);
+  
+
   return (
     <>
       <NavigationContainer>

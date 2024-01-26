@@ -11,6 +11,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { SearchProvider } from './src/context/SearchContext.js';
 import { SegmentedButtonProvider } from './src/context/SegmentedButtonContext.js';
 import TrackPlayer from 'react-native-track-player';
+import { PlaybackService } from './src/PlaybackService.js';
 const theme = {
   ...DefaultTheme,
   colors: {
@@ -37,4 +38,4 @@ export default function Main() {
 }
 
 AppRegistry.registerComponent(appName, () => Main);
-TrackPlayer.registerPlaybackService(()=>require('./src/PlaybackService.js'))
+TrackPlayer.registerPlaybackService(()=>PlaybackService)

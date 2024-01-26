@@ -17,7 +17,7 @@ const ItemListCards = ({ data, dataType,navigateTo }) => {
     const navigation = useNavigation()
     const theme = useTheme()
     const { isLoading, error } = useSearch()
-    return isLoading ? <Loading dataType={dataType}/> : (
+    return isLoading?<Loading/>:(
         <ScreenContainer>
             {data ?
                 <FlatList

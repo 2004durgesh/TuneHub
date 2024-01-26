@@ -1,20 +1,30 @@
-import { View, Text, Image } from 'react-native'
-import React, { useState, useEffect } from 'react'
+import { Button, View, Alert, Text, Image } from 'react-native'
+import React, { useState, useCallback, useRef, useEffect } from 'react'
 import ScreenContainer from '../ScreenContainer'
 import { getColors } from 'react-native-image-colors'
 import tw from 'twrnc'
 import LinearGradient from 'react-native-linear-gradient';
 import { useTheme } from 'react-native-paper'
+import Controls from '../Controls'
+import YoutubePlayer from "react-native-youtube-iframe";
+
 const MusicPlayer = ({ route }) => {
+  const playerRef = useRef();
   const { item } = route.params ?? {}
-  console.log(item, 'item')
+  console.log(item, "item")
   const theme = useTheme()
   const [colors, setColors] = useState(null)
   function resizeImageUrl(url, width, height) {
     return url.replace(/=w\d+/, `=w${width}`).replace(/-h\d+/, `-h${height}`);
   }
+  const [playing, setPlaying] = useState(false);
 
-  // const newUrl = resizeImageUrl(item.thumbnailUrl, 500, 500);
+  const onStateChange = useCallback((state) => {
+    if (state === "ended") {
+      setPlaying(false);
+      Alert.alert("video has finished playing!");
+    }
+  }, []);
   useEffect(() => {
     const url = item.thumbnailUrl
     getColors(url, {
@@ -23,7 +33,11 @@ const MusicPlayer = ({ route }) => {
       key: url,
     }).then(setColors)
   }, [])
-
+  if (!item) {
+    return <ScreenContainer>
+      <Text>no item</Text>
+    </ScreenContainer>
+  }
   return (
     <ScreenContainer>
       <View style={tw`flex-row justify-center`}>
@@ -36,13 +50,29 @@ const MusicPlayer = ({ route }) => {
         <View style={[tw`h-20 border w-1/8`, { backgroundColor: colors?.muted }]}></View>
         <View style={[tw`h-20 border w-1/8`, { backgroundColor: colors?.vibrant }]}></View>
       </View>
-      <View style={tw`flex items-center justify-center p-4`}>
-        <LinearGradient colors={['#4c669f', '#3b5998', '#192f6a']}>
-          <View style={tw`h-full w-full`}>
-            <Image source={{ uri: resizeImageUrl(item.thumbnailUrl, 500, 500) }} style={tw`w-full h-full`} resizeMode='contain' />
-          </View>
-        </LinearGradient>
-      </View>
+      <LinearGradient
+        colors={[colors?.vibrant || theme.colors.primary, colors?.darkVibrant || theme.colors.primary]}
+        style={tw`flex-1 p-4`}
+      >
+        <View style={tw`h-150 justify-center items-center`}>
+          <Image
+            source={{ uri: resizeImageUrl(item.thumbnailUrl, 1000, 1000) }}
+            style={tw`w-full h-full`}
+            resizeMode='contain'
+          />
+          <YoutubePlayer
+            ref={playerRef}
+            height={0}
+            width={0}
+            play={playing}
+            videoId={item.youtubeId}
+            onChangeState={onStateChange}
+            forceAndroidAutoplay={true}
+          />
+          <Controls playerRef={playerRef} duration={item.duration.totalSeconds} isPlaying={playing} setPlaying={setPlaying} state={onStateChange} />
+        </View>
+      </LinearGradient>
+
     </ScreenContainer>
   )
 }

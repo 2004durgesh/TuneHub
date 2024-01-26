@@ -1,4 +1,4 @@
-import { View, Text } from 'react-native'
+import { View, Text,ScrollView } from 'react-native'
 import tw from 'twrnc'
 import { useTheme } from 'react-native-paper'
 import React from 'react'
@@ -12,32 +12,34 @@ const Loading = ({ dataType }) => {
   const { isLoading } = useSearch()
   return (
     <ScreenContainer>
-    {Array.from({ length: 10 }).map((_, i) => (
-      <View key={i} style={tw`flex-row items-center gap-4 p-2`}>
-        <ShimmerPlaceHolder
-          LinearGradient={LinearGradient}
-          style={[tw`h-20 w-20 ${dataType === 'artists' ? 'rounded-full' : 'rounded-md'} `]}
-        />
-        <View style={tw`gap-2`}>
+    <ScrollView>
+      {Array.from({ length: 10 }).map((_, i) => (
+        <View key={i} style={tw`flex-row items-center gap-4 p-2`}>
           <ShimmerPlaceHolder
             LinearGradient={LinearGradient}
-            style={[tw`rounded-full `]}
+            style={[tw`h-20 w-20 ${dataType === 'artists' ? 'rounded-full' : 'rounded-md'} `]}
           />
-          <View style={tw`flex-row items-center gap-2`}>
+          <View style={tw`gap-2`}>
             <ShimmerPlaceHolder
               LinearGradient={LinearGradient}
-              style={[tw`rounded-full `]}
-              width={100}
+              style={[tw`rounded-full w-full`]}
             />
-            <ShimmerPlaceHolder
-              LinearGradient={LinearGradient}
-              style={[tw`rounded-full `]}
-              width={100}
-            />
+            <View style={tw`flex-row items-center gap-2`}>
+              <ShimmerPlaceHolder
+                LinearGradient={LinearGradient}
+                style={[tw`rounded-full`]}
+                width={100}
+              />
+              <ShimmerPlaceHolder
+                LinearGradient={LinearGradient}
+                style={[tw`rounded-full`]}
+                width={100}
+              />
+            </View>
           </View>
         </View>
-      </View>
-    ))}
+      ))}
+    </ScrollView>
       
     </ScreenContainer>
   )
