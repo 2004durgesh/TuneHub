@@ -8,7 +8,7 @@ import moment from 'moment'
 
 
 const Controls = ({ playerRef, duration, isPlaying, setPlaying, state }) => {
-    console.log(isPlaying ? "playing" : "not playing")
+    // console.log(isPlaying ? "playing" : "not playing")
     const [currentProgress, setCurrentProgress] = useState(0)
     const secondToMinute = (seconds) => {
         return moment.utc(seconds * 1000).format('mm:ss')
@@ -71,6 +71,7 @@ const Controls = ({ playerRef, duration, isPlaying, setPlaying, state }) => {
                     <Text style={tw`text-xs font-bold`}>
                         {secondToMinute(currentProgress)}
                     </Text>
+                    
                     <Text style={tw`text-xs font-bold`}>
                         {secondToMinute(duration)}
                     </Text>

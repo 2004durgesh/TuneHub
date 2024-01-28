@@ -107,6 +107,11 @@ android {
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
     }
+     configurations {
+        all*.exclude group: 'com.google.android.exoplayer', module: 'exoplayer-ui'
+        all*.exclude group: 'com.google.android.exoplayer', module: 'extension-mediasession'
+        // Add similar lines for other problematic libraries
+    }
 }
 
 dependencies {
@@ -114,7 +119,7 @@ dependencies {
     implementation project(':react-native-vector-icons')
     implementation("com.facebook.react:react-android")
     implementation("com.facebook.react:flipper-integration")
-
+    
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")
     } else {

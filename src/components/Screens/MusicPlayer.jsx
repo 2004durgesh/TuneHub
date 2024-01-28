@@ -1,4 +1,4 @@
-import { Button, View, Alert, Text, Image } from 'react-native'
+import { Button, View, Alert, Text, Image, NativeModules } from 'react-native'
 import React, { useState, useCallback, useRef, useEffect } from 'react'
 import ScreenContainer from '../ScreenContainer'
 import { getColors } from 'react-native-image-colors'
@@ -7,8 +7,10 @@ import LinearGradient from 'react-native-linear-gradient';
 import { useTheme } from 'react-native-paper'
 import Controls from '../Controls'
 import YoutubePlayer from "react-native-youtube-iframe";
+import { WebView } from 'react-native-webview'
 
 const MusicPlayer = ({ route }) => {
+  console.log("native modules", NativeModules)
   const playerRef = useRef();
   const { item } = route.params ?? {}
   console.log(item, "item")
@@ -69,6 +71,7 @@ const MusicPlayer = ({ route }) => {
             onChangeState={onStateChange}
             forceAndroidAutoplay={true}
           />
+         
           <Controls playerRef={playerRef} duration={item.duration.totalSeconds} isPlaying={playing} setPlaying={setPlaying} state={onStateChange} />
         </View>
       </LinearGradient>
