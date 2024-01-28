@@ -1,23 +1,28 @@
 import 'react-native-gesture-handler';
-import React,{useState,useEffect} from 'react';
-import { StatusBar,ActivityIndicator,SafeAreaView} from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StatusBar, ActivityIndicator, SafeAreaView } from 'react-native';
 import tw from 'twrnc';
 import { NavigationContainer } from '@react-navigation/native';
 import { createMaterialBottomTabNavigator } from '@react-navigation/material-bottom-tabs';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { setupPlayer } from './PlaybackService';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import SystemNavigationBar from 'react-native-system-navigation-bar';
 import { useTheme } from 'react-native-paper';
 import Home from './components/Screens/Home';
 import Screens from './components/Screens/Screens';
+import { useTrackPlayer } from './context/TrackPlayerContext';
 const Tab = createMaterialBottomTabNavigator();
 
 const App = () => {
- 
+  const { isPlayerReady, setupPlayer, addTrack } = useTrackPlayer();
+
   const theme = useTheme();
   SystemNavigationBar.setNavigationColor(theme.colors.primaryContainer);
+  useEffect(() => {
+    setupPlayer();
+  }, []);
   
-
   return (
     <>
       <NavigationContainer>

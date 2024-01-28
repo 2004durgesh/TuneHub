@@ -12,6 +12,7 @@ import { SearchProvider } from './src/context/SearchContext.js';
 import { SegmentedButtonProvider } from './src/context/SegmentedButtonContext.js';
 import TrackPlayer from 'react-native-track-player';
 import { PlaybackService } from './src/PlaybackService.js';
+import { TrackPlayerProvider } from './src/context/TrackPlayerContext.js';
 const theme = {
   ...DefaultTheme,
   colors: {
@@ -26,13 +27,15 @@ const queryClient = new QueryClient()
 export default function Main() {
   return (
     <QueryClientProvider client={queryClient}>
-      <SearchProvider>
-        <SegmentedButtonProvider>
-          <PaperProvider theme={theme}>
-            <App />
-          </PaperProvider>
-        </SegmentedButtonProvider>
-      </SearchProvider>
+      <TrackPlayerProvider>
+        <SearchProvider>
+          <SegmentedButtonProvider>
+            <PaperProvider theme={theme}>
+              <App />
+            </PaperProvider>
+          </SegmentedButtonProvider>
+        </SearchProvider>
+      </TrackPlayerProvider>
     </QueryClientProvider>
   );
 }

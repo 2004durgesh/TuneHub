@@ -5,10 +5,13 @@ import { useTheme } from 'react-native-paper'
 import ScreenContainer from '../ScreenContainer'
 
 const Home = () => {
+
   const theme = useTheme()
   return (
     <ScreenContainer>
-      
+      <View style={tw`flex-row justify-center`}>
+        <Text style={tw`text-white`}>Home</Text>
+      </View>
     </ScreenContainer>
   )
 }
