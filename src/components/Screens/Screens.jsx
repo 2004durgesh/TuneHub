@@ -1,5 +1,5 @@
 import { View, Text, SafeAreaView, BackHandler } from 'react-native'
-import { useEffect, useState } from 'react'
+import { useEffect, useState,Suspense } from 'react'
 import { createStackNavigator } from '@react-navigation/stack';
 import { useSearch } from '../../context/SearchContext';
 import { useSegmentedButton } from '../../context/SegmentedButtonContext';

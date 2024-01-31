@@ -9,20 +9,18 @@ import Controls from '../Controls'
 import TrackPlayer,{Event} from 'react-native-track-player'
 import ytdl from 'react-native-ytdl'
 import { useTrackPlayer } from '../../context/TrackPlayerContext'
-import YoutubePlayer from "react-native-youtube-iframe";
-import { WebView } from 'react-native-webview'
-
 const MusicPlayer = ({ route }) => {
   // const playerRef = useRef();
   const { item } = route.params ?? {}
   console.log(item, "item")
-  console.log((Event.PlaybackActiveTrackChanged),"PlaybackActiveTrackChanged")
   const theme = useTheme()
   const { isPlayerReady, addTrack } = useTrackPlayer();
   const [colors, setColors] = useState(null)
-  function resizeImageUrl(url, width, height) {
+  function resizeImageUrl(url, width=2000, height=2000) {
     return url.replace(/=w\d+/, `=w${width}`).replace(/-h\d+/, `-h${height}`);
   }
+
+
   useEffect(() => {
     const setupAndPlayTrack = async () => {
       if (!isPlayerReady) {
@@ -32,16 +30,20 @@ const MusicPlayer = ({ route }) => {
       const youtubeURL = `http://www.youtube.com/watch?v=${item.youtubeId}`;
       const urls = await ytdl(youtubeURL, { quality: 'highestaudio' });
      
-      await addTrack({
+      // Reset the player
+    await TrackPlayer.reset();
+
+    // Add the new track
+    await addTrack({
         url: urls[0].url,
         title: item.title,
-        artwork: item.thumbnailUrl,
+        artwork: resizeImageUrl(item.thumbnailUrl),
         duration: item.duration.totalSeconds,
       });
-
-      // The following line may help in some cases
-      // await TrackPlayer.skip(item.id);
+      // Start playing the new track
+      await TrackPlayer.play();
     };
+
 
     setupAndPlayTrack();
   }, [isPlayerReady, addTrack, item]);
@@ -74,7 +76,7 @@ const MusicPlayer = ({ route }) => {
       >
         <View style={tw`h-150 justify-center items-center`}>
           <Image
-            source={{ uri: resizeImageUrl(item.thumbnailUrl, 2000, 2000) }}
+            source={{ uri: resizeImageUrl(item.thumbnailUrl) }}
             style={tw`w-full h-full`}
             resizeMode='contain'
           />

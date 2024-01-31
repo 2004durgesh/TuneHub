@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { View, TouchableOpacity, Text } from 'react-native'
+import { View, TouchableOpacity, Text, ActivityIndicator } from 'react-native'
 import tw from 'twrnc'
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { State, useProgress, usePlaybackState } from 'react-native-track-player'
@@ -16,7 +16,8 @@ const Controls = () => {
     const { skipToNext, skipToPrevious, play, pause } = useTrackPlayer();
     const theme = useTheme();
     const secondToMinute = (seconds) => {
-        return moment.utc(seconds * 1000).format('mm:ss')
+        let format = seconds > 3600 ? "hh:mm:ss" : "mm:ss"
+        return moment.utc(seconds * 1000).format(format)
     }
     return (
         <>
@@ -27,7 +28,7 @@ const Controls = () => {
                     maximumValue={duration}
                     thumbTintColor="#FFF"
                     maximumTrackTintColor="#FFF"
-                    minimumTrackTintColor={theme.colors.primary}
+                    minimumTrackTintColor={theme.colors.secondary}
                 />
                 <View style={tw`flex-row justify-between`}>
                     <Text style={tw`text-xs font-bold`}>{secondToMinute(position)}</Text>
@@ -36,8 +37,15 @@ const Controls = () => {
             </View>
             <View style={tw`flex-row items-center justify-center w-full gap-10`}>
                 <Ionicons onPress={skipToPrevious} name="play-skip-back" size={25} />
-                {playerState.state==="paused" || playerState.state==="ready"?<Ionicons onPress={play} name={'play'} size={25} />:
-                <Ionicons onPress={pause} name={'pause'} size={25} />}
+                {
+                    playerState.state === "playing"
+                    ?
+                    <Ionicons onPress={pause} name={'pause'} size={25} />:
+                    playerState.state === "buffering" || playerState.state === "loading"?
+                    <ActivityIndicator size="small" color={theme.colors.secondary} />
+                    :
+                    <Ionicons onPress={play} name={'play'} size={25} />
+                    }
                 <Ionicons onPress={skipToNext} name="play-skip-forward" size={25} />
             </View>
         </>
