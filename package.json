@@ -37,7 +37,8 @@
     "react-native-webview": "^13.6.4",
     "react-native-youtube-iframe": "^2.3.0",
     "react-native-ytdl": "^4.8.3",
-    "twrnc": "^3.6.7"
+    "twrnc": "^3.6.7",
+    "ytmusic-api": "^5.2.1"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

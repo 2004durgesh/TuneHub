@@ -7,27 +7,33 @@ import { useNavigation } from '@react-navigation/native'
 import Loading from './Loading'
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
 import ScreenContainer from './ScreenContainer'
+import CustomImage from './CustomImage'
 const { ...textAttributes } = {
     style: tw`text-gray-300 text-xs w-75`,
     numberOfLines: 1,
     ellipsizeMode: 'tail',
 }
 
-const ItemListCards = ({ data, dataType,navigateTo }) => {
+const ItemListCards = ({ data, dataType, navigateTo }) => {
     const navigation = useNavigation()
     const theme = useTheme()
     const { isLoading, error } = useSearch()
-    return isLoading?<Loading/>:(
+    return isLoading ? <Loading /> : (
         <ScreenContainer>
             {data ?
                 <FlatList
                     data={data}
                     renderItem={({ item }) => (
-                        <TouchableOpacity onPress={() => navigation.navigate(navigateTo,{item})}>
+                        <TouchableOpacity onPress={() => navigation.navigate(navigateTo, { item })}>
                             <View style={tw`flex-row items-center gap-4 p-2`}>
-                                <Image src={item.thumbnailUrl}
+                                {/* <Image src={item.thumbnailUrl}
                                     style={tw`h-20 w-20 ${dataType === 'artists' ? 'rounded-full' : 'rounded-md'}`}
-                                    resizeMode='contain' />
+                                    resizeMode='contain' /> */}
+                                <CustomImage
+                                    imageSrc={item.thumbnailUrl}
+                                    type={dataType}
+                                    resizeMode='contain'
+                                />
                                 <View style={tw``}>
                                     <Text style={tw`text-white font-bold w-80`} numberOfLines={1} ellipsizeMode='tail'>
                                         {item.title || item.name}

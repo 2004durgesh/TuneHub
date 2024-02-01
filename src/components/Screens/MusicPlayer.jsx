@@ -6,7 +6,7 @@ import tw from 'twrnc'
 import LinearGradient from 'react-native-linear-gradient';
 import { useTheme } from 'react-native-paper'
 import Controls from '../Controls'
-import TrackPlayer,{Event} from 'react-native-track-player'
+import TrackPlayer, { Event } from 'react-native-track-player'
 import ytdl from 'react-native-ytdl'
 import { useTrackPlayer } from '../../context/TrackPlayerContext'
 const MusicPlayer = ({ route }) => {
@@ -16,10 +16,9 @@ const MusicPlayer = ({ route }) => {
   const theme = useTheme()
   const { isPlayerReady, addTrack } = useTrackPlayer();
   const [colors, setColors] = useState(null)
-  function resizeImageUrl(url, width=2000, height=2000) {
+  function resizeImageUrl(url, width = 2000, height = 2000) {
     return url.replace(/=w\d+/, `=w${width}`).replace(/-h\d+/, `-h${height}`);
   }
-
 
   useEffect(() => {
     const setupAndPlayTrack = async () => {
@@ -29,16 +28,18 @@ const MusicPlayer = ({ route }) => {
 
       const youtubeURL = `http://www.youtube.com/watch?v=${item.youtubeId}`;
       const urls = await ytdl(youtubeURL, { quality: 'highestaudio' });
-     
-      // Reset the player
-    await TrackPlayer.reset();
+      let info = await ytdl.getBasicInfo(item.youtubeId);
+      console.log(info, "info");
 
-    // Add the new track
-    await addTrack({
+      // Reset the player
+      await TrackPlayer.reset();
+
+      // Add the new track
+      await addTrack({
         url: urls[0].url,
         title: item.title,
         artwork: resizeImageUrl(item.thumbnailUrl),
-        duration: item.duration.totalSeconds,
+        duration: info.videoDetails.lengthSeconds,
       });
       // Start playing the new track
       await TrackPlayer.play();
@@ -80,7 +81,7 @@ const MusicPlayer = ({ route }) => {
             style={tw`w-full h-full`}
             resizeMode='contain'
           />
-          <Controls/>
+          <Controls />
         </View>
       </LinearGradient>
 

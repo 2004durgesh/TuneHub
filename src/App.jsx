@@ -9,7 +9,7 @@ import { setupPlayer } from './PlaybackService';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import SystemNavigationBar from 'react-native-system-navigation-bar';
 import { useTheme } from 'react-native-paper';
-import Home from './components/Screens/Home';
+import Home from './components/Screens/Home/Home';
 import Screens from './components/Screens/Screens';
 import { useTrackPlayer } from './context/TrackPlayerContext';
 const Tab = createMaterialBottomTabNavigator();
@@ -22,7 +22,7 @@ const App = () => {
   useEffect(() => {
     setupPlayer();
   }, []);
-  
+
   return (
     <>
       <NavigationContainer>
