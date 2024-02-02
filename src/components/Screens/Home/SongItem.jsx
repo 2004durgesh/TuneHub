@@ -4,8 +4,12 @@ import tw from "twrnc"
 import CustomImage from '../../CustomImage';
 import { useNavigation } from '@react-navigation/native';
 
+const textAttributes = {
+    style: tw`text-gray-300 text-xs w-75`,
+    numberOfLines: 1,
+    ellipsizeMode: 'tail',
+}
 const SongItem = ({ data }) => {
-    // console.log(data,"data");
     const navigation = useNavigation()
     function resizeImageUrl(url, width = 2000, height = 2000) {
         return url.replace(/=w\d+/, `=w${width}`).replace(/-h\d+/, `-h${height}`);
@@ -15,15 +19,18 @@ const SongItem = ({ data }) => {
             <TouchableOpacity onPress={() => navigation.navigate('Screens', {
                 screen: 'MusicPlayer',
                 params: {
-                    item: {
-                        title: data.name,
-                        thumbnailUrl: data.thumbnails[0].url,
-                        youtubeId: data.videoId
-                    }
+                    title: data.name,
+                    thumbnailUrl: data.thumbnails[0].url,
+                    youtubeId: data.videoId
                 }
             })}>
-                <CustomImage imageSrc={resizeImageUrl(data.thumbnails[0].url)} />
-                <Text>{data.name},   </Text>
+                <View style={tw`flex-row items-center gap-4 p-2`}>
+                    <CustomImage imageSrc={data.thumbnails[0].url} />
+                    <View>
+                        <Text style={tw`text-white font-bold w-80`} numberOfLines={1} ellipsizeMode='tail'>{data.name}</Text>
+                        <Text {...textAttributes}>{data.artist.name}</Text>
+                    </View>
+                </View>
             </TouchableOpacity>
         </View>
     )

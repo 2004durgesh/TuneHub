@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { View, TouchableOpacity, Text, ActivityIndicator } from 'react-native'
 import tw from 'twrnc'
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { State, useProgress, usePlaybackState } from 'react-native-track-player'
+import TrackPlayer, { State, useProgress, usePlaybackState } from 'react-native-track-player'
 import Slider from '@react-native-community/slider';
 import { useTheme } from 'react-native-paper'
 import { useTrackPlayer } from '../context/TrackPlayerContext'
@@ -29,6 +29,10 @@ const Controls = () => {
                     thumbTintColor="#FFF"
                     maximumTrackTintColor="#FFF"
                     minimumTrackTintColor={theme.colors.secondary}
+                    onSlidingComplete={(value) => {
+                        TrackPlayer.seekTo(value)
+                    }
+                    }
                 />
                 <View style={tw`flex-row justify-between`}>
                     <Text style={tw`text-xs font-bold`}>{secondToMinute(position)}</Text>

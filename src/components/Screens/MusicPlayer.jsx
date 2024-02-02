@@ -9,10 +9,11 @@ import Controls from '../Controls'
 import TrackPlayer, { Event } from 'react-native-track-player'
 import ytdl from 'react-native-ytdl'
 import { useTrackPlayer } from '../../context/TrackPlayerContext'
+import CustomImage from '../CustomImage'
 const MusicPlayer = ({ route }) => {
   // const playerRef = useRef();
-  const { item } = route.params ?? {}
-  console.log(item, "item")
+  const params = route.params ?? {}
+  console.log(params, "params")
   const theme = useTheme()
   const { isPlayerReady, addTrack } = useTrackPlayer();
   const [colors, setColors] = useState(null)
@@ -26,9 +27,9 @@ const MusicPlayer = ({ route }) => {
         return;
       }
 
-      const youtubeURL = `http://www.youtube.com/watch?v=${item.youtubeId}`;
+      const youtubeURL = `http://www.youtube.com/watch?v=${params.youtubeId}`;
       const urls = await ytdl(youtubeURL, { quality: 'highestaudio' });
-      let info = await ytdl.getBasicInfo(item.youtubeId);
+      let info = await ytdl.getBasicInfo(params.youtubeId);
       console.log(info, "info");
 
       // Reset the player
@@ -37,8 +38,8 @@ const MusicPlayer = ({ route }) => {
       // Add the new track
       await addTrack({
         url: urls[0].url,
-        title: item.title,
-        artwork: resizeImageUrl(item.thumbnailUrl),
+        title: params.title,
+        artwork: resizeImageUrl(params.thumbnailUrl),
         duration: info.videoDetails.lengthSeconds,
       });
       // Start playing the new track
@@ -47,17 +48,17 @@ const MusicPlayer = ({ route }) => {
 
 
     setupAndPlayTrack();
-  }, [isPlayerReady, addTrack, item]);
+  }, [isPlayerReady, addTrack, params]);
 
   useEffect(() => {
-    const url = item.thumbnailUrl;
+    const url = params.thumbnailUrl;
 
     getColors(url, {
       fallback: theme.colors.primary,
       cache: true,
       key: url,
     }).then(setColors);
-  }, [item, theme.colors.primary]);
+  }, [params, theme.colors.primary]);
 
   return (
     <ScreenContainer>
@@ -76,11 +77,7 @@ const MusicPlayer = ({ route }) => {
         style={tw`flex-1 p-4`}
       >
         <View style={tw`h-150 justify-center items-center`}>
-          <Image
-            source={{ uri: resizeImageUrl(item.thumbnailUrl) }}
-            style={tw`w-full h-full`}
-            resizeMode='contain'
-          />
+          <CustomImage imageSrc={params.thumbnailUrl} style={`w-90 h-90`} resizeMode='contain'/>
           <Controls />
         </View>
       </LinearGradient>

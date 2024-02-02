@@ -1,55 +1,79 @@
-import { View, Text, FlatList, ScrollView } from 'react-native'
+import { View, Text, FlatList, ScrollView,Dimensions } from 'react-native'
 import React, { useState, useEffect } from 'react'
 import tw from "twrnc"
-import { useTheme } from 'react-native-paper'
+import { useTheme,Divider } from 'react-native-paper'
 import ScreenContainer from '../../ScreenContainer'
 import SongItem from './SongItem'
 import PlaylistItem from './PlaylistItem'
+import Loading from '../../Loading'
 const YTMusic = require("ytmusic-api").default;
 
 const Home = () => {
+  const theme = useTheme()
   const [data, setData] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const ytmusic = new YTMusic();
     const fetchHomeData = async () => {
-      await ytmusic.initialize();
-      const home = await ytmusic.getHome()
-      setData(home)
-      console.log(home);
-    }
-    fetchHomeData()
-  }, [])
+      try {
+        await ytmusic.initialize();
+        const home = await ytmusic.getHome();
+        setData(home);
+        setIsLoading(false);
+        console.log(home);
+        return home
+      } catch (error) {
+        console.error("An error occurred while fetching home data: ", error);
+      }finally{
+        setIsLoading(false)
+      }
+    };
+    fetchHomeData();
+  }, []);
 
   const ContentList = ({ contents }) => {
     return (
-      <FlatList
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        data={contents}
-        keyExtractor={(item, index) => index.toString()}
-        renderItem={({ item: content, index: contentIndex }) => (
-          content.type === 'SONG' ? (
-            <SongItem key={contentIndex} data={content} />
-          ) : (
-            <PlaylistItem key={contentIndex} data={content} />
-          )
-        )}
-      />
+      <ScrollView 
+      horizontal 
+      showsHorizontalScrollIndicator={false} 
+      snapToInterval={Dimensions.get('window').width} 
+      snapToAlignment='center'
+      decelerationRate='normal'>
+        <FlatList
+          showsHorizontalScrollIndicator={false}
+          data={contents}
+          numColumns={(contents.length) / 4}
+          keyExtractor={(item, index) => index.toString()}
+          renderItem={({ item: content, index: contentIndex }) => {
+            if (!content) {
+              return null
+            }
+
+            return content.type === 'SONG' ? (
+              <SongItem key={content?.videoId ?? contentIndex} data={content} />
+            ) : (
+              <PlaylistItem key={content.playlistId} data={content} />
+            );
+          }}
+        />
+      </ScrollView>
     );
   };
 
-  const theme = useTheme()
   return (
     <ScreenContainer>
-      {data.map((item, index) => (
-        <View style={tw``}>
-          <Text style={tw`font-bold text-xl mx-4`}>{item.title}</Text>
-          <View key={index} style={tw`flex-row`}>
-            <ContentList contents={item.contents} />
+     {isLoading?<Loading/>: <ScrollView showsVerticalScrollIndicator={false}>
+        {data.map((item, index) => (
+          <View style={tw``}>
+            <Text style={tw`font-bold text-xl mx-4 text-white`}>{item.title}</Text>
+            <View key={item.title} style={tw`flex-row`}>
+              <ContentList contents={item.contents} />
+            </View>
+            <Divider bold horizontalInset/>
           </View>
-        </View>
-      ))}
+        ))}
+      </ScrollView>}
     </ScreenContainer>
   )
 }
