@@ -10,7 +10,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import SystemNavigationBar from 'react-native-system-navigation-bar';
 import { useTheme } from 'react-native-paper';
 import Home from './components/Screens/Home/Home';
-import Screens from './components/Screens/Screens';
+import Screens from './components/Screens/index';
 import { useTrackPlayer } from './context/TrackPlayerContext';
 const Tab = createMaterialBottomTabNavigator();
 
@@ -42,7 +42,7 @@ const App = () => {
             }}
           />
           <Tab.Screen
-            name="Screens"
+            name="Search"
             component={Screens}
             options={{
               tabBarIcon: ({ focused, color }) => (

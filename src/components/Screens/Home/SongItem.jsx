@@ -16,7 +16,7 @@ const SongItem = ({ data }) => {
     }
     return (
         <View style={tw`flex-row`}>
-            <TouchableOpacity onPress={() => navigation.navigate('Screens', {
+            <TouchableOpacity onPress={() => navigation.navigate('Search', {
                 screen: 'MusicPlayer',
                 params: {
                     title: data.name,

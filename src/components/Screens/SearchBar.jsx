@@ -7,7 +7,7 @@ import { useSearch } from '../../context/SearchContext';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Loading from '../Loading';
 
-const Search = ({ navigation }) => {
+const SearchBar = ({ navigation }) => {
   const { isLoading, setSearchQuery, searchSuggestions, getSearches, getSearchSuggestions } = useSearch();
   const [inputValue, setInputValue] = useState('');
   const handleSearch = async () => {
@@ -47,4 +47,4 @@ const Search = ({ navigation }) => {
   );
 };
 
-export default Search;
+export default SearchBar;

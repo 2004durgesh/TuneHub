@@ -6,7 +6,7 @@ import { useSegmentedButton } from '../../context/SegmentedButtonContext';
 import { Musics, Albums, Playlists, Artists } from './SegmentedScreens';
 import MusicPlayer from './MusicPlayer';
 import ScreenContainer from '../ScreenContainer';
-import Search from './Search';
+import SearchBar from './SearchBar';
 const Stack = createStackNavigator();
 
 
@@ -20,7 +20,7 @@ const Screens = ({ navigation }) => {
       <Stack.Navigator
         screenOptions={{ headerShown: false, animationEnabled: false, gestureEnabled: true }}
       >
-        <Stack.Screen name="Search" component={Search} />
+        <Stack.Screen name="SearchBar" component={SearchBar} />
         <Stack.Screen name="Musics" component={Musics} />
         <Stack.Screen name="Albums" component={Albums} />
         <Stack.Screen name="Playlists" component={Playlists} />
