@@ -12,7 +12,7 @@ import moment from 'moment'
 const Controls = () => {
     const { position, duration } = useProgress();
     const playerState = usePlaybackState();
-    console.log(playerState.state, "playerState")
+    // console.log(playerState.state, "playerState")
     const { skipToNext, skipToPrevious, play, pause } = useTrackPlayer();
     const theme = useTheme();
     const secondToMinute = (seconds) => {
@@ -21,7 +21,8 @@ const Controls = () => {
     }
     return (
         <>
-            <View style={tw`w-full`}>
+            <View style={tw`flex-1 w-full mt-10`}>
+            <View style={tw``}>
                 <Slider
                     value={position}
                     minimumValue={0}
@@ -40,17 +41,26 @@ const Controls = () => {
                 </View>
             </View>
             <View style={tw`flex-row items-center justify-center w-full gap-10`}>
-                <Ionicons onPress={skipToPrevious} name="play-skip-back" size={25} />
+                <TouchableOpacity onPress={skipToPrevious}>
+                    <Ionicons name="play-skip-back" size={25} />
+                </TouchableOpacity>
                 {
                     playerState.state === "playing"
-                    ?
-                    <Ionicons onPress={pause} name={'pause'} size={25} />:
-                    playerState.state === "buffering" || playerState.state === "loading"?
-                    <ActivityIndicator size="small" color={theme.colors.secondary} />
-                    :
-                    <Ionicons onPress={play} name={'play'} size={25} />
-                    }
-                <Ionicons onPress={skipToNext} name="play-skip-forward" size={25} />
+                        ?
+                        <TouchableOpacity onPress={pause}>
+                            <Ionicons name={'pause'} size={25} />
+                        </TouchableOpacity> :
+                        playerState.state === "buffering" || playerState.state === "loading" ?
+                            <ActivityIndicator size="small" color={theme.colors.secondary} />
+                            :
+                            <TouchableOpacity onPress={play}>
+                                <Ionicons name={'play'} size={25} />
+                            </TouchableOpacity>
+                }
+                <TouchableOpacity onPress={skipToNext}>
+                    <Ionicons name="play-skip-forward" size={25} />
+                </TouchableOpacity>
+            </View>
             </View>
         </>
     );

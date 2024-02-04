@@ -1,7 +1,7 @@
 // TrackPlayerContext.js
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import TrackPlayer, { Event, State,Capability } from 'react-native-track-player';
+import TrackPlayer, { Event, State,Capability, RepeatMode } from 'react-native-track-player';
 
 const TrackPlayerContext = createContext();
 
@@ -29,7 +29,8 @@ const TrackPlayerProvider = ({ children }) => {
                 Capability.Pause,
             ]
           });
-      });
+      })
+      // await TrackPlayer.setRepeatMode(RepeatMode.Queue);
       
       setIsPlayerReady(true);
       console.log("TrackPlayer is set up");

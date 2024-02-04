@@ -1,22 +1,22 @@
 import 'react-native-gesture-handler';
 import React, { useState, useEffect } from 'react';
-import { StatusBar, ActivityIndicator, SafeAreaView } from 'react-native';
+import { StatusBar, ActivityIndicator, SafeAreaView,View } from 'react-native';
 import tw from 'twrnc';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import { createMaterialBottomTabNavigator } from '@react-navigation/material-bottom-tabs';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { setupPlayer } from './PlaybackService';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import SystemNavigationBar from 'react-native-system-navigation-bar';
 import { useTheme } from 'react-native-paper';
 import Home from './components/Screens/Home/Home';
-import Screens from './components/Screens/index';
+import Screens from './components/Screens/Screens'
 import { useTrackPlayer } from './context/TrackPlayerContext';
+import ControlFooter from './components/Screens/ControlFooter';
 const Tab = createMaterialBottomTabNavigator();
 
 const App = () => {
-  const { isPlayerReady, setupPlayer, addTrack } = useTrackPlayer();
-
+  const { setupPlayer } = useTrackPlayer();
+  // const navigation = useNavigation();
   const theme = useTheme();
   SystemNavigationBar.setNavigationColor(theme.colors.primaryContainer);
   useEffect(() => {
@@ -25,8 +25,10 @@ const App = () => {
 
   return (
     <>
-      <NavigationContainer>
-        <StatusBar backgroundColor={theme.colors.primary} barStyle="light-content" />
+    {/* <View style={tw`relative`}> */}
+    {/* <ControlFooter/> */}
+
+        <NavigationContainer>
         <Tab.Navigator
           activeColor="white"
           inactiveColor='#c6c6d1'
@@ -44,11 +46,13 @@ const App = () => {
           <Tab.Screen
             name="Search"
             component={Screens}
-            options={{
+            options={({ navigation }) => ({
               tabBarIcon: ({ focused, color }) => (
-                <Ionicons name={focused ? 'search' : 'search-outline'} size={25} color={color} />
+                <Ionicons name={focused ? 'search' : 'search-outline'} size={25} color={color}
+                onPress={() => navigation.navigate('SearchBar')}
+                />
               ),
-            }}
+            })}
           />
           <Tab.Screen
             name="Playlist"
@@ -69,9 +73,13 @@ const App = () => {
             }}
           />
         </Tab.Navigator>
-      </NavigationContainer>
+        </NavigationContainer>
+    {/* </View> */}
     </>
   );
+
+
+
 };
 
 export default App;
