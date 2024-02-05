@@ -1,13 +1,13 @@
-import { View, Text, FlatList, ScrollView,Dimensions } from 'react-native'
+import { View, Text, FlatList, ScrollView, Dimensions } from 'react-native'
 import React, { useState, useEffect } from 'react'
 import tw from "twrnc"
-import { useTheme,Divider } from 'react-native-paper'
+import { useTheme, Divider } from 'react-native-paper'
 import ScreenContainer from '../../ScreenContainer'
 import SongItem from './SongItem'
 import PlaylistItem from './PlaylistItem'
 import Loading from '../../Loading'
 const YTMusic = require("ytmusic-api").default;
-
+import ControlFooter from '../../ControlFooter'
 const Home = () => {
   const theme = useTheme()
   const [data, setData] = useState([])
@@ -25,7 +25,7 @@ const Home = () => {
         return home
       } catch (error) {
         console.error("An error occurred while fetching home data: ", error);
-      }finally{
+      } finally {
         setIsLoading(false)
       }
     };
@@ -34,12 +34,12 @@ const Home = () => {
 
   const ContentList = ({ contents }) => {
     return (
-      <ScrollView 
-      horizontal 
-      showsHorizontalScrollIndicator={false} 
-      snapToInterval={Dimensions.get('window').width} 
-      snapToAlignment='center'
-      decelerationRate='normal'>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        snapToInterval={Dimensions.get('window').width}
+        snapToAlignment='center'
+        decelerationRate='normal'>
         <FlatList
           showsHorizontalScrollIndicator={false}
           data={contents}
@@ -62,19 +62,22 @@ const Home = () => {
   };
 
   return (
-    <ScreenContainer>
-     {isLoading?<Loading/>: <ScrollView showsVerticalScrollIndicator={false}>
-        {data.map((item, index) => (
-          <View style={tw``}>
-            <Text style={tw`font-bold text-xl mx-4 text-white`}>{item.title}</Text>
-            <View key={item.title} style={tw`flex-row`}>
-              <ContentList contents={item.contents} />
+    <>
+      <ScreenContainer>
+        {isLoading ? <Loading /> : <ScrollView showsVerticalScrollIndicator={false}>
+          {data.map((item, index) => (
+            <View style={tw``}>
+              <Text style={tw`font-bold text-xl mx-4 text-white`}>{item.title}</Text>
+              <View key={item.title} style={tw`flex-row`}>
+                <ContentList contents={item.contents} />
+              </View>
+              <Divider bold horizontalInset />
             </View>
-            <Divider bold horizontalInset/>
-          </View>
-        ))}
-      </ScrollView>}
-    </ScreenContainer>
+          ))}
+        </ScrollView>}
+      </ScreenContainer>
+      <ControlFooter />
+    </>
   )
 }
 

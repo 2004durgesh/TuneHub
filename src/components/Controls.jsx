@@ -12,7 +12,7 @@ import moment from 'moment'
 const Controls = () => {
     const { position, duration } = useProgress();
     const playerState = usePlaybackState();
-    // console.log(playerState.state, "playerState")
+    console.log(playerState.state, "playerState")
     const { skipToNext, skipToPrevious, play, pause } = useTrackPlayer();
     const theme = useTheme();
     const secondToMinute = (seconds) => {
@@ -21,8 +21,8 @@ const Controls = () => {
     }
     return (
         <>
-            <View style={tw`flex-1 w-full mt-10`}>
-            <View style={tw``}>
+            {/* <View style={tw`flex-1 h-100 w-full mt-10 bg-black`}> */}
+            <View style={tw`w-full`}>
                 <Slider
                     value={position}
                     minimumValue={0}
@@ -61,7 +61,7 @@ const Controls = () => {
                     <Ionicons name="play-skip-forward" size={25} />
                 </TouchableOpacity>
             </View>
-            </View>
+            {/* </View> */}
         </>
     );
 };

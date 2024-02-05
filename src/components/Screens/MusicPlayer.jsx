@@ -1,5 +1,5 @@
 import { Text, View, Dimensions, Image } from 'react-native'
-import React, { useState, useCallback, useRef, useEffect } from 'react'
+import React, { useState,useEffect } from 'react'
 import ScreenContainer from '../ScreenContainer'
 import { getColors } from 'react-native-image-colors'
 import tw from 'twrnc'
@@ -10,8 +10,6 @@ import TrackPlayer, { Event } from 'react-native-track-player'
 import ytdl from 'react-native-ytdl'
 import { useTrackPlayer } from '../../context/TrackPlayerContext'
 import CustomImage from '../CustomImage'
-import Animated, { useSharedValue, useDerivedValue, interpolate, Extrapolation, useAnimatedStyle, useAnimatedScrollHandler } from 'react-native-reanimated';
-import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -23,13 +21,13 @@ const MusicPlayer = ({ route }) => {
   const theme = useTheme()
   const { isPlayerReady, addTrack } = useTrackPlayer();
   const [colors, setColors] = useState(null)
-  function resizeImageUrl(url, width = 2000, height = 2000) {
-    if (!url) {
-      return ''; // return a default image URL or an empty string
-    }
-    return url.replace(/=w\d+/, `=w${width}`).replace(/-h\d+/, `-h${height}`);
+  // function resizeImageUrl(url, width = 2000, height = 2000) {
+  //   if (!url) {
+  //     return ''; // return a default image URL or an empty string
+  //   }
+  //   return url.replace(/=w\d+/, `=w${width}`).replace(/-h\d+/, `-h${height}`);
 
-  }
+  // }
 
   useEffect(() => {
     const setupAndPlayTrack = async () => {
@@ -89,11 +87,10 @@ const MusicPlayer = ({ route }) => {
         style={tw`flex-1 p-4`}
       >
         <View style={tw`h-150 justify-center items-center`}>
-          <CustomImage imageSrc={params.thumbnailUrl} style={`w-90 h-90`} resizeMode='contain' />
-          <Controls />
+          {/* <CustomImage imageSrc={params.thumbnailUrl} style={`w-90 h-90`} resizeMode='contain' /> */}
+          {/* <Controls /> */}
         </View>
       </LinearGradient>
-
     </ScreenContainer>
   )
 }

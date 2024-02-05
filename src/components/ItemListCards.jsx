@@ -13,10 +13,10 @@ const { ...textAttributes } = {
     numberOfLines: 1,
     ellipsizeMode: 'tail',
 }
-
 const ItemListCards = ({ data, dataType, navigateTo }) => {
     const navigation = useNavigation()
     const theme = useTheme()
+    
     const { isLoading, error } = useSearch()
     return isLoading ? <Loading /> : (
         <ScreenContainer>
@@ -24,7 +24,7 @@ const ItemListCards = ({ data, dataType, navigateTo }) => {
                 <FlatList
                     data={data}
                     renderItem={({ item }) => (
-                        <TouchableOpacity onPress={() => navigation.navigate(navigateTo, item )}>
+                        <TouchableOpacity onPress={() => dataType==="musics"?null:navigation.navigate(navigateTo,item)}>
                             <View style={tw`flex-row items-center gap-4 p-2`}>
                                 {/* <Image src={item.thumbnailUrl}
                                     style={tw`h-20 w-20 ${dataType === 'artists' ? 'rounded-full' : 'rounded-md'}`}
