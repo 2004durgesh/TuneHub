@@ -21,29 +21,30 @@ const SearchBar = ({ navigation }) => {
     await getSearchSuggestions(text);
   };
   return (
-    <ScreenContainer>
-      <Searchbar
-        placeholder="Search for music, albums, or playlists"
-        onChangeText={handleChangeText}
-        value={inputValue}
-        style={tw`m-4`}
-        onSubmitEditing={handleSearch}
-      />
-
-      {isLoading ? <Loading /> : (searchSuggestions?.map((suggestion,index) => (
-        <TouchableOpacity onPress={handleSearch} key={index}>
-          <View key={suggestion} style={tw`p-4 flex-row items-center justify-between`}>
-            <Text style={tw`capitalize text-white font-bold text-lg`}>{suggestion}</Text>
-            <MaterialCommunityIcons
-              name="arrow-top-left"
-              size={20}
-              color={'white'}
-              onPress={() => setInputValue(suggestion)}
-            />
-          </View>
-        </TouchableOpacity>
-      )))}
-    </ScreenContainer>
+    <>
+      <ScreenContainer>
+        <Searchbar
+          placeholder="Search for music, albums, or playlists"
+          onChangeText={handleChangeText}
+          value={inputValue}
+          style={tw`m-4`}
+          onSubmitEditing={handleSearch}
+        />
+        {isLoading ? <Loading /> : (searchSuggestions?.map((suggestion,index) => (
+          <TouchableOpacity onPress={handleSearch} key={index}>
+            <View key={suggestion} style={tw`p-4 flex-row items-center justify-between`}>
+              <Text style={tw`capitalize text-white font-bold text-lg`}>{suggestion}</Text>
+              <MaterialCommunityIcons
+                name="arrow-top-left"
+                size={20}
+                color={'white'}
+                onPress={() => setInputValue(suggestion)}
+              />
+            </View>
+          </TouchableOpacity>
+        )))}
+      </ScreenContainer>
+    </>
   );
 };
 

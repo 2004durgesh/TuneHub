@@ -11,7 +11,7 @@ const ScreenContainer = ({ children }) => {
         <SafeAreaView style={[tw`flex-1`, { backgroundColor: theme.colors.primary }]}>
             {children}
         </SafeAreaView>
-        {/* <ControlFooter /> */}
+        <ControlFooter />
     </>
 
     );

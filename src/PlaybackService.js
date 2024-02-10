@@ -1,4 +1,4 @@
-import TrackPlayer, { Event, RepeatMode } from "react-native-track-player";
+import TrackPlayer, { Event, State } from "react-native-track-player";
 
 
 export async function PlaybackService() {
@@ -16,6 +16,18 @@ export async function PlaybackService() {
     TrackPlayer.addEventListener(Event.RemotePrevious, () => {
         TrackPlayer.skipToPrevious()
     })
+    TrackPlayer.addEventListener(Event.RemoteStop, () => {
+        TrackPlayer.stop()
+    })
+    TrackPlayer.addEventListener(Event.RemoteDuck, event => {
+        if (event.paused) {
+            // The audio has been interrupted, pause playback
+            TrackPlayer.pause();
+        } else {
+            // The interruption has ended, resume playback
+            TrackPlayer.play();
+        }
+    });
 
     // TrackPlayer.removeEventListener(Event.RemotePause);
     // TrackPlayer.removeEventListener(Event.RemotePlay);

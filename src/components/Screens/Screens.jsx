@@ -1,24 +1,25 @@
 import { View, Text, SafeAreaView, BackHandler } from 'react-native'
 import { useEffect, useState, Suspense } from 'react'
+import tw from 'twrnc'
 import { createStackNavigator } from '@react-navigation/stack';
 import { useSearch } from '../../context/SearchContext';
 import { useSegmentedButton } from '../../context/SegmentedButtonContext';
 import { Musics, Albums, Playlists, Artists } from './SegmentedScreens';
 import MusicPlayer from './MusicPlayer';
-import ScreenContainer from '../ScreenContainer';
+import { useTheme } from 'react-native-paper';
 import SearchBar from './SearchBar';
-import ControlFooter from '../ControlFooter';
 const Stack = createStackNavigator();
 
 
 const Screens = ({ navigation }) => {
+  const theme=useTheme()
   const { data, isLoading, error, searchQuery, setSearchQuery } = useSearch()
   const { setActiveSegment, } = useSegmentedButton()
   setActiveSegment('Musics')
 
   return (
     <>
-      <ScreenContainer>
+      <SafeAreaView style={[tw`flex-1`, { backgroundColor: theme.colors.primary }]}>
         <Stack.Navigator
           screenOptions={{ headerShown: false, animationEnabled: false, gestureEnabled: true }}
         >
@@ -29,8 +30,7 @@ const Screens = ({ navigation }) => {
           <Stack.Screen name="Artists" component={Artists} />
           <Stack.Screen name="MusicPlayer" component={MusicPlayer} />
         </Stack.Navigator>
-      </ScreenContainer>
-      <ControlFooter />
+      </SafeAreaView>
     </>
   );
 };

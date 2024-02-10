@@ -7,9 +7,7 @@ import { useNavigation } from '@react-navigation/native';
 
 const PlaylistItem = ({data}) => {
   const navigation = useNavigation()
-    function resizeImageUrl(url, width = 2000, height = 2000) {
-        return url.replace(/=w\d+/, `=w${width}`).replace(/-h\d+/, `-h${height}`);
-    }
+   
   return (
     <View style={tw`flex-row`}>
             <TouchableOpacity 

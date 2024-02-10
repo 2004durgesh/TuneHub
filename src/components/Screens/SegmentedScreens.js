@@ -1,4 +1,5 @@
 import React,{Suspense} from 'react';
+import { View } from 'react-native';
 import { useSegmentedButton } from '../../context/SegmentedButtonContext';
 import { useTheme, SegmentedButtons } from 'react-native-paper';
 import ItemListCards from '../ItemListCards';
@@ -59,6 +60,7 @@ const SegmentedItemList = ({ dataType, navigateTo }) => {
                 <Suspense fallback={<Loading/>}>
                     <ItemListCards data={results} dataType={dataType.toLowerCase()} navigateTo={navigateTo} />
                 </Suspense>
+                <View style={tw`mb-20`}></View>
             </ScreenContainer>
         </>
     );

@@ -1,7 +1,7 @@
 // TrackPlayerContext.js
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import TrackPlayer, { Event, State,Capability, RepeatMode } from 'react-native-track-player';
+import TrackPlayer, { Event, State,Capability, RepeatMode,RatingType } from 'react-native-track-player';
 
 const TrackPlayerContext = createContext();
 
@@ -17,6 +17,7 @@ const TrackPlayerProvider = ({ children }) => {
       await TrackPlayer.setupPlayer().then(async() => {
         await TrackPlayer.updateOptions({
             stopWithApp: true,
+            ratingType: RatingType.Heart,
             capabilities: [
               Capability.Play,
               Capability.Pause,
@@ -29,7 +30,8 @@ const TrackPlayerProvider = ({ children }) => {
                 Capability.Pause,
             ]
           });
-      })
+      }
+      )
       // await TrackPlayer.setRepeatMode(RepeatMode.Queue);
       
       setIsPlayerReady(true);

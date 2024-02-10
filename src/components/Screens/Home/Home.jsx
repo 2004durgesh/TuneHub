@@ -74,9 +74,10 @@ const Home = () => {
               <Divider bold horizontalInset />
             </View>
           ))}
+          <View style={tw`mb-20`}></View>
         </ScrollView>}
       </ScreenContainer>
-      <ControlFooter />
+      {/* <ControlFooter /> */}
     </>
   )
 }

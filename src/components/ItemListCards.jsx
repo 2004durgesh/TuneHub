@@ -8,6 +8,8 @@ import Loading from './Loading'
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
 import ScreenContainer from './ScreenContainer'
 import CustomImage from './CustomImage'
+import { useControlFooter } from '../context/ControlFooterContext'
+import { clearNowPlayingMetadata } from 'react-native-track-player/lib/trackPlayer'
 const { ...textAttributes } = {
     style: tw`text-gray-300 text-xs w-75`,
     numberOfLines: 1,
@@ -16,7 +18,7 @@ const { ...textAttributes } = {
 const ItemListCards = ({ data, dataType, navigateTo }) => {
     const navigation = useNavigation()
     const theme = useTheme()
-    
+    const { setImageUrl, setSongName, setArtistName, setYoutubeId,setDataType,setItem } = useControlFooter()
     const { isLoading, error } = useSearch()
     return isLoading ? <Loading /> : (
         <ScreenContainer>
@@ -24,7 +26,19 @@ const ItemListCards = ({ data, dataType, navigateTo }) => {
                 <FlatList
                     data={data}
                     renderItem={({ item }) => (
-                        <TouchableOpacity onPress={() => dataType==="musics"?null:navigation.navigate(navigateTo,item)}>
+                        <TouchableOpacity onPress={() => {
+                            if (dataType === "musics") {
+                                setImageUrl(item.thumbnailUrl);
+                                setSongName(item.title || item.name);
+                                setYoutubeId(item.youtubeId);
+                                setArtistName(item.artists.map((artist) => artist.name).join(', '));
+                                setDataType(dataType)
+                                setItem(item)
+                                console.log(item,"sitem");
+                            } else {
+                                navigation.navigate(navigateTo, item);
+                            }
+                        }}>
                             <View style={tw`flex-row items-center gap-4 p-2`}>
                                 {/* <Image src={item.thumbnailUrl}
                                     style={tw`h-20 w-20 ${dataType === 'artists' ? 'rounded-full' : 'rounded-md'}`}
@@ -38,7 +52,7 @@ const ItemListCards = ({ data, dataType, navigateTo }) => {
                                     <Text style={tw`text-white font-bold w-80`} numberOfLines={1} ellipsizeMode='tail'>
                                         {item.title || item.name}
                                     </Text>
-                                    <View style={tw`flex-row items-center gap-2`}>
+                                    {/* <View style={tw`flex-row items-center gap-2`}>
                                         {item.isExplicit && <MaterialIcons name='explicit' size={15} color={theme.colors.secondary} />}
                                         {dataType === 'musics' && <Text {...textAttributes}>
                                             {item.artists.map((artist) => artist.name).join(', ')} . {item.duration.label}
@@ -52,7 +66,7 @@ const ItemListCards = ({ data, dataType, navigateTo }) => {
                                         {dataType === 'artists' && <Text {...textAttributes}>
                                             {item.subscribers}
                                         </Text>}
-                                    </View>
+                                    </View> */}
                                 </View>
                             </View>
                         </TouchableOpacity>
