@@ -52,21 +52,21 @@ const ItemListCards = ({ data, dataType, navigateTo }) => {
                                     <Text style={tw`text-white font-bold w-80`} numberOfLines={1} ellipsizeMode='tail'>
                                         {item.title || item.name}
                                     </Text>
-                                    {/* <View style={tw`flex-row items-center gap-2`}>
-                                        {item.isExplicit && <MaterialIcons name='explicit' size={15} color={theme.colors.secondary} />}
+                                    <View style={tw`flex-row items-center gap-2`}>
+                                        {item?.isExplicit && <MaterialIcons name='explicit' size={15} color={theme.colors.secondary} />}
                                         {dataType === 'musics' && <Text {...textAttributes}>
-                                            {item.artists.map((artist) => artist.name).join(', ')} . {item.duration.label}
+                                            {item.artists?.map((artist) => artist.name).join(', ')} . {item.duration.label}
                                         </Text>}
                                         {dataType === 'albums' && <Text {...textAttributes}>
-                                            {item.artist} . {item.type} . {item.year}
+                                            {item?.artist} . {item.type} . {item.year}
                                         </Text>}
                                         {dataType === 'playlists' && <Text {...textAttributes}>
-                                            {item.totalSongs} songs
+                                            {item?.totalSongs} songs
                                         </Text>}
                                         {dataType === 'artists' && <Text {...textAttributes}>
-                                            {item.subscribers}
+                                            {item?.subscribers}
                                         </Text>}
-                                    </View> */}
+                                    </View>
                                 </View>
                             </View>
                         </TouchableOpacity>
