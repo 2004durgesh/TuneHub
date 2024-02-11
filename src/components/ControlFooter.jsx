@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, memo } from 'react';
+import React, { useRef, useEffect, useState, useLayoutEffect } from 'react';
 import { View, Image, Dimensions, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import Animated, {
     useSharedValue, useDerivedValue, interpolate, Extrapolation, useAnimatedStyle, useAnimatedScrollHandler
@@ -14,12 +14,13 @@ import { useTrackPlayer } from '../context/TrackPlayerContext';
 import { useControlFooter } from '../context/ControlFooterContext';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { Marquee } from '@animatereactnative/marquee';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
 
-const ControlFooter = memo(() => {
+const ControlFooter = () => {
 
     function resizeImageUrl(url, width = 2000, height = 2000) {
         if (!url) {
@@ -31,16 +32,47 @@ const ControlFooter = memo(() => {
     const theme = useTheme()
     const playerState = usePlaybackState();
     const bottomSheetRef = useRef(null);
-    const { imageUrl, songName, artistName, youtubeId,item } = useControlFooter()
-    console.log({ imageUrl, songName, artistName, youtubeId,item });
+    const { imageUrl, songName, artistName, youtubeId, setImageUrl, setSongName, setArtistName, setYoutubeId,setHideFooter } = useControlFooter()
+    // console.log({ imageUrl, songName, artistName, youtubeId });
     const { isPlayerReady, addTrack, play, pause } = useTrackPlayer();
     const [colors, setColors] = useState(null)
     const translateY = useSharedValue(0);
-    // const [key, setKey] = useState(youtubeId)
-    // useEffect(()=>{
-    //     const forceRemount = () => {setKey(Math.random()),console.log("remounted");};
-    //     forceRemount()
-    // },[youtubeId])
+
+    useLayoutEffect(() => {
+        // This is an async function that restores the player state from AsyncStorage
+        const restoreState = async () => {
+            try {
+                // Try to get the saved state from AsyncStorage
+                const savedState = await AsyncStorage.getItem('playerState');
+                console.log("savedState", JSON.parse(savedState));
+                // If there is a saved state...
+                if (savedState) {
+                    // Parse the saved state from JSON
+                    const { imageUrl, songName, artistName, youtubeId } = JSON.parse(savedState);
+                    // And use it to set the state of our component
+                    setImageUrl(imageUrl);
+                    setSongName(songName);
+                    setArtistName(artistName);
+                    setYoutubeId(youtubeId);
+                }
+            } catch (error) {
+                console.log(error, "error");
+            }
+        };
+        restoreState();
+    }, []);
+
+    // This effect runs when any of the state variables change
+    useEffect(() => {
+        const saveState = async () => {
+            const state = { imageUrl, songName, artistName, youtubeId };
+            await AsyncStorage.setItem('playerState', JSON.stringify(state));
+            console.log('State saved:', state);
+        };
+
+        saveState();
+    }, [imageUrl, songName, artistName, youtubeId]); // This effect runs whenever any of these variables change
+
     useEffect(() => {
         const setupAndPlayTrack = async () => {
             if (!isPlayerReady) {
@@ -51,6 +83,9 @@ const ControlFooter = memo(() => {
             let info = await ytdl.getBasicInfo(youtubeId);
             // console.log(info, "info");
 
+            // stop the player
+            await TrackPlayer.stop();
+            
             // Reset the player
             await TrackPlayer.reset();
 
@@ -85,6 +120,17 @@ const ControlFooter = memo(() => {
             translateY.value = event.contentOffset.y;
         },
     });
+
+    const handleControlFooter=async()=>{
+        await TrackPlayer.stop()
+        await TrackPlayer.reset()
+        //clear the playerState local storage
+        await AsyncStorage.removeItem('playerState')
+        setHideFooter(true)
+        //checking if local storage is cleared
+        const savedState = await AsyncStorage.getItem('playerState');
+        console.log("savedState after clearing", savedState);
+    }
 
     const animatedImageHeight = useDerivedValue(() => {
         return interpolate(translateY.value, [0, SCREEN_HEIGHT - 90], [400, 5], Extrapolation.CLAMP);
@@ -148,26 +194,31 @@ const ControlFooter = memo(() => {
                         <Animated.View style={[tw``, { opacity: animatedOpacity }]}>
                             <Marquee spacing={300}>
                                 <View style={tw`flex-row items-center gap-2 w-75`}>
-                                <Text style={[tw`text-white font-bold`]} numberOfLines={1} ellipsizeMode='tail'>{songName || "No Songs Playing"} .</Text>
+                                    <Text style={[tw`text-white font-bold`]} numberOfLines={1} ellipsizeMode='tail'>{songName || "No Songs Playing"} .</Text>
                                     <Text style={[tw`text-white text-xs`]} numberOfLines={1} ellipsizeMode='tail'>{artistName || "No Songs Playing"}</Text>
                                 </View>
                             </Marquee>
-                                    {
-                                        playerState.state === "playing"
-                                            ?
-                                            <TouchableOpacity onPress={pause}>
-                                                <Ionicons name={'pause'} size={25} color='white' />
-                                            </TouchableOpacity> :
-                                            playerState.state === "buffering" || playerState.state === "loading" ?
-                                                <ActivityIndicator size="small" color={theme.colors.secondary} />
-                                                :
-                                                <TouchableOpacity onPress={play}>
-                                                    <Ionicons name={'play'} size={25} color='white' />
-                                                </TouchableOpacity>
-                                    }
+                            <View style={tw`flex-row items-center gap-4`}>
+                                {
+                                    playerState.state === "playing"
+                                        ?
+                                        <TouchableOpacity onPress={pause}>
+                                            <Ionicons name={'pause'} size={25} color='white' />
+                                        </TouchableOpacity> :
+                                        playerState.state === "buffering" || playerState.state === "loading" ?
+                                            <ActivityIndicator size="small" color={theme.colors.secondary} />
+                                            :
+                                            <TouchableOpacity onPress={play}>
+                                                <Ionicons name={'play'} size={25} color='white' />
+                                            </TouchableOpacity>
+                                }
+                                <TouchableOpacity onPress={handleControlFooter}>
+                                    <Ionicons name={'close'} size={25} color='white' />
+                                </TouchableOpacity>
+                            </View>
                         </Animated.View>
                     </View>
-                    <Animated.View style={[tw``,{ height: animatedHeaderHeight}]}>
+                    <Animated.View style={[tw`mt-8`, { height: animatedHeaderHeight }]}>
                         <View style={tw`items-center`}>
                             <Text style={tw`font-bold text-xl text-white`} numberOfLines={1} ellipsizeMode='tail'>{songName || "No Songs Playing"}</Text>
                             <Text style={[tw`text-white`]} numberOfLines={1} ellipsizeMode='tail'>{artistName || "No Songs Playing"}</Text>
@@ -178,6 +229,6 @@ const ControlFooter = memo(() => {
             </BottomSheet>
         </View>
     );
-});
+};
 
 export default ControlFooter;

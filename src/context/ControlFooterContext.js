@@ -9,10 +9,10 @@ export const ControlFooterProvider = ({ children }) => {
     const[artistName,setArtistName]=useState("")
     const [youtubeId,setYoutubeId]=useState("")
     const [dataType,setDataType]=useState("")
-    const[item,setItem]=useState()
+    const [hideFooter, setHideFooter] = useState(false)
 
     return (
-        <ControlFooterContext.Provider value={{ imageUrl,songName,setSongName,artistName,setArtistName, setImageUrl,youtubeId,setYoutubeId,dataType,setDataType,item,setItem }}>
+        <ControlFooterContext.Provider value={{ imageUrl,songName,setSongName,artistName,setArtistName, setImageUrl,youtubeId,setYoutubeId,dataType,setDataType,hideFooter, setHideFooter}}>
             {children}
         </ControlFooterContext.Provider>
     );

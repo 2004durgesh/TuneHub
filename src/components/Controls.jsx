@@ -11,8 +11,7 @@ import FavoritesButton from './FavoriteButton';
 import { useControlFooter } from '../context/ControlFooterContext';
 
 const Controls = () => {
-    const { imageUrl, songName, artistName, youtubeId,dataType,item } = useControlFooter()
-    console.log(item,"item");
+    const { imageUrl, songName, artistName, youtubeId,dataType} = useControlFooter()
     const { position, duration } = useProgress();
     const playerState = usePlaybackState();
     console.log(playerState.state, "playerState")

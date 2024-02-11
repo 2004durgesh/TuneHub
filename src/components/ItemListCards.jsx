@@ -9,7 +9,6 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
 import ScreenContainer from './ScreenContainer'
 import CustomImage from './CustomImage'
 import { useControlFooter } from '../context/ControlFooterContext'
-import { clearNowPlayingMetadata } from 'react-native-track-player/lib/trackPlayer'
 const { ...textAttributes } = {
     style: tw`text-gray-300 text-xs w-75`,
     numberOfLines: 1,
@@ -18,7 +17,7 @@ const { ...textAttributes } = {
 const ItemListCards = ({ data, dataType, navigateTo }) => {
     const navigation = useNavigation()
     const theme = useTheme()
-    const { setImageUrl, setSongName, setArtistName, setYoutubeId,setDataType,setItem } = useControlFooter()
+    const { setImageUrl, setSongName, setArtistName, setYoutubeId,setDataType,setHideFooter} = useControlFooter()
     const { isLoading, error } = useSearch()
     return isLoading ? <Loading /> : (
         <ScreenContainer>
@@ -33,8 +32,7 @@ const ItemListCards = ({ data, dataType, navigateTo }) => {
                                 setYoutubeId(item.youtubeId);
                                 setArtistName(item.artists.map((artist) => artist.name).join(', '));
                                 setDataType(dataType)
-                                setItem(item)
-                                console.log(item,"sitem");
+                                setHideFooter(false)
                             } else {
                                 navigation.navigate(navigateTo, item);
                             }

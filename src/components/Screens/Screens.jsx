@@ -5,17 +5,17 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { useSearch } from '../../context/SearchContext';
 import { useSegmentedButton } from '../../context/SegmentedButtonContext';
 import { Musics, Albums, Playlists, Artists } from './SegmentedScreens';
-import MusicPlayer from './MusicPlayer';
 import { useTheme } from 'react-native-paper';
 import SearchBar from './SearchBar';
+import { MusicPlayer,ArtistInfo,AlbumInfo,PlaylistInfo } from './Media';
 const Stack = createStackNavigator();
 
 
 const Screens = ({ navigation }) => {
-  const theme=useTheme()
-  const { data, isLoading, error, searchQuery, setSearchQuery } = useSearch()
-  const { setActiveSegment, } = useSegmentedButton()
-  setActiveSegment('Musics')
+  const theme = useTheme()
+  // const { data, isLoading, error, searchQuery, setSearchQuery } = useSearch()
+  // const { setActiveSegment, } = useSegmentedButton()
+  // setActiveSegment('Musics')
 
   return (
     <>
@@ -29,6 +29,9 @@ const Screens = ({ navigation }) => {
           <Stack.Screen name="Playlists" component={Playlists} />
           <Stack.Screen name="Artists" component={Artists} />
           <Stack.Screen name="MusicPlayer" component={MusicPlayer} />
+          <Stack.Screen name="ArtistInfo" component={ArtistInfo} />
+          <Stack.Screen name="AlbumInfo" component={AlbumInfo} />
+          <Stack.Screen name="PlaylistInfo" component={PlaylistInfo} />
         </Stack.Navigator>
       </SafeAreaView>
     </>
