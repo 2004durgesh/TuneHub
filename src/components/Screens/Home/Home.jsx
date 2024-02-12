@@ -36,7 +36,7 @@ const Home = () => {
     return (
       <ScrollView
         horizontal
-        showsHorizontalScrollIndicator={false}
+        // showsHorizontalScrollIndicator={false}
         snapToInterval={Dimensions.get('window').width}
         snapToAlignment='center'
         decelerationRate='normal'>

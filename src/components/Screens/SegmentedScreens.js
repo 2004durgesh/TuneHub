@@ -60,7 +60,6 @@ const SegmentedItemList = ({ dataType, navigateTo }) => {
                 <Suspense fallback={<Loading/>}>
                     <ItemListCards data={results} dataType={dataType.toLowerCase()} navigateTo={navigateTo} />
                 </Suspense>
-                <View style={tw`mb-20`}></View>
             </ScreenContainer>
         </>
     );

@@ -2,12 +2,11 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import TrackPlayer, { Event, State,Capability, RepeatMode,RatingType } from 'react-native-track-player';
-
+import { useControlFooter } from './ControlFooterContext';
 const TrackPlayerContext = createContext();
 
 const TrackPlayerProvider = ({ children }) => {
   const [isPlayerReady, setIsPlayerReady] = useState(false);
-
   useEffect(() => {
     setupPlayer();
   }, []);
@@ -41,6 +40,23 @@ const TrackPlayerProvider = ({ children }) => {
       console.error('Error setting up TrackPlayer:', error);
     }
   };
+
+  const reset=async()=>{
+    try {
+      await TrackPlayer.reset()
+    } catch (error) {
+      console.error('Error adding track:', error);
+      
+    }
+  }
+  const stop=async()=>{
+    try {
+      await TrackPlayer.stop()
+    } catch (error) {
+      console.error('Error adding track:', error);
+      
+    }
+  }
 
   const addTrack = async (track) => {
     try {
@@ -93,6 +109,8 @@ const TrackPlayerProvider = ({ children }) => {
         pause,
         skipToNext,
         skipToPrevious,
+        reset,
+        stop
       }}
     >
       {children}

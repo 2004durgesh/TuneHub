@@ -28,8 +28,8 @@ const queryClient = new QueryClient()
 export default function Main() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TrackPlayerProvider>
-        <ControlFooterProvider>
+      <ControlFooterProvider>
+        <TrackPlayerProvider>
           <SearchProvider>
             <SegmentedButtonProvider>
               <PaperProvider theme={theme}>
@@ -37,8 +37,8 @@ export default function Main() {
               </PaperProvider>
             </SegmentedButtonProvider>
           </SearchProvider>
-        </ControlFooterProvider>
-      </TrackPlayerProvider>
+        </TrackPlayerProvider>
+      </ControlFooterProvider>
     </QueryClientProvider>
   );
 }

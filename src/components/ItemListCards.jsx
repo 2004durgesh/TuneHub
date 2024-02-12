@@ -24,6 +24,7 @@ const ItemListCards = ({ data, dataType, navigateTo }) => {
             {data ?
                 <FlatList
                     data={data}
+                    contentContainerStyle={tw`mb-20`} 
                     renderItem={({ item }) => (
                         <TouchableOpacity onPress={() => {
                             if (dataType === "musics") {
@@ -32,7 +33,7 @@ const ItemListCards = ({ data, dataType, navigateTo }) => {
                                 setYoutubeId(item.youtubeId);
                                 setArtistName(item.artists.map((artist) => artist.name).join(', '));
                                 setDataType(dataType)
-                                setHideFooter(false)
+                                // setHideFooter(false)
                             } else {
                                 navigation.navigate(navigateTo, item);
                             }

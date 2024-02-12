@@ -34,12 +34,13 @@ const ControlFooter = () => {
     const bottomSheetRef = useRef(null);
     const { imageUrl, songName, artistName, youtubeId, setImageUrl, setSongName, setArtistName, setYoutubeId,setHideFooter } = useControlFooter()
     // console.log({ imageUrl, songName, artistName, youtubeId });
-    const { isPlayerReady, addTrack, play, pause } = useTrackPlayer();
+    const { reset,stop, play, pause } = useTrackPlayer();
     const [colors, setColors] = useState(null)
     const translateY = useSharedValue(0);
 
     useLayoutEffect(() => {
         // This is an async function that restores the player state from AsyncStorage
+        setHideFooter(false)
         const restoreState = async () => {
             try {
                 // Try to get the saved state from AsyncStorage
@@ -73,38 +74,6 @@ const ControlFooter = () => {
         saveState();
     }, [imageUrl, songName, artistName, youtubeId]); // This effect runs whenever any of these variables change
 
-    useEffect(() => {
-        const setupAndPlayTrack = async () => {
-            if (!isPlayerReady) {
-                return;
-            }
-            const youtubeURL = `http://www.youtube.com/watch?v=${youtubeId}`;
-            const urls = await ytdl(youtubeURL, { quality: 'highestaudio' });
-            let info = await ytdl.getBasicInfo(youtubeId);
-            // console.log(info, "info");
-
-            // stop the player
-            await TrackPlayer.stop();
-            
-            // Reset the player
-            await TrackPlayer.reset();
-
-            // Add the new track
-            await addTrack({
-                id: youtubeId,
-                url: urls[0].url,
-                title: songName,
-                artist: artistName,
-                artwork: resizeImageUrl(imageUrl),
-                duration: info.videoDetails.lengthSeconds,
-            });
-            // Start playing the new track
-            await TrackPlayer.play();
-        };
-
-
-        setupAndPlayTrack();
-    }, [isPlayerReady, addTrack, youtubeId]);
 
     useEffect(() => {
         const url = imageUrl;
@@ -120,16 +89,17 @@ const ControlFooter = () => {
             translateY.value = event.contentOffset.y;
         },
     });
+    console.log(colors);
 
     const handleControlFooter=async()=>{
-        await TrackPlayer.stop()
-        await TrackPlayer.reset()
+        await stop()
+        await reset()
         //clear the playerState local storage
         await AsyncStorage.removeItem('playerState')
         setHideFooter(true)
-        //checking if local storage is cleared
-        const savedState = await AsyncStorage.getItem('playerState');
-        console.log("savedState after clearing", savedState);
+        // checking if local storage is cleared
+        // const savedState = await AsyncStorage.getItem('playerState');
+        // console.log("savedState after clearing", savedState);
     }
 
     const animatedImageHeight = useDerivedValue(() => {
