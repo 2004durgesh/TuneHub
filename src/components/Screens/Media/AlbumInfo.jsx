@@ -10,15 +10,16 @@ import axios from 'axios'
 import moment from 'moment'
 import { useControlFooter } from '../../../context/ControlFooterContext'
 import ytdl from 'react-native-ytdl'
+import { getYoutubeAudioUrl } from '../../../utils/ytdlUtils'
 import TrackPlayer, { Event } from 'react-native-track-player'
 import { useTrackPlayer } from '../../../context/TrackPlayerContext'
-
+import { useImageColors } from '../../../utils/useImageColors'
+import AnimatedScrollView from '../../AnimatedScrollView'
 const AlbumInfo = ({ route }) => {
   const params = route.params ?? {}
   console.log(params, "params")
   const { setImageUrl, setSongName, setArtistName, setYoutubeId, setDataType, setHideFooter } = useControlFooter()
   const { isPlayerReady, addTrack, play, reset, stop } = useTrackPlayer()
-  const [colors, setColors] = useState(null)
   const [data, setData] = useState([])
   const theme = useTheme()
 
@@ -46,7 +47,6 @@ const AlbumInfo = ({ route }) => {
       try {
         if (data) {
           const trackPromises = data.map(async (item) => {
-            const urls = await ytdl(`http://www.youtube.com/watch?v=${item.youtubeId}`, { quality: 'highestaudio' });
 
             return {
               title: item.title,
@@ -54,16 +54,16 @@ const AlbumInfo = ({ route }) => {
               artwork: item.thumbnailUrl,
               id: item.youtubeId,
               duration: item.duration.totalSeconds,
-              url: urls[0].url,
+              url: await getYoutubeAudioUrl(item.youtubeId),
             };
           });
 
           const tracks = await Promise.all(trackPromises);
           console.log(tracks, "tracks");
-          await stop()
+          // await stop()
           await reset()
           await addTrack(tracks);
-          await play();
+          // await play();
         }
       } catch (error) {
         console.error("Error fetching and adding tracks:", error);
@@ -90,20 +90,13 @@ const AlbumInfo = ({ route }) => {
       trackChangedListener.remove();
     };
   }, [data]);
-  useEffect(() => {
-    const url = params.thumbnailUrl;
 
-    getColors(url, {
-      fallback: "#000",
-      cache: true,
-      key: url,
-    }).then(setColors);
-  }, [params]);
+  const{vibrant}=useImageColors(params.thumbnailUrl)
+  
 
   return (
     <ScreenContainer>
-      <StatusBar backgroundColor='transparent' translucent />
-      <View style={[tw`flex-1 bg-black`]}>
+      <AnimatedScrollView>
         <ImageBackground
           source={{ uri: params.thumbnailUrl }}
           style={tw`h-100`}>
@@ -111,20 +104,20 @@ const AlbumInfo = ({ route }) => {
             style={tw`absolute top-0 left-0 right-0 h-100`}
             blurType="dark"
             blurAmount={5}
-            reducedTransparencyFallbackColor={colors?.vibrant || "black"}
+            reducedTransparencyFallbackColor={vibrant || "black"}
           />
           <LinearGradient
             colors={["transparent", "black"]}
             style={tw`h-100`}>
             <View style={tw`flex-1 justify-center items-center`}>
-              <Text style={tw`text-white text-xs mt-8`}>{params.artist}</Text>
-              <Text style={tw`text-white text-xs mb-4`}>{params.type} . {params.year}</Text>
+              <Text style={tw`text-white text-xs mt-15`}>{params.artist}</Text>
+              <Text style={tw`text-white text-xs mb-4`}>{params?.type??"Single"} . {params.year}</Text>
               <Image
                 source={{ uri: params.thumbnailUrl }}
                 resizeMode='contain'
                 style={[tw`h-60 z-500 rounded-md`, { aspectRatio: 1 / 1 }]}
               />
-              <Text style={tw`text-white text-3xl font-bold mt-4`}>{params.title}</Text>
+              <Text style={tw`text-white text-center text-3xl font-bold mt-4`}>{params.title}</Text>
             </View>
           </LinearGradient>
         </ImageBackground>
@@ -148,7 +141,7 @@ const AlbumInfo = ({ route }) => {
           ))}
           <Text style={tw`text-center`}>{data.length} songs . {formatDurationString(totalDuration)}</Text>
         </View>
-      </View>
+      </AnimatedScrollView>
     </ScreenContainer>
   )
 }

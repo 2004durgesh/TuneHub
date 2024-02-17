@@ -9,6 +9,9 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
 import ScreenContainer from './ScreenContainer'
 import CustomImage from './CustomImage'
 import { useControlFooter } from '../context/ControlFooterContext'
+import { useTrackPlayer } from '../context/TrackPlayerContext'
+import { resizeImageUrl } from '../utils/imageUtils'
+import { getYoutubeAudioDuration, getYoutubeAudioUrl } from '../utils/ytdlUtils'
 const { ...textAttributes } = {
     style: tw`text-gray-300 text-xs w-75`,
     numberOfLines: 1,
@@ -18,7 +21,34 @@ const ItemListCards = ({ data, dataType, navigateTo }) => {
     const navigation = useNavigation()
     const theme = useTheme()
     const { setImageUrl, setSongName, setArtistName, setYoutubeId,setDataType,setHideFooter} = useControlFooter()
+    const { isPlayerReady, addTrack, play, reset, stop } = useTrackPlayer()
     const { isLoading, error } = useSearch()
+    const handleOnPress = async (item) => {
+        if (!isPlayerReady) {
+            return;
+        }
+        if (dataType === "musics") {
+            setImageUrl(item.thumbnailUrl);
+            setSongName(item.title || item.name);
+            setYoutubeId(item.youtubeId);
+            setArtistName(item.artists.map((artist) => artist.name).join(', '));
+            setDataType(dataType)
+            setHideFooter(false)
+        } else {
+            navigation.navigate(navigateTo, item);
+        }
+        // await stop()
+        await reset()
+        await addTrack({
+            id: item.youtubeId,
+            url: await getYoutubeAudioUrl(item.youtubeId),
+            title: item.title || item.name,
+            artist: item.artists.map((artist) => artist.name).join(', '),
+            artwork: resizeImageUrl(item.thumbnailUrl),
+            duration: await getYoutubeAudioDuration(item.youtubeId)
+        });
+        await play()
+    }
     return isLoading ? <Loading /> : (
         <ScreenContainer>
             {data ?
@@ -26,18 +56,7 @@ const ItemListCards = ({ data, dataType, navigateTo }) => {
                     data={data}
                     contentContainerStyle={tw`mb-20`} 
                     renderItem={({ item }) => (
-                        <TouchableOpacity onPress={() => {
-                            if (dataType === "musics") {
-                                setImageUrl(item.thumbnailUrl);
-                                setSongName(item.title || item.name);
-                                setYoutubeId(item.youtubeId);
-                                setArtistName(item.artists.map((artist) => artist.name).join(', '));
-                                setDataType(dataType)
-                                // setHideFooter(false)
-                            } else {
-                                navigation.navigate(navigateTo, item);
-                            }
-                        }}>
+                        <TouchableOpacity onPress={() => handleOnPress(item)}>
                             <View style={tw`flex-row items-center gap-4 p-2`}>
                                 {/* <Image src={item.thumbnailUrl}
                                     style={tw`h-20 w-20 ${dataType === 'artists' ? 'rounded-full' : 'rounded-md'}`}

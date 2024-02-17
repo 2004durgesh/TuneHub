@@ -9,23 +9,24 @@ import LinearGradient from 'react-native-linear-gradient';
 import axios from 'axios'
 import moment from 'moment'
 import { useControlFooter } from '../../../context/ControlFooterContext'
+import { useTrackPlayer } from '../../../context/TrackPlayerContext'
+import { getYoutubeAudioUrl } from '../../../utils/ytdlUtils'
 import ytdl from 'react-native-ytdl'
 import TrackPlayer, { Event } from 'react-native-track-player'
-import { useTrackPlayer } from '../../../context/TrackPlayerContext'
-import {useSharedValue} from 'react-native-reanimated';
-
+import { useSharedValue } from 'react-native-reanimated';
+import { useImageColors } from '../../../utils/useImageColors'
+import AnimatedScrollView from '../../AnimatedScrollView'
 const PlaylistInfo = ({ route }) => {
   const params = route.params ?? {}
   console.log(params, "params")
   const { setImageUrl, setSongName, setArtistName, setYoutubeId, setDataType, setHideFooter } = useControlFooter()
   const { isPlayerReady, addTrack, play, reset, stop } = useTrackPlayer()
-  const [colors, setColors] = useState(null)
-  const [data, setData] = useState([])
+  const [data, setData] = useState({})
   const theme = useTheme()
   const [bgColor, setBgColor] = useState("transparent")
   const translateY = useSharedValue(0);
 
-  
+
   const scrollHandler = (event) => {
     translateY.value = event.nativeEvent.contentOffset.y;
     if (translateY.value > 300) {
@@ -64,8 +65,7 @@ const PlaylistInfo = ({ route }) => {
     const fetchAndAddTracks = async () => {
       try {
         if (data) {
-          const trackPromises =data&& data.videos?.map(async (item) => {
-            const urls = await ytdl(`http://www.youtube.com/watch?v=${item.id}`, { quality: 'highestaudio' });
+          const trackPromises = data && data.videos?.map(async (item) => {
 
             return {
               title: item.title,
@@ -73,13 +73,13 @@ const PlaylistInfo = ({ route }) => {
               artwork: item.thumbnail.url,
               id: item.id,
               duration: (item.duration) / 1000,
-              url: urls[0].url,
+              url: await getYoutubeAudioUrl(item.id),
             };
           });
 
           const tracks = await Promise.all(trackPromises);
           console.log(tracks, "tracks");
-          await stop()
+          // await stop()
           await reset()
           await addTrack(tracks);
           await play();
@@ -109,25 +109,12 @@ const PlaylistInfo = ({ route }) => {
   //     trackChangedListener.remove();
   //   };
   // }, [data]);
-  useEffect(() => {
-    const url = params.thumbnailUrl;
+  const { vibrant } = useImageColors(params.thumbnailUrl)
 
-    getColors(url, {
-      fallback: "#000",
-      cache: true,
-      key: url,
-    }).then(setColors);
-  }, [params]);
 
   return (
     <ScreenContainer>
-      <StatusBar backgroundColor={bgColor} translucent animated />
-      <ScrollView
-        contentContainerStyle={tw`pb-20`}
-        showsVerticalScrollIndicator={false}
-        style={[tw`flex-1 bg-black`]}
-        onScroll={scrollHandler}
-      >
+      <AnimatedScrollView>
         <ImageBackground
           source={{ uri: params.thumbnailUrl }}
           style={tw`h-100`}>
@@ -135,7 +122,7 @@ const PlaylistInfo = ({ route }) => {
             style={tw`absolute top-0 left-0 right-0 h-100`}
             blurType="dark"
             blurAmount={5}
-            reducedTransparencyFallbackColor={colors?.vibrant || "black"}
+            reducedTransparencyFallbackColor={vibrant || "black"}
           />
           <LinearGradient
             colors={["transparent", "black"]}
@@ -169,13 +156,13 @@ const PlaylistInfo = ({ route }) => {
                 setHideFooter(false)
               }}>
                 <Text style={tw`text-white font-bold w-90`} numberOfLines={2}>{item.title}</Text>
-                <Text style={tw`text-sm`} numberOfLines={1}>{item.channel.name} . {secondToMinute((item.duration) / 1000)}</Text>
+                <Text style={tw``} numberOfLines={1}>{item.channel.name} . {secondToMinute((item.duration) / 1000)}</Text>
               </TouchableOpacity>
             </View>
           ))}
           <Text style={tw`text-center`}>{data && data.videos?.length} tracks . {formatDurationString((totalDuration) / 1000)}</Text>
         </View>
-      </ScrollView>
+      </AnimatedScrollView>
     </ScreenContainer>
   )
 }

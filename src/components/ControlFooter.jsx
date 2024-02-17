@@ -15,6 +15,8 @@ import { useControlFooter } from '../context/ControlFooterContext';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { Marquee } from '@animatereactnative/marquee';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { resizeImageUrl } from '../utils/imageUtils';
+import { useImageColors } from '../utils/useImageColors';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -22,20 +24,12 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 
 const ControlFooter = () => {
 
-    function resizeImageUrl(url, width = 2000, height = 2000) {
-        if (!url) {
-            return 'https://unsplash.com/photos/a-black-and-white-photo-of-a-black-surface-ilVYjf0J378';
-        }
-        return url.replace(/=w\d+/, `=w${width}`).replace(/-h\d+/, `-h${height}`);
-
-    }
     const theme = useTheme()
     const playerState = usePlaybackState();
     const bottomSheetRef = useRef(null);
-    const { imageUrl, songName, artistName, youtubeId, setImageUrl, setSongName, setArtistName, setYoutubeId,setHideFooter } = useControlFooter()
+    const { imageUrl, songName, artistName, youtubeId, setImageUrl, setSongName, setArtistName, setYoutubeId, setHideFooter } = useControlFooter()
     // console.log({ imageUrl, songName, artistName, youtubeId });
-    const { reset,stop, play, pause } = useTrackPlayer();
-    const [colors, setColors] = useState(null)
+    const { reset, stop, play, pause } = useTrackPlayer();
     const translateY = useSharedValue(0);
 
     useLayoutEffect(() => {
@@ -74,25 +68,17 @@ const ControlFooter = () => {
         saveState();
     }, [imageUrl, songName, artistName, youtubeId]); // This effect runs whenever any of these variables change
 
-
-    useEffect(() => {
-        const url = imageUrl;
-
-        getColors(url, {
-            fallback: "#000",
-            cache: true,
-            key: url,
-        }).then(setColors);
-    }, [theme.colors.primary, imageUrl]);
+    const { vibrant } = useImageColors(imageUrl)
+    console.log(vibrant);
+    
     const scrollHandler = useAnimatedScrollHandler({
         onScroll: (event) => {
             translateY.value = event.contentOffset.y;
         },
     });
-    console.log(colors);
 
-    const handleControlFooter=async()=>{
-        await stop()
+    const handleControlFooter = async () => {
+        // await stop()
         await reset()
         //clear the playerState local storage
         await AsyncStorage.removeItem('playerState')
@@ -151,7 +137,7 @@ const ControlFooter = () => {
                 enableDynamicSizing={true}
                 animatedPosition={translateY}
                 detached={true}
-                backgroundStyle={{ backgroundColor: colors?.vibrant || "black" }}
+                backgroundStyle={{ backgroundColor: vibrant || "black" }}
             >
                 <BottomSheetScrollView onScroll={scrollHandler} >
                     <View style={[tw`flex-1 items-center flex-row`]}>

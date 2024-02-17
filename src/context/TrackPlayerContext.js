@@ -1,7 +1,7 @@
 // TrackPlayerContext.js
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import TrackPlayer, { Event, State,Capability, RepeatMode,RatingType } from 'react-native-track-player';
+import TrackPlayer, { Event, State, Capability, RepeatMode, RatingType } from 'react-native-track-player';
 import { useControlFooter } from './ControlFooterContext';
 const TrackPlayerContext = createContext();
 
@@ -13,26 +13,29 @@ const TrackPlayerProvider = ({ children }) => {
 
   const setupPlayer = async () => {
     try {
-      await TrackPlayer.setupPlayer().then(async() => {
+      await TrackPlayer.setupPlayer().then(async () => {
         await TrackPlayer.updateOptions({
-            stopWithApp: true,
-            ratingType: RatingType.Heart,
-            capabilities: [
-              Capability.Play,
-              Capability.Pause,
-              Capability.SkipToNext,
-              Capability.SkipToPrevious,
-              Capability.Stop
-            ],
-            compactCapabilities: [
-                Capability.Play,
-                Capability.Pause,
-            ]
-          });
+          stopWithApp: true,
+          ratingType: RatingType.Heart,
+          capabilities: [
+            Capability.Play,
+            Capability.Pause,
+            Capability.SkipToNext,
+            Capability.SkipToPrevious,
+            Capability.Stop
+          ],
+          compactCapabilities: [
+            Capability.Play,
+            Capability.Pause,
+            Capability.SkipToNext,
+            Capability.SkipToPrevious,
+            Capability.Stop
+          ]
+        });
       }
       )
       // await TrackPlayer.setRepeatMode(RepeatMode.Queue);
-      
+
       setIsPlayerReady(true);
       console.log("TrackPlayer is set up");
       // Add event listeners or other setup logic if needed
@@ -41,20 +44,20 @@ const TrackPlayerProvider = ({ children }) => {
     }
   };
 
-  const reset=async()=>{
+  const reset = async () => {
     try {
       await TrackPlayer.reset()
     } catch (error) {
       console.error('Error adding track:', error);
-      
+
     }
   }
-  const stop=async()=>{
+  const stop = async () => {
     try {
       await TrackPlayer.stop()
     } catch (error) {
       console.error('Error adding track:', error);
-      
+
     }
   }
 

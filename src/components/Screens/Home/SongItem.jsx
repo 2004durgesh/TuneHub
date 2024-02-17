@@ -6,6 +6,8 @@ import { useControlFooter } from '../../../context/ControlFooterContext';
 import TrackPlayer from 'react-native-track-player';
 import { useTrackPlayer } from '../../../context/TrackPlayerContext';
 import ytdl from 'react-native-ytdl'
+import { getYoutubeAudioUrl, getYoutubeAudioDuration } from '../../../utils/ytdlUtils';
+import { resizeImageUrl } from '../../../utils/imageUtils';
 const textAttributes = {
     style: tw`text-gray-300 text-xs w-75`,
     numberOfLines: 1,
@@ -13,17 +15,11 @@ const textAttributes = {
 }
 const SongItem = ({ data }) => {
     const { setImageUrl, setSongName, setArtistName, setYoutubeId, setDataType, setHideFooter } = useControlFooter()
-    const { isPlayerReady, addTrack, play, reset,stop } = useTrackPlayer()
-    function resizeImageUrl(url, width = 2000, height = 2000) {
-        if (!url) {
-            return 'https://unsplash.com/photos/a-black-and-white-photo-of-a-black-surface-ilVYjf0J378';
-        }
-        return url.replace(/=w\d+/, `=w${width}`).replace(/-h\d+/, `-h${height}`);
+    const { isPlayerReady, addTrack, play, reset, stop } = useTrackPlayer()
 
-    }
     const handleOnPress = async () => {
         if (!isPlayerReady) {
-          return;
+            return;
         }
         setImageUrl(data.thumbnails[0].url);
         setSongName(data.name);
@@ -33,19 +29,20 @@ const SongItem = ({ data }) => {
         setHideFooter(false)
         // await stop()
         await reset()
-        const youtubeURL = `http://www.youtube.com/watch?v=${data.videoId}`;
-        const urls = await ytdl(youtubeURL, { quality: 'highestaudio' });
-        let info = await ytdl.getBasicInfo(data.videoId);
+        // const youtubeURL = `http://www.youtube.com/watch?v=${data.videoId}`;
+        // const urls = await ytdl(youtubeURL, { quality: 'highestaudio' });
+        // let info = await ytdl.getBasicInfo(data.videoId);
         await addTrack({
-          id: data.videoId,
-          url: urls[0].url,
-          title: data.name,
-          artist: data.artist.name,
-          artwork: resizeImageUrl(data.thumbnails[0].url),
-          duration: info.videoDetails.lengthSeconds,
+            id: data.videoId,
+            url: await getYoutubeAudioUrl(data.videoId),
+            title: data.name,
+            artist: data.artist.name,
+            artwork: resizeImageUrl(data.thumbnails[0].url),
+            duration: await getYoutubeAudioDuration(data.videoId)
         });
         await play()
-      };
+        console.log("songitem clicked");
+    };
 
     return (
         <View style={tw`flex-row`}>

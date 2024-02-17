@@ -1,4 +1,4 @@
-import React,{Suspense} from 'react';
+import React,{Suspense,useEffect,useCallback} from 'react';
 import { View } from 'react-native';
 import { useSegmentedButton } from '../../context/SegmentedButtonContext';
 import { useTheme, SegmentedButtons } from 'react-native-paper';
@@ -10,13 +10,21 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
 import Loading from '../Loading';
+import { useFocusEffect } from '@react-navigation/native';
 
 const SegmentedItemList = ({ dataType, navigateTo }) => {
     const { activeSegment, setActiveSegment } = useSegmentedButton();
     const { data } = useSearch();
     const { musicsResults, albumsResults, playlistsResults, artistsResults } = data ?? {};
     const results = data ? data[dataType.toLowerCase() + 'Results'] : {};
-    setActiveSegment(dataType);
+    useEffect(() => {
+        setActiveSegment(dataType);
+    }, [dataType]);
+    useFocusEffect(
+        useCallback(() => {
+            setActiveSegment(dataType);
+        }, [dataType])
+    );
     const navigation = useNavigation()
     const theme = useTheme()
     return (

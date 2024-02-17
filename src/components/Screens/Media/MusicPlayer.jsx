@@ -10,6 +10,7 @@ import TrackPlayer, { Event } from 'react-native-track-player'
 import ytdl from 'react-native-ytdl'
 import { useTrackPlayer } from '../../../context/TrackPlayerContext'
 import CustomImage from '../../CustomImage'
+import { resizeImageUrl } from '../../../utils/imageUtils'
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -21,14 +22,7 @@ const MusicPlayer = ({ route }) => {
   const theme = useTheme()
   const { isPlayerReady, addTrack } = useTrackPlayer();
   const [colors, setColors] = useState(null)
-  // function resizeImageUrl(url, width = 2000, height = 2000) {
-  //   if (!url) {
-  //     return ''; // return a default image URL or an empty string
-  //   }
-  //   return url.replace(/=w\d+/, `=w${width}`).replace(/-h\d+/, `-h${height}`);
-
-  // }
-
+  
   useEffect(() => {
     const setupAndPlayTrack = async () => {
       if (!isPlayerReady) {

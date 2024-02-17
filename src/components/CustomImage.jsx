@@ -2,15 +2,10 @@ import { View, Text, Image } from 'react-native'
 import FastImage from 'react-native-fast-image'
 import tw from "twrnc"
 import React from 'react'
+import { resizeImageUrl } from '../utils/imageUtils'
 
 const CustomImage = ({ imageSrc, style, type, resizeMode = 'cover' }) => {
-  function resizeImageUrl(url, width = 2000, height = 2000) {
-    if (!url) {
-      return 'https://unsplash.com/photos/a-black-and-white-photo-of-a-black-surface-ilVYjf0J378'; // return a default image URL or an empty string
-    }
-    return url.replace(/=w\d+/, `=w${width}`).replace(/-h\d+/, `-h${height}`);
   
-  }
   return (
     <FastImage
       source={{ 
