@@ -7,6 +7,7 @@ import ScreenContainer from '../../ScreenContainer'
 import { getColors } from 'react-native-image-colors'
 import LinearGradient from 'react-native-linear-gradient';
 import axios from 'axios'
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import moment from 'moment'
 import { useControlFooter } from '../../../context/ControlFooterContext'
 import ytdl from 'react-native-ytdl'
@@ -110,18 +111,21 @@ const AlbumInfo = ({ route }) => {
             colors={["transparent", "black"]}
             style={tw`h-100`}>
             <View style={tw`flex-1 justify-center items-center`}>
-              <Text style={tw`text-white text-xs mt-15`}>{params.artist}</Text>
+              <Text style={tw`text-white text-xs mt-20`}>{params.artist}</Text>
               <Text style={tw`text-white text-xs mb-4`}>{params?.type??"Single"} . {params.year}</Text>
               <Image
                 source={{ uri: params.thumbnailUrl }}
                 resizeMode='contain'
                 style={[tw`h-60 z-500 rounded-md`, { aspectRatio: 1 / 1 }]}
               />
-              <Text style={tw`text-white text-center text-3xl font-bold mt-4`}>{params.title}</Text>
+              <Text style={tw`text-white text-center text-3xl font-bold mt-4`} numberOfLines={1}>{params.title}</Text>
+              <TouchableOpacity onPress={play} style={tw`bg-white w-15 h-15 items-center justify-center rounded-full`}>
+                <Ionicons name={'play'} size={25} color='black' />
+              </TouchableOpacity>
             </View>
           </LinearGradient>
         </ImageBackground>
-        <View style={tw``}>
+        <View style={tw`mt-15`}>
           {data && data.map((item, index) => (
             <View key={index} style={tw`flex-row items-center`}>
               <Text style={tw`text-white text-lg font-bold p-6`}>{index + 1}</Text>

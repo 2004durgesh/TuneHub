@@ -6,6 +6,7 @@ import { BlurView } from "@react-native-community/blur"
 import ScreenContainer from '../../ScreenContainer'
 import { getColors } from 'react-native-image-colors'
 import LinearGradient from 'react-native-linear-gradient';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import axios from 'axios'
 import moment from 'moment'
 import { useControlFooter } from '../../../context/ControlFooterContext'
@@ -23,18 +24,7 @@ const PlaylistInfo = ({ route }) => {
   const { isPlayerReady, addTrack, play, reset, stop } = useTrackPlayer()
   const [data, setData] = useState({})
   const theme = useTheme()
-  const [bgColor, setBgColor] = useState("transparent")
-  const translateY = useSharedValue(0);
 
-
-  const scrollHandler = (event) => {
-    translateY.value = event.nativeEvent.contentOffset.y;
-    if (translateY.value > 300) {
-      setBgColor("black")
-    } else {
-      setBgColor("transparent")
-    }
-  }
 
   useEffect(() => {
     const fetchData = async () => {
@@ -46,7 +36,7 @@ const PlaylistInfo = ({ route }) => {
     fetchData()
   }, [])
 
-  const totalDuration = data && data.videos?.reduce((acc, item) => acc + item.duration, 0)
+  const totalDuration = (data && data.videos?.reduce((acc, item) => acc + item.duration, 0)) / 1000
   console.log(totalDuration, "totalDuration");
 
   const formatDurationString = (seconds) => {
@@ -82,7 +72,7 @@ const PlaylistInfo = ({ route }) => {
           // await stop()
           await reset()
           await addTrack(tracks);
-          await play();
+          // await play();
         }
       } catch (error) {
         console.error("Error fetching and adding tracks:", error);
@@ -92,23 +82,23 @@ const PlaylistInfo = ({ route }) => {
     fetchAndAddTracks();
   }, [data]);
 
-  // useEffect(() => {
-  //   const trackChangedListener = TrackPlayer.addEventListener(Event.PlaybackActiveTrackChanged, async () => {
-  //     const index = await TrackPlayer.getActiveTrackIndex();
-  //     setImageUrl(data[index].thumbnailUrl);
-  //     setSongName(data[index].title);
-  //     setYoutubeId(data[index].youtubeId);
-  //     setArtistName(data[index].artists.map((artist) => artist.name).join(', '));
-  //     setDataType("musics");
-  //     setHideFooter(false)
-  //     console.log(data[index], "data[index]");
-  //   });
+  useEffect(() => {
+    const trackChangedListener = TrackPlayer.addEventListener(Event.PlaybackActiveTrackChanged, async () => {
+      const index = await TrackPlayer.getActiveTrackIndex();
+      setImageUrl(data.videos[index].thumbnail.url);
+      setSongName(data.videos[index].title);
+      setYoutubeId(data.videos[index].id);
+      setArtistName(data.videos[index].channel.name);
+      setDataType("musics");
+      setHideFooter(false)
+      console.log(data.videos[index], "data.videos[index]");
+    });
 
-  //   return () => {
-  //     // Don't forget to remove the event listener when the component is unmounted
-  //     trackChangedListener.remove();
-  //   };
-  // }, [data]);
+    return () => {
+      // Don't forget to remove the event listener when the component is unmounted
+      trackChangedListener.remove();
+    };
+  }, [data]);
   const { vibrant } = useImageColors(params.thumbnailUrl)
 
 
@@ -128,18 +118,22 @@ const PlaylistInfo = ({ route }) => {
             colors={["transparent", "black"]}
             style={tw`h-100`}>
             <View style={tw`flex-1 justify-center items-center`}>
-              <Text style={tw`text-white text-xs my-4`}>{data && data.channel?.name}</Text>
+              <Text style={tw`text-white text-xs mb-8 mt-20`}>{data && data.channel?.name}</Text>
               {/* <Text style={tw`text-white text-xs mb-4`}>{params.type} . {params.year}</Text> */}
               <Image
                 source={{ uri: params.thumbnailUrl }}
                 resizeMode='contain'
                 style={[tw`h-60 z-500 rounded-md`, { aspectRatio: 1 / 1 }]}
               />
-              <Text style={tw`text-white text-3xl font-bold mt-4`}>{params.title}</Text>
+              <Text style={tw`text-white text-3xl font-bold mt-4`} numberOfLines={3}>{params.title}</Text>
+              <TouchableOpacity onPress={play} style={tw`bg-white w-15 h-15 items-center justify-center rounded-full`}>
+                <Ionicons name={'play'} size={25} color='black' />
+              </TouchableOpacity>
             </View>
           </LinearGradient>
         </ImageBackground>
-        <View style={tw``}>
+
+        <View style={tw`mt-15`}>
           {data && data.videos?.map((item, index) => (
             <View key={index} style={tw`flex-row items-center`}>
               <Image
@@ -160,7 +154,7 @@ const PlaylistInfo = ({ route }) => {
               </TouchableOpacity>
             </View>
           ))}
-          <Text style={tw`text-center`}>{data && data.videos?.length} tracks . {formatDurationString((totalDuration) / 1000)}</Text>
+          <Text style={tw`text-center`}>{data && data.videos?.length} tracks . {formatDurationString(totalDuration)}</Text>
         </View>
       </AnimatedScrollView>
     </ScreenContainer>

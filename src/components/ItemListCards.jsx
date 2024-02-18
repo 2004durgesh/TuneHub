@@ -1,4 +1,4 @@
-import { View, Text, FlatList, Image, TouchableOpacity } from 'react-native'
+import { View, Text, FlatList, SafeAreaView, TouchableOpacity } from 'react-native'
 import React from 'react'
 import tw from 'twrnc'
 import { useTheme } from 'react-native-paper'
@@ -50,7 +50,7 @@ const ItemListCards = ({ data, dataType, navigateTo }) => {
         await play()
     }
     return isLoading ? <Loading /> : (
-        <ScreenContainer>
+        <SafeAreaView style={[tw`flex-1`, { backgroundColor: theme.colors.primary }]}>
             {data ?
                 <FlatList
                     data={data}
@@ -92,7 +92,7 @@ const ItemListCards = ({ data, dataType, navigateTo }) => {
                     keyExtractor={item => item.youtubeId}
                 />
                 : null}
-        </ScreenContainer>
+        </SafeAreaView>
     )
 }
 

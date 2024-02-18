@@ -62,9 +62,9 @@ const FavoritesButton = ({ dataType, youtubeId, songName, imageUrl,artistName}) 
         >
             <>
                 {isFavorite ?
-                    <Ionicons name="heart" size={18} color="#D3D3D3" />
+                    <Ionicons name="heart" size={18} color="#fff" />
                     :
-                    <Ionicons name="heart-outline" size={18} color="#D3D3D3" />}
+                    <Ionicons name="heart-outline" size={18} color="#fff" />}
             </>
         </TouchableRipple>
     )

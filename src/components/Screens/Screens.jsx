@@ -19,7 +19,7 @@ const Screens = ({ navigation }) => {
 
   return (
     <>
-      <SafeAreaView style={[tw`flex-1`, { backgroundColor: theme.colors.primary }]}>
+      <>
         <Stack.Navigator
           screenOptions={{ headerShown: false, animationEnabled: false, gestureEnabled: true }}
         >
@@ -33,7 +33,7 @@ const Screens = ({ navigation }) => {
           <Stack.Screen name="AlbumInfo" component={AlbumInfo} />
           <Stack.Screen name="PlaylistInfo" component={PlaylistInfo} />
         </Stack.Navigator>
-      </SafeAreaView>
+      </>
     </>
   );
 };
