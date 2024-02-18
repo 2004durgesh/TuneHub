@@ -60,4 +60,8 @@ The app is organized into intuitive directories:
 
 TuneHub is a musical work in progress, undergoing development. Be ready for an auditory adventure! 🎧 Contributions are welcomed with open arms.
 
+## Download the App 📥
+
+You can download the latest version of the app from the [Releases](https://github.com/2004durgesh/TuneHub/releases/) page.
+
 Happy listening! 🎶
