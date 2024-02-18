@@ -17,6 +17,7 @@ import TrackPlayer, { Event } from 'react-native-track-player'
 import { useSharedValue } from 'react-native-reanimated';
 import { useImageColors } from '../../../utils/useImageColors'
 import AnimatedScrollView from '../../AnimatedScrollView'
+import { act } from 'react-test-renderer'
 const PlaylistInfo = ({ route }) => {
   const params = route.params ?? {}
   console.log(params, "params")
@@ -85,6 +86,8 @@ const PlaylistInfo = ({ route }) => {
   useEffect(() => {
     const trackChangedListener = TrackPlayer.addEventListener(Event.PlaybackActiveTrackChanged, async () => {
       const index = await TrackPlayer.getActiveTrackIndex();
+      const activeTrack = await TrackPlayer.getActiveTrack()
+      console.log(activeTrack, "activeTrack");
       setImageUrl(data.videos[index].thumbnail.url);
       setSongName(data.videos[index].title);
       setYoutubeId(data.videos[index].id);
