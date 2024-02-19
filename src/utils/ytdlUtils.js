@@ -3,7 +3,7 @@ import ytdl from 'react-native-ytdl'
 const getYoutubeAudioUrl = async (youtubeId) => {
     const youtubeURL = `http://www.youtube.com/watch?v=${youtubeId}`;
     const urls = await ytdl(youtubeURL, { quality: 'highestaudio' });
-    // console.log("url has been fetched", urls[0].url);
+    console.log("url has been fetched", urls[0].url);
     return urls[0].url
 }
 

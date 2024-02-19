@@ -6,7 +6,7 @@ import tw from 'twrnc';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ReactNativeHapticFeedback from "react-native-haptic-feedback";
 
-const FavoritesButton = ({ dataType, youtubeId, songName, imageUrl,artistName}) => {
+const FavoritesButton = ({ dataType, youtubeId, songName, imageUrl,artistName,duration}) => {
     const [isFavorite, setIsFavorite] = useState(false);
     const [favoriteSongs, setFavoriteSongs] = useState([]);
     const theme = useTheme()
@@ -17,8 +17,8 @@ const FavoritesButton = ({ dataType, youtubeId, songName, imageUrl,artistName}) 
         title: songName,
         thumbnailUrl: imageUrl,
         dataType: dataType,
-        duration: "3:00",
-        // artistName:artistName,
+        duration:duration,
+        artistName:artistName,
     };
 
     useEffect(() => {

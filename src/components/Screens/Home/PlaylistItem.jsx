@@ -11,15 +11,14 @@ const PlaylistItem = ({data}) => {
   return (
     <View style={tw`flex-row`}>
             <TouchableOpacity 
-            onPress={()=>{Alert.alert('This feature is not available yet')}}
-            // onPress={() => navigation.navigate('Screens', {
-            //     screen: 'MusicPlayer',
-            //     params: {
-            //         title: data.name,
-            //         thumbnailUrl: data.thumbnails[0].url,
-            //         youtubeId: data.videoId
-            //     }
-            // })}
+            onPress={() => navigation.navigate('Search', {
+                screen: 'PlaylistInfo',
+                params: {
+                    title: data.name,
+                    thumbnailUrl: data.thumbnails[1].url,
+                    playlistId: data.playlistId
+                }
+            })}
             >
                 <View style={tw`flex-row items-center gap-4 p-2`}>
                     <CustomImage imageSrc={data.thumbnails[0].url} />

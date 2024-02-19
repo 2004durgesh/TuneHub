@@ -64,7 +64,7 @@ const App = () => {
                 ),
               }}
             />
-            <Tab.Screen
+            {/* <Tab.Screen
               name="Settings"
               component={Screens}
               options={{
@@ -72,7 +72,7 @@ const App = () => {
                   <Ionicons name={focused ? 'settings' : 'settings-outline'} size={25} color={color} />
                 ),
               }}
-            />
+            /> */}
           </Tab.Navigator>
         </NavigationContainer>
       </GestureHandlerRootView>

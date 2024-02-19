@@ -14,7 +14,7 @@ const Controls = () => {
     const { imageUrl, songName, artistName, youtubeId,dataType} = useControlFooter()
     const { position, duration } = useProgress();
     const playerState = usePlaybackState();
-    console.log(playerState.state, "playerState")
+    // console.log(playerState.state, "playerState")
     const { skipToNext, skipToPrevious, play, pause } = useTrackPlayer();
     const theme = useTheme();
     const secondToMinute = (seconds) => {
@@ -65,7 +65,7 @@ const Controls = () => {
                 </View>
                 <View style={tw`flex-row items-center justify-between`}>
                     <Ionicons name="play-skip-forward" size={18} color='white' style={tw`ml-20`}/>
-                    <FavoritesButton dataType={dataType} youtubeId={youtubeId} songName={songName} imageUrl={imageUrl} artistName={artistName}/>
+                    <FavoritesButton dataType={dataType} youtubeId={youtubeId} songName={songName} imageUrl={imageUrl} artistName={artistName} duration={secondToMinute(duration)}/>
                 </View>
             </>
         </>

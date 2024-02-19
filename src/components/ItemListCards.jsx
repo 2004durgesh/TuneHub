@@ -1,5 +1,5 @@
 import { View, Text, FlatList, SafeAreaView, TouchableOpacity } from 'react-native'
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import tw from 'twrnc'
 import { useTheme } from 'react-native-paper'
 import { useSearch } from './../context/SearchContext'
@@ -20,10 +20,22 @@ const { ...textAttributes } = {
 const ItemListCards = ({ data, dataType, navigateTo }) => {
     const navigation = useNavigation()
     const theme = useTheme()
-    const { setImageUrl, setSongName, setArtistName, setYoutubeId,setDataType,setHideFooter} = useControlFooter()
+    const { setImageUrl, setSongName, setArtistName, setYoutubeId, setDataType, setHideFooter } = useControlFooter()
     const { isPlayerReady, addTrack, play, reset, stop } = useTrackPlayer()
+    const [refreshing, setRefreshing] = useState(false);
+    const [key, setKey] = useState(0); // Add a key state
+
+    const onRefresh = useEffect(() => {
+        setRefreshing(true);
+
+        // Remount the component by changing the key
+        setKey(prevKey => prevKey + 1);
+
+        setRefreshing(false);
+    }, []);
     const { isLoading, error } = useSearch()
     const handleOnPress = async (item) => {
+        console.log(item, "item");
         if (!isPlayerReady) {
             return;
         }
@@ -31,7 +43,7 @@ const ItemListCards = ({ data, dataType, navigateTo }) => {
             setImageUrl(item.thumbnailUrl);
             setSongName(item.title || item.name);
             setYoutubeId(item.youtubeId);
-            setArtistName(item.artists.map((artist) => artist.name).join(', '));
+            setArtistName(item.artists?.map((artist) => artist.name).join(', ') ?? item.artistName);
             setDataType(dataType)
             setHideFooter(false)
         } else {
@@ -43,7 +55,7 @@ const ItemListCards = ({ data, dataType, navigateTo }) => {
             id: item.youtubeId,
             url: await getYoutubeAudioUrl(item.youtubeId),
             title: item.title || item.name,
-            artist: item.artists.map((artist) => artist.name).join(', '),
+            artist: item.artists?.map((artist) => artist.name).join(', ') ?? item.artistName,
             artwork: resizeImageUrl(item.thumbnailUrl),
             duration: await getYoutubeAudioDuration(item.youtubeId)
         });
@@ -54,7 +66,10 @@ const ItemListCards = ({ data, dataType, navigateTo }) => {
             {data ?
                 <FlatList
                     data={data}
-                    contentContainerStyle={tw`mb-20`} 
+                    key={key}
+                    contentContainerStyle={tw`mb-20`}
+                    refreshing={refreshing}
+                    onRefresh={onRefresh}
                     renderItem={({ item }) => (
                         <TouchableOpacity onPress={() => handleOnPress(item)}>
                             <View style={tw`flex-row items-center gap-4 p-2`}>
@@ -73,7 +88,7 @@ const ItemListCards = ({ data, dataType, navigateTo }) => {
                                     <View style={tw`flex-row items-center gap-2`}>
                                         {item?.isExplicit && <MaterialIcons name='explicit' size={15} color={theme.colors.secondary} />}
                                         {dataType === 'musics' && <Text {...textAttributes}>
-                                            {item.artists?.map((artist) => artist.name).join(', ')} . {item.duration.label}
+                                            {item.artists?.map((artist) => artist.name).join(', ') ?? item.artistName} . {item.duration?.label ?? item.duration}
                                         </Text>}
                                         {dataType === 'albums' && <Text {...textAttributes}>
                                             {item?.artist} . {item.type} . {item.year}
