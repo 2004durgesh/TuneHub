@@ -23,15 +23,6 @@ The app is organized into intuitive directories:
 - **App.jsx:** The application's entry point.
 - **PlaybackService.js:** The maestro handling music playback.
 
-## Key Components 🎚️
-
-- **ControlFooter:** Rules the music player footer.
-- **ItemListCards:** Displays a list of musical wonders.
-- **AlbumInfo:** Dives deep into album details.
-- **SongItem:** Showcases a single soulful song.
-- **Favorite:** Highlights your cherished tunes.
-- **Home:** The heart of the app.
-
 ## Contexts 💡
 
 - **ControlFooterContext:** Governs state and functions for the control footer.
@@ -43,18 +34,6 @@ The app is organized into intuitive directories:
 - **imageUtils:** Crafts enchanting visuals.
 - **ytdlUtils:** Masters the art of processing YouTube download links.
 - **useImageColors:** A wizardly custom hook for extracting dominant colors.
-
-## Getting Started 🚀
-
-1. **Install Dependencies:**
-   ```bash
-   npm install
-   ```
-
-2. **Run the App:**
-   ```bash
-   npm start
-   ```
 
 ## Note 📝
 
