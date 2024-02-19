@@ -10,15 +10,13 @@ cd android
 
 # The following commands use Gradle, a build tool for Android, to build the APK.
 
-# assembleDebug: Builds the debug APK. The debug APK is signed with a debug key and it has debugging enabled.
-# echo "Building debug APK........................................................................."
-# ./gradlew assembleDebug 
 
-# assembleRelease: Builds the release APK. The release APK is signed with the release key.
+# assembleRelease: Builds the release APK.
 echo "Building release APK........................................................................."
 ./gradlew assembleRelease 
 
-echo "Bundling release APK........................................................................."
+# assembleRelease: Bundles the release AAB.
+echo "Bundling release AAB........................................................................."
 ./gradlew bundleRelease 
 
 echo "Installing release APK........................................................................."
