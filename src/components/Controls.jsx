@@ -14,7 +14,7 @@ const Controls = () => {
     const { imageUrl, songName, artistName, youtubeId,dataType} = useControlFooter()
     const { position, duration } = useProgress();
     const playerState = usePlaybackState();
-    // console.log(playerState.state, "playerState")
+    console.log(playerState, "playerState")
     const { skipToNext, skipToPrevious, play, pause } = useTrackPlayer();
     const theme = useTheme();
     const secondToMinute = (seconds) => {

@@ -21,7 +21,7 @@ const Home = () => {
         const home = await ytmusic.getHome();
         setData(home);
         setIsLoading(false);
-        console.log(home);
+        // console.log(home);
         return home
       } catch (error) {
         console.error("An error occurred while fetching home data: ", error);
@@ -44,7 +44,7 @@ const Home = () => {
           showsHorizontalScrollIndicator={false}
           data={contents}
           numColumns={(contents.length) / 4}
-          keyExtractor={(item, index) => index.toString()}
+          keyExtractor={(item, index) => item ? (item.type === 'SONG' ? (item.videoId ?? index.toString()) : (item.playlistId ?? index.toString())) : index.toString()}
           renderItem={({ item: content, index: contentIndex }) => {
             if (!content) {
               return null
@@ -53,7 +53,7 @@ const Home = () => {
             return content.type === 'SONG' ? (
               <SongItem key={content?.videoId ?? contentIndex} data={content} />
             ) : (
-              <PlaylistItem key={content.playlistId} data={content} />
+              <PlaylistItem key={content?.playlistId} data={content} />
             );
           }}
         />

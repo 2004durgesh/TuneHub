@@ -1,44 +1,37 @@
-// TrackPlayerContext.js
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import TrackPlayer, { Event, State, Capability, RepeatMode, RatingType } from 'react-native-track-player';
-import { useControlFooter } from './ControlFooterContext';
+import TrackPlayer, { Capability, RatingType } from 'react-native-track-player';
+
 const TrackPlayerContext = createContext();
 
 const TrackPlayerProvider = ({ children }) => {
   const [isPlayerReady, setIsPlayerReady] = useState(false);
+
   useEffect(() => {
     setupPlayer();
   }, []);
 
   const setupPlayer = async () => {
     try {
-      await TrackPlayer.setupPlayer().then(async () => {
-        await TrackPlayer.updateOptions({
-          stopWithApp: true,
-          ratingType: RatingType.Heart,
-          capabilities: [
-            Capability.Play,
-            Capability.Pause,
-            Capability.SkipToNext,
-            Capability.SkipToPrevious,
-            Capability.Stop
-          ],
-          compactCapabilities: [
-            Capability.Play,
-            Capability.Pause,
-            Capability.SkipToNext,
-            Capability.SkipToPrevious,
-            Capability.Stop
-          ]
-        });
-      }
-      )
+      await TrackPlayer.setupPlayer();
+      await TrackPlayer.updateOptions({
+        stopWithApp: true,
+        ratingType: RatingType.Heart,
+        capabilities: [
+          Capability.Play,
+          Capability.Pause,
+          Capability.SkipToNext,
+          Capability.SkipToPrevious,
+          Capability.Stop,
+        ],
+        compactCapabilities: [
+          Capability.Play,
+          Capability.Pause,
+          Capability.SkipToNext,
+        ],
+      });
       // await TrackPlayer.setRepeatMode(RepeatMode.Queue);
-
       setIsPlayerReady(true);
       console.log("TrackPlayer is set up");
-      // Add event listeners or other setup logic if needed
     } catch (error) {
       console.error('Error setting up TrackPlayer:', error);
     }
@@ -46,25 +39,24 @@ const TrackPlayerProvider = ({ children }) => {
 
   const reset = async () => {
     try {
-      await TrackPlayer.reset()
+      await TrackPlayer.reset();
     } catch (error) {
-      console.error('Error adding track:', error);
-
+      console.error('Error resetting TrackPlayer:', error);
     }
-  }
+  };
+
   const stop = async () => {
     try {
-      await TrackPlayer.stop()
+      await TrackPlayer.stop();
     } catch (error) {
-      console.error('Error adding track:', error);
-
+      console.error('Error stopping TrackPlayer:', error);
     }
-  }
+  };
 
   const addTrack = async (track) => {
     try {
       await TrackPlayer.add(track);
-      console.log(track, "track added")
+      console.log(track, "track added");
     } catch (error) {
       console.error('Error adding track:', error);
     }
@@ -113,7 +105,7 @@ const TrackPlayerProvider = ({ children }) => {
         skipToNext,
         skipToPrevious,
         reset,
-        stop
+        stop,
       }}
     >
       {children}
