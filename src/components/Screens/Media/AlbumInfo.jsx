@@ -26,7 +26,7 @@ const AlbumInfo = ({ route }) => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data } = await axios.get(`https://yt-music-api-zeta.vercel.app/albums/${params.albumId}`)
+      const { data } = await axios.get(`https://yt-music-api-peta.vercel.app/albums/${params.albumId}`)
       setData(data)
       console.log(data, "data");
       return data

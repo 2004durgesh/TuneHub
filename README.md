@@ -42,7 +42,6 @@ TuneHub is a musical work in progress, undergoing development. Be ready for an a
 ## Download the App 📥
 
 You can download the latest version of the app from the [Releases](https://github.com/2004durgesh/TuneHub/releases/) page.
-
-<span style='color:#ef4444;font-weight:bold'> ⚠️⚠️⚠️Please note that this project may discontinue in the future due to react-native-ytdl URL issues.⚠️⚠️</span>
+# ⚠️Please note that this project may discontinue in the future due to react-native-ytdl URL issues.⚠️
 
 Happy listening! 🎶

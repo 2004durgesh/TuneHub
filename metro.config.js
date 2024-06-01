@@ -12,6 +12,7 @@ const config = {
   resolver: {
     assetExts: [...defaultConfig.resolver.assetExts, 'lottie'],
   },
+  
 };
 
 module.exports = mergeConfig(getDefaultConfig(__dirname), config)

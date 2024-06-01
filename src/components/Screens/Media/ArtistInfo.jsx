@@ -19,7 +19,7 @@ const ArtistInfo = ({ route, navigation }) => {
   const [data, setData] = useState({})
   useEffect(() => {
     const fetchData = async () => {
-      const { data } = await axios.get(`https://yt-music-api-zeta.vercel.app/artists/${params.artistId}`)
+      const { data } = await axios.get(`https://yt-music-api-peta.vercel.app/artists/${params.artistId}`)
       setData(data)
       console.log(data, "data");
       return data

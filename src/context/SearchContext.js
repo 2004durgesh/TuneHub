@@ -14,7 +14,7 @@ export const SearchProvider = ({ children }) => {
     const results = {};
     try {
       for (const endpoint of endpoints) {
-        const url = `https://yt-music-api-zeta.vercel.app/search/${endpoint}?query=${query}`;
+        const url = `https://yt-music-api-peta.vercel.app/search/${endpoint}?query=${query}`;
         const { data } = await axios.get(url);
         results[`${endpoint}Results`] = data;
       }
@@ -34,7 +34,7 @@ export const SearchProvider = ({ children }) => {
   });
 
   const getSearchSuggestions = async (query) => {
-    const url = `https://yt-music-api-zeta.vercel.app/search/suggestions?query=${query}`;
+    const url = `https://yt-music-api-peta.vercel.app/search/suggestions?query=${query}`;
     try {
       const { data } = await axios.get(url);
       setSearchSuggestions(data);

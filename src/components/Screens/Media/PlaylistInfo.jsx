@@ -29,7 +29,7 @@ const PlaylistInfo = ({ route }) => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data } = await axios.get(`https://yt-music-api-zeta.vercel.app/playlists/${params.playlistId}`)
+      const { data } = await axios.get(`https://yt-music-api-peta.vercel.app/playlists/${params.playlistId}`)
       setData(data)
       console.log(data, "data");
       return data
