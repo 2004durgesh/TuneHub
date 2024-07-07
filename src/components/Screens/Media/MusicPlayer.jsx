@@ -1,7 +1,7 @@
 import { Text, View, Dimensions, Image } from 'react-native'
 import React, { useState, useEffect } from 'react'
 import ScreenContainer from '../../ScreenContainer'
-import { getColors } from 'react-native-image-colors'
+// import { getColors } from 'react-native-image-colors'
 import tw from 'twrnc'
 import LinearGradient from 'react-native-linear-gradient';
 import { useTheme } from 'react-native-paper'
@@ -52,19 +52,19 @@ const MusicPlayer = ({ route }) => {
     setupAndPlayTrack();
   }, [isPlayerReady, addTrack, params]);
 
-  useEffect(() => {
-    const url = params.thumbnailUrl;
+  // useEffect(() => {
+  //   const url = params.thumbnailUrl;
 
-    getColors(url, {
-      fallback: theme.colors.primary,
-      cache: true,
-      key: url,
-    }).then(setColors);
-  }, [params, theme.colors.primary]);
+  //   getColors(url, {
+  //     fallback: theme.colors.primary,
+  //     cache: true,
+  //     key: url,
+  //   }).then(setColors);
+  // }, [params, theme.colors.primary]);
 
   return (
     <ScreenContainer>
-      <View style={tw`flex-row justify-center`}>
+      {/* <View style={tw`flex-row justify-center`}>
         <View style={[tw`h-20 border w-1/8`, { backgroundColor: colors?.average }]}></View>
         <View style={[tw`h-20 border w-1/8`, { backgroundColor: colors?.darkMuted }]}></View>
         <View style={[tw`h-20 border w-1/8`, { backgroundColor: colors?.darkVibrant }]}></View>
@@ -73,11 +73,11 @@ const MusicPlayer = ({ route }) => {
         <View style={[tw`h-20 border w-1/8`, { backgroundColor: colors?.lightVibrant }]}></View>
         <View style={[tw`h-20 border w-1/8`, { backgroundColor: colors?.muted }]}></View>
         <View style={[tw`h-20 border w-1/8`, { backgroundColor: colors?.vibrant }]}></View>
-      </View>
+      </View> */}
 
 
       <LinearGradient
-        colors={[colors?.vibrant || theme.colors.primary, colors?.darkVibrant || theme.colors.primary]}
+        // colors={[colors?.vibrant || theme.colors.primary, colors?.darkVibrant || theme.colors.primary]}
         style={tw`flex-1 p-4`}
       >
         <View style={tw`h-150 justify-center items-center`}>

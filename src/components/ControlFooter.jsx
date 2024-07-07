@@ -6,7 +6,6 @@ import Animated, {
 import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import tw from "twrnc"
 import TrackPlayer, { usePlaybackState } from 'react-native-track-player'
-import { getColors } from 'react-native-image-colors'
 import ytdl from 'react-native-ytdl'
 import Controls from './Controls';
 import { useTheme } from 'react-native-paper';

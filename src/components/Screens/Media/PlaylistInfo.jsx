@@ -4,7 +4,6 @@ import tw from 'twrnc'
 import { useTheme } from 'react-native-paper'
 import { BlurView } from "@react-native-community/blur"
 import ScreenContainer from '../../ScreenContainer'
-import { getColors } from 'react-native-image-colors'
 import LinearGradient from 'react-native-linear-gradient';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import axios from 'axios'

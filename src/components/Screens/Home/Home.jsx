@@ -8,6 +8,7 @@ import PlaylistItem from './PlaylistItem'
 import Loading from '../../Loading'
 const YTMusic = require("ytmusic-api").default;
 import ControlFooter from '../../ControlFooter'
+import { getYoutubeAudioUrl } from '../../../utils/ytdlUtils'
 const Home = () => {
   const theme = useTheme()
   const [data, setData] = useState([])
@@ -18,6 +19,7 @@ const Home = () => {
     const fetchHomeData = async () => {
       try {
         await ytmusic.initialize();
+        await getYoutubeAudioUrl("yH7eDWTH5iM")
         const home = await ytmusic.getHome();
         setData(home);
         setIsLoading(false);
