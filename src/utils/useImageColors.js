@@ -12,7 +12,7 @@ export const useImageColors = (imageUrl) => {
     // }, [imageUrl]);
 
     // return colors
-    return "#000000"
+    return "#00409f"
 }
 
 

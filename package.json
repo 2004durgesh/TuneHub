@@ -21,7 +21,7 @@
     "@react-navigation/stack": "^6.3.20",
     "@tanstack/react-query": "^5.17.12",
     "axios": "^1.6.5",
-    "expo": "^51.0.18",
+    "expo": "^51.0.0",
     "expo-modules-core": "^1.11.8",
     "lodash": "^4.17.21",
     "lottie-react-native": "^6.7.2",
@@ -38,12 +38,12 @@
     "react-native-screens": "^3.29.0",
     "react-native-shimmer-placeholder": "^2.0.9",
     "react-native-system-navigation-bar": "^2.6.3",
-    "react-native-track-player": "^4.0.1",
+    "react-native-track-player": "^4.1.1",
     "react-native-vector-icons": "^10.0.3",
     "react-native-ytdl": "^4.8.3",
     "twrnc": "^3.6.7",
-    "ytmusic-api": "^5.2.1",
-    "ytdl-core": "https://github.com/hjjinx/react-native-ytdl.git"
+    "ytdl-core": "https://github.com/hjjinx/react-native-ytdl.git",
+    "ytmusic-api": "^5.2.1"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

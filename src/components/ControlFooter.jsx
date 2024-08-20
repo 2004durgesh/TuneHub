@@ -69,7 +69,7 @@ const ControlFooter = () => {
 
     const { vibrant } = useImageColors(imageUrl)
     console.log(vibrant);
-    
+
     const scrollHandler = useAnimatedScrollHandler({
         onScroll: (event) => {
             translateY.value = event.contentOffset.y;

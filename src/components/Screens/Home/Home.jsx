@@ -19,11 +19,10 @@ const Home = () => {
     const fetchHomeData = async () => {
       try {
         await ytmusic.initialize();
-        await getYoutubeAudioUrl("yH7eDWTH5iM")
         const home = await ytmusic.getHome();
+        console.log(home, "home");
         setData(home);
         setIsLoading(false);
-        // console.log(home);
         return home
       } catch (error) {
         console.error("An error occurred while fetching home data: ", error);

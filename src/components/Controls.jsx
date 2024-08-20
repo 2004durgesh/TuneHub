@@ -9,14 +9,27 @@ import { useTrackPlayer } from '../context/TrackPlayerContext'
 import moment from 'moment'
 import FavoritesButton from './FavoriteButton';
 import { useControlFooter } from '../context/ControlFooterContext';
+import { getYoutubeAudioDuration } from '../utils/ytdlUtils';
 
 const Controls = () => {
     const { imageUrl, songName, artistName, youtubeId,dataType} = useControlFooter()
-    const { position, duration } = useProgress();
+    const { position} = useProgress();
+    const [duration, setDuration] = useState(0);
     const playerState = usePlaybackState();
-    console.log(playerState, "playerState")
+    // console.log(playerState, "playerState")
     const { skipToNext, skipToPrevious, play, pause } = useTrackPlayer();
     const theme = useTheme();
+    useEffect(() => {
+        const fetchDuration = async () => {
+            try {
+                const res = await getYoutubeAudioDuration(youtubeId);
+                setDuration(res);
+            } catch (err) {
+                console.log(err);
+            }
+        };
+        fetchDuration();
+    }, [youtubeId]);
     const secondToMinute = (seconds) => {
         let format = seconds > 3600 ? "hh:mm:ss" : "mm:ss"
         return moment.utc(seconds * 1000).format(format)
