@@ -19,7 +19,7 @@ echo "Installing release APK....................................................
 ./gradlew installRelease
 
 # assembleRelease: Bundles the release AAB.
-echo "Bundling release AAB........................................................................."
-./gradlew bundleRelease 
+# echo "Bundling release AAB........................................................................."
+# ./gradlew bundleRelease 
 
 echo "All tasks completed successfully........................................................................."
