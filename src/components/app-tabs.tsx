@@ -1,30 +1,40 @@
+import { Color } from 'expo-router';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
-import { useColorScheme } from 'react-native';
+import { Platform, useColorScheme } from 'react-native';
 
-import { Colors } from '@/constants/theme';
+import { colors } from '@/theme';
+
+// Platform-native tab bar background: iOS uses UIKit systemBackground (auto dark/light),
+// Android uses Material You dynamic surface (requires useColorScheme for React Compiler compat).
+const tabBarBg = Platform.select({
+  ios: Color.ios.systemBackground,
+  android: Color.android.dynamic.surface,
+  default: colors.background,
+});
 
 export default function AppTabs() {
-  const scheme = useColorScheme();
-  const colors = Colors[scheme === 'unspecified' ? 'light' : scheme];
+  useColorScheme(); // keeps Color.android.dynamic.* fresh under React Compiler memoization
 
   return (
-    <NativeTabs
-      backgroundColor={colors.background}
-      indicatorColor={colors.backgroundElement}
-      labelStyle={{ selected: { color: colors.text } }}>
+    <NativeTabs backgroundColor={tabBarBg} labelStyle={{ selected: { color: colors.accent } }}>
       <NativeTabs.Trigger name="index">
         <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
-          src={require('@/assets/images/tabIcons/home.png')}
-          renderingMode="template"
+          sf={{ default: 'house', selected: 'house.fill' }}
+          md={{ default: 'home', selected: 'home' }}
         />
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger name="explore">
-        <NativeTabs.Trigger.Label>Explore</NativeTabs.Trigger.Label>
+      <NativeTabs.Trigger name="search">
+        <NativeTabs.Trigger.Label>Search</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf="magnifyingglass" md="search" />
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="library">
+        <NativeTabs.Trigger.Label>Library</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
-          src={require('@/assets/images/tabIcons/explore.png')}
-          renderingMode="template"
+          sf={{ default: 'books.vertical', selected: 'books.vertical.fill' }}
+          md={{ default: 'library_music', selected: 'library_music' }}
         />
       </NativeTabs.Trigger>
     </NativeTabs>

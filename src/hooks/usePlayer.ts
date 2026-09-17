@@ -1,0 +1,80 @@
+import { useCallback, useEffect } from 'react';
+import { useShallow } from 'zustand/react/shallow';
+import type { Song } from '@/types';
+import { usePlayerStore, useSettingsStore } from '@/store';
+import { recordPlay } from './useHistory';
+import {
+  setupPlayer,
+  subscribePlayback,
+  playNow as playNowService,
+  play as playService,
+  pause as pauseService,
+  next as nextService,
+  previous as previousService,
+  seek as seekService,
+  setEqualizerEnabled,
+  applyEqualizerPreset,
+} from '@/services/player';
+
+/**
+ * Bridges the native player events into `playerStore` and exposes transport
+ * actions. Mount ONCE near the app root (e.g. in the root layout) so the
+ * subscription and setup run a single time.
+ */
+export function usePlayerBridge() {
+  const { setCurrentSong, setPlaybackState, setProgress } = usePlayerStore(
+    useShallow((s) => ({
+      setCurrentSong: s.setCurrentSong,
+      setPlaybackState: s.setPlaybackState,
+      setProgress: s.setProgress,
+    })),
+  );
+
+  useEffect(() => {
+    setupPlayer();
+    // Apply any persisted equalizer settings once the player is up.
+    const { equalizerEnabled, equalizerPreset } = useSettingsStore.getState();
+    if (equalizerEnabled) {
+      void setEqualizerEnabled(true);
+      void applyEqualizerPreset(equalizerPreset);
+    }
+    const unsubscribe = subscribePlayback({
+      onTrackChange: (song) => {
+        setCurrentSong(song);
+        if (song) recordPlay(song);
+      },
+      onStateChange: setPlaybackState,
+      onProgress: setProgress,
+    });
+    return unsubscribe;
+  }, [setCurrentSong, setPlaybackState, setProgress]);
+}
+
+/** Playback controls + current state for any screen/component. */
+export function usePlayer() {
+  const currentSong = usePlayerStore((s) => s.currentSong);
+  const playbackState = usePlayerStore((s) => s.playbackState);
+  const position = usePlayerStore((s) => s.position);
+  const duration = usePlayerStore((s) => s.duration);
+
+  const playSongs = useCallback((songs: Song[], startIndex = 0) => {
+    return playNowService(songs, startIndex);
+  }, []);
+
+  const togglePlayPause = useCallback(() => {
+    return playbackState === 'playing' ? pauseService() : playService();
+  }, [playbackState]);
+
+  return {
+    currentSong,
+    playbackState,
+    position,
+    duration,
+    isPlaying: playbackState === 'playing',
+    playSongs,
+    togglePlayPause,
+    next: nextService,
+    previous: previousService,
+    seek: seekService,
+  };
+}

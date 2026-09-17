@@ -1,18 +1,59 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
+import { DarkTheme, ThemeProvider } from 'expo-router';
+import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useColorScheme } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import AppTabs from '@/components/app-tabs';
+import { usePlayerBridge } from '@/hooks/usePlayer';
+import { colors } from '@/theme';
 
 SplashScreen.preventAutoHideAsync();
 
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
+export default function RootLayout() {
+  usePlayerBridge();
+
+  useEffect(() => {
+    SplashScreen.hideAsync();
+  }, []);
+
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AnimatedSplashOverlay />
-      <AppTabs />
-    </ThemeProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ThemeProvider value={DarkTheme}>
+        <StatusBar style="light" />
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: colors.background },
+          }}
+        >
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="player" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="lyrics" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="queue" options={{ presentation: 'modal' }} />
+          <Stack.Screen
+            name="album/[id]"
+            options={{ headerShown: true, headerTransparent: true, headerTintColor: colors.text }}
+          />
+          <Stack.Screen
+            name="artist/[id]"
+            options={{ headerShown: true, headerTransparent: true, headerTintColor: colors.text }}
+          />
+          <Stack.Screen
+            name="playlist/[id]"
+            options={{ headerShown: true, headerTransparent: true, headerTintColor: colors.text }}
+          />
+          <Stack.Screen
+            name="playlist-detail/[id]"
+            options={{ headerShown: true, headerTransparent: true, headerTintColor: colors.text }}
+          />
+          <Stack.Screen name="liked-songs" />
+          <Stack.Screen name="history" />
+          <Stack.Screen name="playlists" />
+          <Stack.Screen name="settings/index" />
+          <Stack.Screen name="settings/playback" options={{ headerShown: true }} />
+        </Stack>
+      </ThemeProvider>
+    </GestureHandlerRootView>
   );
 }

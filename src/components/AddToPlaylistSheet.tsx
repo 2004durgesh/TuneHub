@@ -1,0 +1,246 @@
+import { useCallback, useEffect, useState } from 'react';
+import { Alert, Modal, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import type { Playlist } from 'react-native-nitro-player';
+import type { Song } from '@/types';
+import { AppIcon } from '@/components/app-icon';
+import { SheetModal } from '@/components/SheetModal';
+import { addSongToPlaylist, createPlaylist, getAllPlaylists } from '@/services/player/playerQueue';
+import { colors, radii, spacing, typography } from '@/theme';
+
+type Props = {
+  song: Song | null;
+  onClose: () => void;
+};
+
+export function AddToPlaylistSheet({ song, onClose }: Props) {
+  const [playlists, setPlaylists] = useState<Playlist[]>([]);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newName, setNewName] = useState('');
+  // Song captured when the create flow starts, since the sheet closes first.
+  const [pendingSong, setPendingSong] = useState<Song | null>(null);
+
+  // Refresh the playlist list whenever the sheet is opened for a song.
+  useEffect(() => {
+    if (song != null) {
+      setPlaylists(getAllPlaylists());
+    }
+  }, [song]);
+
+  const handleAdd = useCallback(
+    (playlistId: string) => {
+      if (song == null) return;
+      void addSongToPlaylist(playlistId, song).then(onClose);
+    },
+    [song, onClose],
+  );
+
+  const createAndAdd = useCallback((name: string, target: Song) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    void createPlaylist(trimmed).then((id) => addSongToPlaylist(id, target));
+  }, []);
+
+  const handleNewPlaylist = useCallback(() => {
+    const target = song;
+    if (target == null) return;
+    // Close this sheet first, then prompt — avoids stacking two Modals.
+    onClose();
+    setTimeout(() => {
+      if (Platform.OS === 'ios') {
+        Alert.prompt(
+          'New Playlist',
+          'Enter a name for your playlist',
+          (name) => createAndAdd(name ?? '', target),
+          'plain-text',
+          '',
+        );
+      } else {
+        setPendingSong(target);
+        setNewName('');
+        setShowCreateModal(true);
+      }
+    }, 350);
+  }, [song, onClose, createAndAdd]);
+
+  const handleCreateConfirm = useCallback(() => {
+    setShowCreateModal(false);
+    if (pendingSong != null) createAndAdd(newName, pendingSong);
+    setPendingSong(null);
+  }, [newName, pendingSong, createAndAdd]);
+
+  return (
+    <>
+      <SheetModal visible={song != null} onClose={onClose}>
+        {song != null && (
+          <View>
+            <View style={styles.header}>
+              <Text style={styles.title}>Add to Playlist</Text>
+            </View>
+
+            <View style={styles.divider} />
+
+            <Pressable
+              onPress={handleNewPlaylist}
+              android_ripple={{ color: colors.surfaceHigh }}
+              style={({ pressed }) => [styles.row, pressed && styles.pressed]}
+            >
+              <View style={styles.rowIcon}>
+                <AppIcon name="add" size={20} color={colors.accent} />
+              </View>
+              <Text style={styles.rowLabel}>New Playlist</Text>
+            </Pressable>
+
+            {playlists.length === 0 ? (
+              <Text style={styles.emptyHint}>No playlists yet — create one above</Text>
+            ) : (
+              playlists.map((playlist) => (
+                <Pressable
+                  key={playlist.id}
+                  onPress={() => handleAdd(playlist.id)}
+                  android_ripple={{ color: colors.surfaceHigh }}
+                  style={({ pressed }) => [styles.row, pressed && styles.pressed]}
+                >
+                  <View style={styles.rowIcon}>
+                    <AppIcon name="queue" size={20} color={colors.accent} />
+                  </View>
+                  <Text style={styles.rowLabel} numberOfLines={1}>
+                    {playlist.name}
+                  </Text>
+                  <Text style={styles.trackCount}>{playlist.tracks.length}</Text>
+                </Pressable>
+              ))
+            )}
+          </View>
+        )}
+      </SheetModal>
+
+      {/* Android create dialog (iOS uses Alert.prompt) — sibling, not nested */}
+      <Modal
+        visible={showCreateModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowCreateModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>New Playlist</Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Playlist name"
+              placeholderTextColor={colors.textTertiary}
+              value={newName}
+              onChangeText={setNewName}
+              autoFocus
+              returnKeyType="done"
+              onSubmitEditing={handleCreateConfirm}
+            />
+            <View style={styles.modalButtons}>
+              <Pressable onPress={() => setShowCreateModal(false)} style={styles.modalBtn}>
+                <Text style={styles.modalBtnCancel}>Cancel</Text>
+              </Pressable>
+              <Pressable onPress={handleCreateConfirm} style={styles.modalBtn}>
+                <Text style={styles.modalBtnConfirm}>Create</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </>
+  );
+}
+
+const styles = StyleSheet.create({
+  header: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
+  },
+  title: {
+    ...typography.bodyStrong,
+    color: colors.text,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginBottom: spacing.xs,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    gap: spacing.md,
+  },
+  pressed: {
+    opacity: 0.7,
+  },
+  rowIcon: {
+    width: 40,
+    height: 40,
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: radii.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rowLabel: {
+    flex: 1,
+    ...typography.body,
+    color: colors.text,
+  },
+  trackCount: {
+    ...typography.metadata,
+    color: colors.textSecondary,
+  },
+  emptyHint: {
+    ...typography.metadata,
+    color: colors.textTertiary,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+  },
+  // Modal styles (Android)
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: colors.overlay,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+  },
+  modalContent: {
+    width: '100%',
+    backgroundColor: colors.surface,
+    borderRadius: radii.card,
+    padding: spacing.lg,
+    gap: spacing.md,
+  },
+  modalTitle: {
+    ...typography.sectionHeader,
+    color: colors.text,
+  },
+  modalInput: {
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: radii.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    ...typography.body,
+    color: colors.text,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: spacing.md,
+  },
+  modalBtn: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+  },
+  modalBtnCancel: {
+    ...typography.body,
+    color: colors.textSecondary,
+  },
+  modalBtnConfirm: {
+    ...typography.bodyStrong,
+    color: colors.accent,
+  },
+});
