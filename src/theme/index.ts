@@ -1,4 +1,4 @@
-export { colors } from './colors';
+export { colors, hexColors } from './colors';
 export type { ColorKey } from './colors';
 export { spacing, screenPadding } from './spacing';
 export type { SpacingKey } from './spacing';

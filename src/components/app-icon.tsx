@@ -30,6 +30,7 @@ const ICONS = {
   album: { ios: 'square.stack', android: 'album', web: 'album' },
   artist: { ios: 'music.mic', android: 'mic', web: 'mic' },
   warning: { ios: 'exclamationmark.triangle.fill', android: 'warning', web: 'warning' },
+  check: { ios: 'checkmark', android: 'check', web: 'check' },
 } as const;
 
 export type IconName = keyof typeof ICONS;

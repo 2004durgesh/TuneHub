@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { View } from 'react-native';
+import { BottomSheet, RNHostView } from '@expo/ui';
 
-import { colors, radii, spacing } from '@/theme';
+import { colors } from '@/theme';
 
 type Props = {
   visible: boolean;
@@ -11,52 +11,23 @@ type Props = {
 };
 
 /**
- * A reliable bottom sheet built on React Native's Modal. Unlike @expo/ui's
- * BottomSheet it sizes to its content and handles touches consistently across
- * platforms. Tapping the backdrop dismisses; taps inside the sheet don't.
+ * Bottom sheet built on `@expo/ui`'s native `BottomSheet`. Omitting `snapPoints`
+ * auto-sizes it to content. The RN children are wrapped in `RNHostView` so they
+ * bridge into the native (Compose/SwiftUI) tree and stay interactive — plain RN
+ * views placed directly in a `BottomSheet` render but don't receive touches.
  */
 export function SheetModal({ visible, onClose, children }: Props) {
-  const { bottom } = useSafeAreaInsets();
-
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}
-      statusBarTranslucent
+    <BottomSheet
+      isPresented={visible}
+      onDismiss={onClose}
+      showDragIndicator
+      containerColor={colors.surface}
+      contentColor={colors.text}
     >
-      <Pressable style={styles.backdrop} onPress={onClose}>
-        <Pressable
-          style={[styles.sheet, { paddingBottom: bottom + spacing.md }]}
-          onPress={() => {}}
-        >
-          <View style={styles.handle} />
-          {children}
-        </Pressable>
-      </Pressable>
-    </Modal>
+      <RNHostView>
+        <View>{children}</View>
+      </RNHostView>
+    </BottomSheet>
   );
 }
-
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: colors.overlay,
-  },
-  sheet: {
-    backgroundColor: colors.surface,
-    borderTopLeftRadius: radii.sheet,
-    borderTopRightRadius: radii.sheet,
-    paddingTop: spacing.sm,
-  },
-  handle: {
-    alignSelf: 'center',
-    width: 40,
-    height: 4,
-    borderRadius: radii.pill,
-    backgroundColor: colors.surfaceHigh,
-    marginBottom: spacing.sm,
-  },
-});

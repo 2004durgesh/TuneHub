@@ -1,4 +1,5 @@
 import { Share, StyleSheet, Text, Pressable, View } from 'react-native';
+import type { ColorValue } from 'react-native';
 import { useRouter } from 'expo-router';
 import type { Song } from '@/types';
 import { AppIcon } from '@/components/app-icon';
@@ -18,8 +19,8 @@ type ActionRowProps = {
   icon: IconName;
   label: string;
   onPress: () => void;
-  iconColor?: string;
-  labelColor?: string;
+  iconColor?: ColorValue;
+  labelColor?: ColorValue;
 };
 
 function ActionRow({

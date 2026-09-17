@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Modal, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import type { Playlist } from 'react-native-nitro-player';
 import type { Song } from '@/types';
 import { AppIcon } from '@/components/app-icon';
@@ -114,37 +114,30 @@ export function AddToPlaylistSheet({ song, onClose }: Props) {
         )}
       </SheetModal>
 
-      {/* Android create dialog (iOS uses Alert.prompt) — sibling, not nested */}
-      <Modal
-        visible={showCreateModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowCreateModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>New Playlist</Text>
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Playlist name"
-              placeholderTextColor={colors.textTertiary}
-              value={newName}
-              onChangeText={setNewName}
-              autoFocus
-              returnKeyType="done"
-              onSubmitEditing={handleCreateConfirm}
-            />
-            <View style={styles.modalButtons}>
-              <Pressable onPress={() => setShowCreateModal(false)} style={styles.modalBtn}>
-                <Text style={styles.modalBtnCancel}>Cancel</Text>
-              </Pressable>
-              <Pressable onPress={handleCreateConfirm} style={styles.modalBtn}>
-                <Text style={styles.modalBtnConfirm}>Create</Text>
-              </Pressable>
-            </View>
+      {/* Android create prompt — native bottom sheet (iOS uses Alert.prompt) */}
+      <SheetModal visible={showCreateModal} onClose={() => setShowCreateModal(false)}>
+        <View style={styles.createSheet}>
+          <Text style={styles.modalTitle}>New Playlist</Text>
+          <TextInput
+            style={styles.modalInput}
+            placeholder="Playlist name"
+            placeholderTextColor={colors.textTertiary}
+            value={newName}
+            onChangeText={setNewName}
+            autoFocus
+            returnKeyType="done"
+            onSubmitEditing={handleCreateConfirm}
+          />
+          <View style={styles.modalButtons}>
+            <Pressable onPress={() => setShowCreateModal(false)} style={styles.modalBtn}>
+              <Text style={styles.modalBtnCancel}>Cancel</Text>
+            </Pressable>
+            <Pressable onPress={handleCreateConfirm} style={styles.modalBtn}>
+              <Text style={styles.modalBtnConfirm}>Create</Text>
+            </Pressable>
           </View>
         </View>
-      </Modal>
+      </SheetModal>
     </>
   );
 }
@@ -197,19 +190,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
   },
-  // Modal styles (Android)
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: colors.overlay,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-  },
-  modalContent: {
-    width: '100%',
-    backgroundColor: colors.surface,
-    borderRadius: radii.card,
-    padding: spacing.lg,
+  // Create-playlist prompt (inside SheetModal)
+  createSheet: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
     gap: spacing.md,
   },
   modalTitle: {

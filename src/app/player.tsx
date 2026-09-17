@@ -1,5 +1,6 @@
+import { Host, Slider } from '@expo/ui';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Dimensions, GestureResponderEvent, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Dimensions, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -13,7 +14,7 @@ import { Artwork } from '@/components/Artwork';
 import { AppIcon } from '@/components/app-icon';
 import { SongActionSheet } from '@/components/SongActionSheet';
 import { AddToPlaylistSheet } from '@/components/AddToPlaylistSheet';
-import { colors, radii, screenPadding, spacing, timings, typography } from '@/theme';
+import { colors, hexColors, radii, screenPadding, spacing, timings, typography } from '@/theme';
 import type { RepeatMode, Song } from '@/types';
 
 // ---------------------------------------------------------------------------
@@ -28,7 +29,6 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const ARTWORK_SIZE = SCREEN_WIDTH - spacing.xl * 2;
 const ICON_BTN_SIZE = 44;
 const PLAY_BTN_SIZE = 56;
-const TRACK_HEIGHT = 4;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -65,9 +65,6 @@ export default function PlayerScreen() {
   const setRepeatStore = usePlayerStore((s) => s.setRepeat);
   const toggleShuffle = usePlayerStore((s) => s.toggleShuffle);
 
-  // Progress bar layout
-  const [trackWidth, setTrackWidth] = useState(0);
-
   // Action sheet for the current song
   const [sheetSong, setSheetSong] = useState<Song | null>(null);
   const [addToPlaylistSong, setAddToPlaylistSong] = useState<Song | null>(null);
@@ -76,11 +73,11 @@ export default function PlayerScreen() {
   const dynamicAtmosphere = useSettingsStore((s) => s.dynamicAtmosphere);
   const reducedMotion = useSettingsStore((s) => s.reducedMotion);
   const artworkColors = useArtworkColors(currentSong?.artworkUrl);
-  const atmosphere = useSharedValue<string>(colors.background);
+  const atmosphere = useSharedValue<string>(hexColors.background);
 
   useEffect(() => {
     const target =
-      dynamicAtmosphere && artworkColors ? artworkColors.background : colors.background;
+      dynamicAtmosphere && artworkColors ? artworkColors.background : hexColors.background;
     atmosphere.value = reducedMotion ? target : withTiming(target, timings.atmosphere);
   }, [artworkColors, dynamicAtmosphere, reducedMotion, atmosphere]);
 
@@ -88,8 +85,6 @@ export default function PlayerScreen() {
 
   // Derived values
   const liked = currentSong ? isLiked(currentSong.id) : false;
-  const fillWidth =
-    trackWidth > 0 && duration > 0 ? Math.max(0, (position / duration) * trackWidth) : 0;
   const repeatIconName = repeat === 'track' ? 'repeatOne' : 'repeat';
   const repeatActive = repeat !== 'off';
   const repeatColor = repeatActive ? colors.accent : colors.textSecondary;
@@ -98,15 +93,6 @@ export default function PlayerScreen() {
   // ---------------------------------------------------------------------------
   // Handlers
   // ---------------------------------------------------------------------------
-  const handleSeek = useCallback(
-    (evt: GestureResponderEvent) => {
-      if (trackWidth <= 0 || duration <= 0) return;
-      const ratio = Math.max(0, Math.min(1, evt.nativeEvent.locationX / trackWidth));
-      seek(ratio * duration);
-    },
-    [trackWidth, duration, seek],
-  );
-
   const handleRepeat = useCallback(async () => {
     const next = nextRepeatMode(repeat);
     setRepeatStore(next);
@@ -188,13 +174,14 @@ export default function PlayerScreen() {
       <View style={styles.progressRow}>
         <Text style={styles.timeText}>{formatTime(position)}</Text>
 
-        <Pressable
-          style={styles.track}
-          onPress={handleSeek}
-          onLayout={(e) => setTrackWidth(e.nativeEvent.layout.width)}
-        >
-          <View style={[styles.fill, { width: fillWidth }]} />
-        </Pressable>
+        <Host style={styles.sliderHost}>
+          <Slider
+            value={position}
+            min={0}
+            max={Math.max(duration, 1)}
+            onValueChange={(v) => seek(v)}
+          />
+        </Host>
 
         <Text style={[styles.timeText, styles.timeTextRight]}>
           -{formatTime(Math.max(0, duration - position))}
@@ -322,20 +309,8 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     marginBottom: spacing.lg,
   },
-  track: {
+  sliderHost: {
     flex: 1,
-    height: TRACK_HEIGHT,
-    backgroundColor: colors.surfaceHigh,
-    borderRadius: radii.pill,
-    overflow: 'hidden',
-  },
-  fill: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    height: TRACK_HEIGHT,
-    backgroundColor: colors.accent,
-    borderRadius: radii.pill,
   },
   timeText: {
     ...typography.caption,

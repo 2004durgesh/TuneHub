@@ -16,7 +16,7 @@ import { useLikedSongs } from '@/hooks/useLikedSongs';
 import { useArtworkColors } from '@/hooks/useArtworkColors';
 import { usePlayerStore } from '@/store/playerStore';
 import { useSettingsStore } from '@/store/settingsStore';
-import { colors, spacing, radii, typography, springs, timings } from '@/theme';
+import { colors, hexColors, spacing, radii, typography, springs, timings } from '@/theme';
 
 // Design constants — not in theme
 const MINI_PLAYER_HEIGHT = 64;
@@ -62,13 +62,13 @@ export default function MiniPlayer({ style }: Props) {
   // ── Faint artwork atmosphere tint ────────────────────────────────────────
   const dynamicAtmosphere = useSettingsStore((s) => s.dynamicAtmosphere);
   const artworkColors = useArtworkColors(currentSong?.artworkSmall);
-  const tint = useSharedValue<string>(colors.surface);
+  const tint = useSharedValue<string>(hexColors.surface);
 
   useEffect(() => {
     tint.value =
       dynamicAtmosphere && artworkColors
         ? withTiming(artworkColors.primary, timings.atmosphere)
-        : colors.surface;
+        : hexColors.surface;
   }, [artworkColors, dynamicAtmosphere, tint]);
 
   const tintStyle = useAnimatedStyle(() => ({ backgroundColor: tint.value }));

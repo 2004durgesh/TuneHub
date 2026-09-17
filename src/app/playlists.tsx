@@ -1,19 +1,11 @@
-import {
-  Alert,
-  FlatList,
-  Modal,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Alert, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useState, useCallback, useEffect } from 'react';
 import { Stack, useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Host, List, ListItem } from '@expo/ui';
 import type { Playlist } from 'react-native-nitro-player';
 import { AppIcon } from '@/components/app-icon';
+import { SheetModal } from '@/components/SheetModal';
 import { EmptyState } from '@/components/states/EmptyState';
 import { getAllPlaylists, createPlaylist, deletePlaylist } from '@/services/player/playerQueue';
 import { colors, radii, spacing, typography } from '@/theme';
@@ -101,64 +93,51 @@ export default function PlaylistsScreen() {
           subtitle="Create a playlist to get started"
         />
       ) : (
-        <FlatList
-          data={playlists}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <Pressable
-              style={({ pressed }) => [styles.playlistRow, pressed && styles.pressed]}
-              onPress={() => router.push(`/playlist-detail/${item.id}`)}
-              onLongPress={() => handleDelete(item)}
-              android_ripple={{ color: colors.surfaceHigh }}
-            >
-              <View style={styles.playlistIcon}>
-                <AppIcon name="queue" size={20} color={colors.accent} />
-              </View>
-              <Text style={styles.playlistName} numberOfLines={1}>
-                {item.name}
-              </Text>
-              {item.tracks.length > 0 && (
-                <Text style={styles.trackCount}>{item.tracks.length}</Text>
-              )}
-              <AppIcon name="chevronRight" size={16} color={colors.textTertiary} />
-            </Pressable>
-          )}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-        />
+        // TODO: @expo/ui ListItem has no long-press / per-row action, so
+        // long-press-to-delete is dropped here. Re-wire delete via a swipe
+        // action or a delete button on /playlist-detail/[id]. handleDelete /
+        // deletePlaylist are kept intact for that follow-up.
+        <Host style={styles.listHost} colorScheme="dark">
+          <List>
+            {playlists.map((playlist) => (
+              <ListItem
+                key={playlist.id}
+                onPress={() => router.push(`/playlist-detail/${playlist.id}`)}
+                leading={<AppIcon name="queue" size={20} color={colors.accent} />}
+                trailing={<AppIcon name="chevronRight" size={16} color={colors.textTertiary} />}
+                supportingText={`${playlist.tracks.length} songs`}
+              >
+                {playlist.name}
+              </ListItem>
+            ))}
+          </List>
+        </Host>
       )}
 
-      {/* Android create modal */}
-      <Modal
-        visible={showCreateModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowCreateModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>New Playlist</Text>
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Playlist name"
-              placeholderTextColor={colors.textTertiary}
-              value={newName}
-              onChangeText={setNewName}
-              autoFocus
-              returnKeyType="done"
-              onSubmitEditing={handleCreateConfirm}
-            />
-            <View style={styles.modalButtons}>
-              <Pressable onPress={() => setShowCreateModal(false)} style={styles.modalBtn}>
-                <Text style={styles.modalBtnCancel}>Cancel</Text>
-              </Pressable>
-              <Pressable onPress={handleCreateConfirm} style={styles.modalBtn}>
-                <Text style={styles.modalBtnConfirm}>Create</Text>
-              </Pressable>
-            </View>
+      {/* Android create prompt — native bottom sheet (iOS uses Alert.prompt) */}
+      <SheetModal visible={showCreateModal} onClose={() => setShowCreateModal(false)}>
+        <View style={styles.createSheet}>
+          <Text style={styles.modalTitle}>New Playlist</Text>
+          <TextInput
+            style={styles.modalInput}
+            placeholder="Playlist name"
+            placeholderTextColor={colors.textTertiary}
+            value={newName}
+            onChangeText={setNewName}
+            autoFocus
+            returnKeyType="done"
+            onSubmitEditing={handleCreateConfirm}
+          />
+          <View style={styles.modalButtons}>
+            <Pressable onPress={() => setShowCreateModal(false)} style={styles.modalBtn}>
+              <Text style={styles.modalBtnCancel}>Cancel</Text>
+            </Pressable>
+            <Pressable onPress={handleCreateConfirm} style={styles.modalBtn}>
+              <Text style={styles.modalBtnConfirm}>Create</Text>
+            </Pressable>
           </View>
         </View>
-      </Modal>
+      </SheetModal>
     </View>
   );
 }
@@ -184,49 +163,13 @@ const styles = StyleSheet.create({
     color: colors.text,
     textAlign: 'center',
   },
-  listContent: {
-    paddingBottom: spacing.xxl,
+  listHost: {
+    flex: 1,
   },
-  playlistRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  // Create-playlist prompt (inside SheetModal)
+  createSheet: {
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    gap: spacing.sm,
-  },
-  pressed: {
-    opacity: 0.7,
-  },
-  playlistIcon: {
-    width: 40,
-    height: 40,
-    backgroundColor: colors.surfaceElevated,
-    borderRadius: radii.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  playlistName: {
-    flex: 1,
-    ...typography.bodyStrong,
-    color: colors.text,
-  },
-  trackCount: {
-    ...typography.metadata,
-    color: colors.textSecondary,
-  },
-  // Modal styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: colors.overlay,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-  },
-  modalContent: {
-    width: '100%',
-    backgroundColor: colors.surface,
-    borderRadius: radii.card,
-    padding: spacing.lg,
+    paddingTop: spacing.sm,
     gap: spacing.md,
   },
   modalTitle: {
