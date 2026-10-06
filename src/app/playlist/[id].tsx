@@ -8,6 +8,7 @@ import { Artwork } from '@/components/Artwork';
 import { SongRow } from '@/components/SongRow';
 import { ErrorState } from '@/components/states/ErrorState';
 import { LoadingState } from '@/components/states/LoadingState';
+import { useMiniPlayerInset } from '@/hooks/useMiniPlayerPlacement';
 import { usePlayer } from '@/hooks/usePlayer';
 import { getPlaylist } from '@/services/music/playlistService';
 import { useSettingsStore } from '@/store/settingsStore';
@@ -17,6 +18,7 @@ import type { RemotePlaylist, Song } from '@/types';
 export default function PlaylistScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { top } = useSafeAreaInsets();
+  const miniPlayerInset = useMiniPlayerInset();
   const audioQuality = useSettingsStore((s) => s.audioQuality);
   const { playSongs, currentSong } = usePlayer();
 
@@ -86,7 +88,10 @@ export default function PlaylistScreen() {
         data={playlist.songs}
         keyExtractor={(song) => song.id}
         style={styles.list}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[
+          styles.listContent,
+          { paddingBottom: spacing.xxl + miniPlayerInset },
+        ]}
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={
           <View style={[styles.header, { paddingTop: top + spacing.xl }]}>

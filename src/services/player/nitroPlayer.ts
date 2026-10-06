@@ -68,6 +68,12 @@ export async function next(): Promise<void> {
 export async function previous(): Promise<void> {
   const m = getMod();
   if (!m) return;
+  // skipToPrevious on the first track stops playback; restart the song instead.
+  const { currentIndex } = await m.TrackPlayer.getState();
+  if (currentIndex <= 0) {
+    await m.TrackPlayer.seek(0);
+    return;
+  }
   await m.TrackPlayer.skipToPrevious();
 }
 

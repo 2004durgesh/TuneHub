@@ -54,4 +54,6 @@ export type ColorKey = keyof typeof colors;
 export const hexColors = {
   background: md3.background,
   surface: md3.surface,
+  surfaceElevated: md3.surfaceContainer,
+  surfaceHigh: md3.surfaceContainerHigh,
 } as const;

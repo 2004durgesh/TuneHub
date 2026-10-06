@@ -8,6 +8,7 @@ import { Artwork } from '@/components/Artwork';
 import { SongRow } from '@/components/SongRow';
 import { ErrorState } from '@/components/states/ErrorState';
 import { LoadingState } from '@/components/states/LoadingState';
+import { useMiniPlayerInset } from '@/hooks/useMiniPlayerPlacement';
 import { usePlayer } from '@/hooks/usePlayer';
 import { getPlaylist, removeSongFromPlaylist, renamePlaylist } from '@/services/player/playerQueue';
 import { trackToSong } from '@/services/player/trackAdapter';
@@ -20,6 +21,7 @@ export default function PlaylistDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { top } = useSafeAreaInsets();
+  const miniPlayerInset = useMiniPlayerInset();
   const { playSongs, currentSong } = usePlayer();
 
   const [playlist, setPlaylist] = useState<Playlist | null>(null);
@@ -100,7 +102,10 @@ export default function PlaylistDetailScreen() {
       <FlatList
         data={songs}
         keyExtractor={(s) => s.id}
-        contentContainerStyle={[styles.content, { paddingTop: top + 56 }]}
+        contentContainerStyle={[
+          styles.content,
+          { paddingTop: top + 56, paddingBottom: spacing.xxl + miniPlayerInset },
+        ]}
         ListHeaderComponent={() => (
           <View style={styles.hero}>
             <Artwork uri={playlist.artwork ?? ''} size={200} />

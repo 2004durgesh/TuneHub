@@ -6,6 +6,7 @@ import { Platform, Pressable } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AppIcon } from '@/components/app-icon';
+import { NowPlaying } from '@/components/now-playing/NowPlaying';
 import { usePlayerBridge } from '@/hooks/usePlayer';
 import { colors } from '@/theme';
 
@@ -47,9 +48,6 @@ export default function RootLayout() {
           }}
         >
           <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="player" options={{ presentation: 'modal' }} />
-          <Stack.Screen name="lyrics" options={{ presentation: 'modal' }} />
-          <Stack.Screen name="queue" options={{ presentation: 'modal' }} />
           <Stack.Screen
             name="album/[id]"
             options={{ headerShown: true, headerTransparent: true, headerTintColor: colors.text }}
@@ -81,6 +79,8 @@ export default function RootLayout() {
           />
           <Stack.Screen name="settings/playback" options={{ headerShown: true }} />
         </Stack>
+        {/* Mini player and full player as one morphing surface above every screen. */}
+        <NowPlaying />
       </ThemeProvider>
     </GestureHandlerRootView>
   );

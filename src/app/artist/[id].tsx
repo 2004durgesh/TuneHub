@@ -8,6 +8,7 @@ import { Artwork } from '@/components/Artwork';
 import { SongRow } from '@/components/SongRow';
 import { ErrorState } from '@/components/states/ErrorState';
 import { LoadingState } from '@/components/states/LoadingState';
+import { useMiniPlayerInset } from '@/hooks/useMiniPlayerPlacement';
 import { usePlayer } from '@/hooks/usePlayer';
 import { getArtist } from '@/services/music/artistService';
 import { useSettingsStore } from '@/store/settingsStore';
@@ -20,6 +21,7 @@ const TOP_SONGS_LIMIT = 5;
 export default function ArtistScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { top } = useSafeAreaInsets();
+  const miniPlayerInset = useMiniPlayerInset();
   const router = useRouter();
   const audioQuality = useSettingsStore((s) => s.audioQuality);
   const { playSongs, currentSong } = usePlayer();
@@ -93,7 +95,10 @@ export default function ArtistScreen() {
       />
       <ScrollView
         style={styles.container}
-        contentContainerStyle={[styles.content, { paddingTop: top + spacing.xl }]}
+        contentContainerStyle={[
+          styles.content,
+          { paddingTop: top + spacing.xl, paddingBottom: spacing.xxl + miniPlayerInset },
+        ]}
         showsVerticalScrollIndicator={false}
       >
         {/* Hero */}

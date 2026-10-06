@@ -13,6 +13,7 @@ import { ErrorState } from '@/components/states/ErrorState';
 import { LoadingState } from '@/components/states/LoadingState';
 import { useHistory } from '@/hooks/useHistory';
 import { useHomeData } from '@/hooks/useHomeData';
+import { useMiniPlayerInset } from '@/hooks/useMiniPlayerPlacement';
 import { usePlayer } from '@/hooks/usePlayer';
 import { colors, radii, spacing, typography } from '@/theme';
 import type { ArtistSummary, DiscoveryItem, Song } from '@/types';
@@ -163,6 +164,7 @@ function HomeHeader() {
 
 export default function HomeScreen() {
   const { top } = useSafeAreaInsets();
+  const miniPlayerInset = useMiniPlayerInset();
   const router = useRouter();
   const { charts, newReleases, featuredPlaylists, topArtists, loading, error, refresh } =
     useHomeData();
@@ -191,9 +193,16 @@ export default function HomeScreen() {
 
   const handleSongPress = useCallback(
     (song: Song) => {
-      void playSongs([song], 0);
+      // Queue the whole history so next/previous move through it (a one-song queue just stops).
+      void playSongs(
+        history,
+        Math.max(
+          0,
+          history.findIndex((s) => s.id === song.id),
+        ),
+      );
     },
-    [playSongs],
+    [history, playSongs],
   );
 
   if (loading && charts.length === 0) {
@@ -209,7 +218,10 @@ export default function HomeScreen() {
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={[styles.content, { paddingTop: top + spacing.md }]}
+      contentContainerStyle={[
+        styles.content,
+        { paddingTop: top + spacing.md, paddingBottom: spacing.xxl + miniPlayerInset },
+      ]}
       showsVerticalScrollIndicator={false}
     >
       <HomeHeader />

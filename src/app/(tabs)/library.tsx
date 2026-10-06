@@ -10,6 +10,7 @@ import { SongRow } from '@/components/SongRow';
 import { EmptyState } from '@/components/states/EmptyState';
 import { useHistory } from '@/hooks/useHistory';
 import { useLikedSongs } from '@/hooks/useLikedSongs';
+import { useMiniPlayerInset } from '@/hooks/useMiniPlayerPlacement';
 import { usePlayer } from '@/hooks/usePlayer';
 import { colors, spacing, typography } from '@/theme';
 import type { Song } from '@/types';
@@ -44,6 +45,7 @@ function NavRow({ icon, label, count, onPress }: NavRowProps) {
 
 export default function LibraryScreen() {
   const { top } = useSafeAreaInsets();
+  const miniPlayerInset = useMiniPlayerInset();
   const router = useRouter();
   const { likedSongs } = useLikedSongs();
   const { history } = useHistory();
@@ -53,9 +55,16 @@ export default function LibraryScreen() {
 
   const handleSongPress = useCallback(
     (song: Song) => {
-      void playSongs([song], 0);
+      // Queue the whole history so next/previous move through it (a one-song queue just stops).
+      void playSongs(
+        history,
+        Math.max(
+          0,
+          history.findIndex((s) => s.id === song.id),
+        ),
+      );
     },
-    [playSongs],
+    [history, playSongs],
   );
 
   const recentSongs = history.slice(0, 3);
@@ -63,7 +72,10 @@ export default function LibraryScreen() {
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={[styles.content, { paddingTop: top + spacing.md }]}
+      contentContainerStyle={[
+        styles.content,
+        { paddingTop: top + spacing.md, paddingBottom: spacing.xxl + miniPlayerInset },
+      ]}
       showsVerticalScrollIndicator={false}
     >
       <Text style={styles.title}>Library</Text>

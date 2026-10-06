@@ -9,11 +9,13 @@ import { ThemedList, ThemedListItem } from '@/components/native/ThemedList';
 import { ThemedTextInput } from '@/components/native/ThemedTextInput';
 import { SheetModal } from '@/components/SheetModal';
 import { EmptyState } from '@/components/states/EmptyState';
+import { useMiniPlayerInset } from '@/hooks/useMiniPlayerPlacement';
 import { getAllPlaylists, createPlaylist, deletePlaylist } from '@/services/player/playerQueue';
 import { colors, radii, spacing, typography } from '@/theme';
 
 export default function PlaylistsScreen() {
   const { top } = useSafeAreaInsets();
+  const miniPlayerInset = useMiniPlayerInset();
   const router = useRouter();
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -102,7 +104,7 @@ export default function PlaylistsScreen() {
         // long-press-to-delete is dropped here. Re-wire delete via a swipe
         // action or a delete button on /playlist-detail/[id]. handleDelete /
         // deletePlaylist are kept intact for that follow-up.
-        <Host style={styles.listHost} colorScheme="dark">
+        <Host style={[styles.listHost, { marginBottom: miniPlayerInset }]} colorScheme="dark">
           <ThemedList>
             {playlists.map((playlist) => (
               <ThemedListItem

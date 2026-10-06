@@ -121,11 +121,13 @@ keep a plain-RN fallback in the base file so web/Expo Go never crash.
 
 Other UI building blocks:
 
-- `expo-image` for ALL images (blurhash placeholder, disk cache).
+- `expo-image` for all images (blurhash placeholder, disk cache). Exception: the player
+  artwork is drawn by Skia (`ArtworkTransition`) because the track-change shader needs the
+  decoded images.
 - `expo-symbols` for icons, always via `AppIcon` (`src/components/app-icon.tsx`) — a
   platform name map over `SymbolView`. Never use raw `SymbolView` in screens.
-- Custom Reanimated components for animation-heavy surfaces (MiniPlayer, NowPlaying,
-  artwork atmosphere) where `@expo/ui` can't express the motion.
+- Custom Reanimated components for animation-heavy surfaces (NowPlaying, artwork
+  atmosphere) where `@expo/ui` can't express the motion.
 
 ## Colors: Material 3 on both platforms
 
@@ -157,9 +159,19 @@ Other UI building blocks:
 - `SongActionSheet` is the universal song context menu — reuse everywhere. Wire its
   `onAddToPlaylist` to open `AddToPlaylistSheet` on any screen that shows it.
 - `SheetModal` is the universal bottom-sheet base — build every sheet on it.
-- `MiniPlayer` renders as a floating overlay in `src/app/(tabs)/_layout.tsx`, positioned
-  above the native tab bar. There is no JS API for the native tab-bar height, so its offset
-  is a platform constant (iOS 49 / Android 80 dp) + safe-area bottom inset.
+- `NowPlaying` (`src/components/now-playing/`) is the mini player AND the full player — one
+  surface in the root layout above every screen, not a route. A single `progress` shared value
+  (0 = mini, 1 = full) morphs it: the container grows from the floating bar to full screen, the
+  artwork canvas moves/scales from `MiniBar`'s thumbnail slot to `FullPlayer`'s hero slot, and the
+  full chrome is revealed by the growing clip. Tap/swipe up expands; swipe down, the chevron,
+  Android back, or any navigation collapses. Lyrics and queue are panels inside the expanded
+  player (they replace the artwork), not routes. Never add a `/player` route.
+- The collapsed bar's position comes from `useMiniPlayerPlacement` (above the native tab bar on
+  tab screens, above the safe area on pushed screens — there's no JS API for the tab-bar height,
+  so it's iOS 49 / Android 80 dp). Scrolling screens add `useMiniPlayerInset()` to their bottom
+  padding so the bar never covers the last rows.
+- Write Reanimated shared values with `.set()`/`.get()` in callbacks and gestures — React
+  Compiler rejects `.value =` assignments outside effects.
 
 ## Playback model (nitro-player)
 
@@ -175,9 +187,16 @@ Other UI building blocks:
 
 - `react-native-reanimated` (v4) only. Never `Animated` from RN core.
 - Spring configs from `@/theme` `springs` (default `springs.smooth`). Timing from `timings`.
-- Dynamic artwork atmosphere: `src/hooks/useArtworkColors.ts` extracts a palette via
-  `react-native-image-colors` (guarded; null on web/Expo Go). The player and MiniPlayer
-  tint their background toward it.
+- Dynamic artwork atmosphere: `src/hooks/useArtworkColors.ts` extracts a four-color palette
+  with Skia (decode → 24×24 CPU surface → bucket the pixels), cached per URL. The mini bar tints
+  toward it; the expanded player renders `PlayerBackdrop` (Skia): blurred palette blobs drifting
+  over the dark base, crossfading between tracks.
+- Skia is `react-native-skia` (v3, Graphite backend) — the renamed successor of
+  `@shopify/react-native-skia`; never install the old package. Skia `color` props need hex
+  strings (`hexColors`), not RN `ColorValue`. Drive Skia props with Reanimated shared/derived
+  values directly (no React re-renders per frame).
+- Track changes in the player dissolve the artwork with a runtime shader
+  (`src/components/ArtworkTransition.tsx`); it starts only after the new image decodes.
 - Gate non-essential animation/atmosphere on `useSettingsStore(s => s.reducedMotion)` and
   `useSettingsStore(s => s.dynamicAtmosphere)`.
 

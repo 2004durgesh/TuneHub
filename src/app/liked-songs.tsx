@@ -8,12 +8,14 @@ import { SongActionSheet } from '@/components/SongActionSheet';
 import { AddToPlaylistSheet } from '@/components/AddToPlaylistSheet';
 import { EmptyState } from '@/components/states/EmptyState';
 import { useLikedSongs } from '@/hooks/useLikedSongs';
+import { useMiniPlayerInset } from '@/hooks/useMiniPlayerPlacement';
 import { usePlayer } from '@/hooks/usePlayer';
 import { colors, spacing, typography } from '@/theme';
 import type { Song } from '@/types';
 
 export default function LikedSongsScreen() {
   const { top } = useSafeAreaInsets();
+  const miniPlayerInset = useMiniPlayerInset();
   const router = useRouter();
   const { likedSongs } = useLikedSongs();
   const { playSongs, currentSong, isPlaying } = usePlayer();
@@ -66,7 +68,10 @@ export default function LikedSongsScreen() {
               rightElement={<AppIcon name="heartFill" size={20} color={colors.like} />}
             />
           )}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[
+            styles.listContent,
+            { paddingBottom: spacing.xxl + miniPlayerInset },
+          ]}
           showsVerticalScrollIndicator={false}
         />
       )}

@@ -11,6 +11,7 @@ import { ThemedTextInput } from '@/components/native/ThemedTextInput';
 import { SongActionSheet } from '@/components/SongActionSheet';
 import { SongRow } from '@/components/SongRow';
 import { LoadingState } from '@/components/states/LoadingState';
+import { useMiniPlayerInset } from '@/hooks/useMiniPlayerPlacement';
 import { usePlayer } from '@/hooks/usePlayer';
 import { getSongById, searchAll } from '@/services/music';
 import { useMusicStore, useSettingsStore } from '@/store';
@@ -76,6 +77,7 @@ function SearchResults({
   onItemPress,
   onArtistPress,
 }: ResultsProps) {
+  const miniPlayerInset = useMiniPlayerInset();
   const isEmpty =
     songs.length === 0 && albums.length === 0 && artists.length === 0 && playlists.length === 0;
 
@@ -88,7 +90,10 @@ function SearchResults({
   }
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false}>
+    <ScrollView
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{ paddingBottom: spacing.xxl + miniPlayerInset }}
+    >
       {songs.length > 0 && (
         <View style={styles.resultSection}>
           <Text style={styles.resultTitle}>Songs</Text>
