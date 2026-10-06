@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { Playlist } from 'react-native-nitro-player';
 import type { Song } from '@/types';
 import { AppIcon } from '@/components/app-icon';
+import { ThemedTextInput } from '@/components/native/ThemedTextInput';
 import { SheetModal } from '@/components/SheetModal';
 import { addSongToPlaylist, createPlaylist, getAllPlaylists } from '@/services/player/playerQueue';
 import { colors, radii, spacing, typography } from '@/theme';
@@ -16,6 +17,8 @@ export function AddToPlaylistSheet({ song, onClose }: Props) {
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newName, setNewName] = useState('');
+  // Bumped on each open so the name field remounts empty.
+  const [nameFieldKey, setNameFieldKey] = useState(0);
   // Song captured when the create flow starts, since the sheet closes first.
   const [pendingSong, setPendingSong] = useState<Song | null>(null);
 
@@ -57,6 +60,7 @@ export function AddToPlaylistSheet({ song, onClose }: Props) {
       } else {
         setPendingSong(target);
         setNewName('');
+        setNameFieldKey((k) => k + 1);
         setShowCreateModal(true);
       }
     }, 350);
@@ -118,16 +122,16 @@ export function AddToPlaylistSheet({ song, onClose }: Props) {
       <SheetModal visible={showCreateModal} onClose={() => setShowCreateModal(false)}>
         <View style={styles.createSheet}>
           <Text style={styles.modalTitle}>New Playlist</Text>
-          <TextInput
-            style={styles.modalInput}
-            placeholder="Playlist name"
-            placeholderTextColor={colors.textTertiary}
-            value={newName}
-            onChangeText={setNewName}
-            autoFocus
-            returnKeyType="done"
-            onSubmitEditing={handleCreateConfirm}
-          />
+          <View style={styles.modalInput}>
+            <ThemedTextInput
+              key={nameFieldKey}
+              onChangeText={setNewName}
+              placeholder="Playlist name"
+              autoFocus
+              returnKeyType="done"
+              onSubmitEditing={handleCreateConfirm}
+            />
+          </View>
           <View style={styles.modalButtons}>
             <Pressable onPress={() => setShowCreateModal(false)} style={styles.modalBtn}>
               <Text style={styles.modalBtnCancel}>Cancel</Text>
@@ -205,8 +209,6 @@ const styles = StyleSheet.create({
     borderRadius: radii.sm,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    ...typography.body,
-    color: colors.text,
     borderWidth: 1,
     borderColor: colors.border,
   },

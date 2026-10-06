@@ -1,11 +1,13 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
-import { FlatList, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import type { TextInputRef } from '@expo/ui';
 
 import { AppIcon } from '@/components/app-icon';
 import { AddToPlaylistSheet } from '@/components/AddToPlaylistSheet';
 import ArtworkCard from '@/components/ArtworkCard';
+import { ThemedTextInput } from '@/components/native/ThemedTextInput';
 import { SongActionSheet } from '@/components/SongActionSheet';
 import { SongRow } from '@/components/SongRow';
 import { LoadingState } from '@/components/states/LoadingState';
@@ -178,7 +180,9 @@ function SearchResults({
 export default function SearchScreen() {
   const { top } = useSafeAreaInsets();
   const router = useRouter();
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<TextInputRef>(null);
+  // Bumped to remount the field when its text is set from outside (history chips).
+  const [inputKey, setInputKey] = useState(0);
   const { playSongs } = usePlayer();
   const audioQuality = useSettingsStore((s) => s.audioQuality);
 
@@ -224,13 +228,17 @@ export default function SearchScreen() {
     [setSearchResults],
   );
 
-  const handleSubmit = useCallback(() => {
-    void runSearch(query);
-  }, [query, runSearch]);
+  const handleSubmit = useCallback(
+    (text: string) => {
+      void runSearch(text);
+    },
+    [runSearch],
+  );
 
   const handleHistorySelect = useCallback(
     (q: string) => {
       setQuery(q);
+      setInputKey((k) => k + 1);
       void runSearch(q);
     },
     [runSearch],
@@ -286,22 +294,22 @@ export default function SearchScreen() {
       {/* Search bar */}
       <View style={styles.searchBar}>
         <AppIcon name="search" size={18} color={colors.textTertiary} />
-        <TextInput
+        <ThemedTextInput
+          key={inputKey}
           ref={inputRef}
-          style={styles.input}
-          value={query}
+          containerStyle={styles.input}
+          defaultValue={query}
           onChangeText={handleChangeText}
           onSubmitEditing={handleSubmit}
           placeholder="Songs, artists, albums…"
-          placeholderTextColor={colors.textTertiary}
           returnKeyType="search"
           autoCorrect={false}
           autoCapitalize="none"
-          selectionColor={colors.accent}
         />
         {query.length > 0 && (
           <Pressable
             onPress={() => {
+              inputRef.current?.clear();
               setQuery('');
               setSearchResults(null);
               inputRef.current?.focus();
@@ -313,30 +321,33 @@ export default function SearchScreen() {
         )}
       </View>
 
-      {/* Body */}
-      {loading && <LoadingState />}
+      {/* Body — any touch here (tap or scroll) dismisses the keyboard. RN's Keyboard.dismiss
+          only tracks RN TextInputs, so blur the native field directly. */}
+      <View style={styles.body} onTouchStart={() => inputRef.current?.blur()}>
+        {loading && <LoadingState />}
 
-      {!loading && showHistory && (
-        <HistoryChips
-          history={searchHistory}
-          onSelect={handleHistorySelect}
-          onClear={clearSearchHistory}
-        />
-      )}
+        {!loading && showHistory && (
+          <HistoryChips
+            history={searchHistory}
+            onSelect={handleHistorySelect}
+            onClear={clearSearchHistory}
+          />
+        )}
 
-      {showResults && searchResults && (
-        <SearchResults
-          songs={searchResults.songs}
-          albums={searchResults.albums}
-          artists={searchResults.artists}
-          playlists={searchResults.playlists}
-          onSongPress={handleSongPress}
-          onSongLongPress={handleSongLongPress}
-          onAlbumPress={handleAlbumPress}
-          onItemPress={handleItemPress}
-          onArtistPress={handleArtistPress}
-        />
-      )}
+        {showResults && searchResults && (
+          <SearchResults
+            songs={searchResults.songs}
+            albums={searchResults.albums}
+            artists={searchResults.artists}
+            playlists={searchResults.playlists}
+            onSongPress={handleSongPress}
+            onSongLongPress={handleSongLongPress}
+            onAlbumPress={handleAlbumPress}
+            onItemPress={handleItemPress}
+            onArtistPress={handleArtistPress}
+          />
+        )}
+      </View>
 
       <SongActionSheet
         song={sheetSong}
@@ -369,12 +380,14 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     backgroundColor: colors.surface,
     borderRadius: radii.card,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   input: {
     flex: 1,
-    ...typography.body,
-    color: colors.text,
-    padding: 0,
+  },
+  body: {
+    flex: 1,
   },
   historySection: {
     paddingHorizontal: spacing.md,

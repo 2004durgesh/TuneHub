@@ -1,4 +1,4 @@
-import { Alert, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useState, useCallback, useEffect } from 'react';
 import { Stack, useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -6,6 +6,7 @@ import { Host } from '@expo/ui';
 import type { Playlist } from 'react-native-nitro-player';
 import { AppIcon } from '@/components/app-icon';
 import { ThemedList, ThemedListItem } from '@/components/native/ThemedList';
+import { ThemedTextInput } from '@/components/native/ThemedTextInput';
 import { SheetModal } from '@/components/SheetModal';
 import { EmptyState } from '@/components/states/EmptyState';
 import { getAllPlaylists, createPlaylist, deletePlaylist } from '@/services/player/playerQueue';
@@ -17,6 +18,8 @@ export default function PlaylistsScreen() {
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newName, setNewName] = useState('');
+  // Bumped on each open so the name field remounts empty.
+  const [nameFieldKey, setNameFieldKey] = useState(0);
 
   const refresh = useCallback(() => {
     setPlaylists(getAllPlaylists());
@@ -46,6 +49,7 @@ export default function PlaylistsScreen() {
       );
     } else {
       setNewName('');
+      setNameFieldKey((k) => k + 1);
       setShowCreateModal(true);
     }
   }, [refresh]);
@@ -119,16 +123,16 @@ export default function PlaylistsScreen() {
       <SheetModal visible={showCreateModal} onClose={() => setShowCreateModal(false)}>
         <View style={styles.createSheet}>
           <Text style={styles.modalTitle}>New Playlist</Text>
-          <TextInput
-            style={styles.modalInput}
-            placeholder="Playlist name"
-            placeholderTextColor={colors.textTertiary}
-            value={newName}
-            onChangeText={setNewName}
-            autoFocus
-            returnKeyType="done"
-            onSubmitEditing={handleCreateConfirm}
-          />
+          <View style={styles.modalInput}>
+            <ThemedTextInput
+              key={nameFieldKey}
+              onChangeText={setNewName}
+              placeholder="Playlist name"
+              autoFocus
+              returnKeyType="done"
+              onSubmitEditing={handleCreateConfirm}
+            />
+          </View>
           <View style={styles.modalButtons}>
             <Pressable onPress={() => setShowCreateModal(false)} style={styles.modalBtn}>
               <Text style={styles.modalBtnCancel}>Cancel</Text>
@@ -182,8 +186,6 @@ const styles = StyleSheet.create({
     borderRadius: radii.sm,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    ...typography.body,
-    color: colors.text,
     borderWidth: 1,
     borderColor: colors.border,
   },

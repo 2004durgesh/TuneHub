@@ -284,6 +284,8 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     backgroundColor: colors.surface,
     borderRadius: radii.card,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   searchPlaceholder: {
     ...typography.body,
