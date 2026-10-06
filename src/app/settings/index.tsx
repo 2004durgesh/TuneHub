@@ -1,16 +1,15 @@
 import { Alert, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Host, List, ListItem, Switch } from '@expo/ui';
+import { Host, Switch } from '@expo/ui';
 import Constants from 'expo-constants';
 import { AppIcon } from '@/components/app-icon';
+import { ThemedList, ThemedListItem } from '@/components/native/ThemedList';
 import { useSettingsStore } from '@/store/settingsStore';
 import { clearHistory } from '@/services/storage/history';
 import { colors, spacing, typography } from '@/theme';
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
 
   const dynamicAtmosphere = useSettingsStore((s) => s.dynamicAtmosphere);
   const reducedMotion = useSettingsStore((s) => s.reducedMotion);
@@ -33,53 +32,53 @@ export default function SettingsScreen() {
   const chevron = <AppIcon name="chevronRight" size={16} color={colors.textTertiary} />;
 
   return (
-    <View style={[styles.screen, { paddingTop: insets.top }]}>
+    <View style={styles.screen}>
       <Text style={styles.header}>Settings</Text>
       <Host style={styles.listHost} colorScheme="dark">
-        <List>
-          <ListItem
+        <ThemedList>
+          <ThemedListItem
             onPress={() => router.push('/settings/playback')}
             leading={<AppIcon name="play" size={20} color={colors.accent} />}
             trailing={chevron}
             supportingText="Streaming quality"
           >
             Audio Quality
-          </ListItem>
-          <ListItem
+          </ThemedListItem>
+          <ThemedListItem
             onPress={() => router.push('/settings/playback')}
             leading={<AppIcon name="settings" size={20} color={colors.accent} />}
             trailing={chevron}
             supportingText="Presets & bands"
           >
             Equalizer
-          </ListItem>
-          <ListItem
+          </ThemedListItem>
+          <ThemedListItem
             leading={<AppIcon name="album" size={20} color={colors.accent} />}
             trailing={<Switch value={dynamicAtmosphere} onValueChange={toggleAtmosphere} />}
             supportingText="Tint the player from artwork"
           >
             Dynamic Atmosphere
-          </ListItem>
-          <ListItem
+          </ThemedListItem>
+          <ThemedListItem
             leading={<AppIcon name="more" size={20} color={colors.accent} />}
             trailing={<Switch value={reducedMotion} onValueChange={toggleReducedMotion} />}
             supportingText="Minimize animations"
           >
             Reduced Motion
-          </ListItem>
-          <ListItem
+          </ThemedListItem>
+          <ThemedListItem
             leading={<AppIcon name="warning" size={20} color={colors.accent} />}
             supportingText={`Version ${appVersion}`}
           >
             About
-          </ListItem>
-          <ListItem
+          </ThemedListItem>
+          <ThemedListItem
             onPress={handleClearHistory}
             leading={<AppIcon name="trash" size={20} color={colors.error} />}
           >
             Clear Play History
-          </ListItem>
-        </List>
+          </ThemedListItem>
+        </ThemedList>
       </Host>
     </View>
   );

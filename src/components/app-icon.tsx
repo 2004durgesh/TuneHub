@@ -23,6 +23,7 @@ const ICONS = {
   close: { ios: 'xmark', android: 'close', web: 'close' },
   chevronDown: { ios: 'chevron.down', android: 'keyboard_arrow_down', web: 'keyboard_arrow_down' },
   chevronRight: { ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' },
+  chevronLeft: { ios: 'chevron.left', android: 'chevron_left', web: 'chevron_left' },
   add: { ios: 'plus', android: 'add', web: 'add' },
   playlistAdd: { ios: 'text.badge.plus', android: 'playlist_add', web: 'playlist_add' },
   trash: { ios: 'trash', android: 'delete', web: 'delete' },

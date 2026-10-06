@@ -2,9 +2,10 @@ import { Alert, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'r
 import { useState, useCallback, useEffect } from 'react';
 import { Stack, useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Host, List, ListItem } from '@expo/ui';
+import { Host } from '@expo/ui';
 import type { Playlist } from 'react-native-nitro-player';
 import { AppIcon } from '@/components/app-icon';
+import { ThemedList, ThemedListItem } from '@/components/native/ThemedList';
 import { SheetModal } from '@/components/SheetModal';
 import { EmptyState } from '@/components/states/EmptyState';
 import { getAllPlaylists, createPlaylist, deletePlaylist } from '@/services/player/playerQueue';
@@ -78,7 +79,7 @@ export default function PlaylistsScreen() {
 
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} hitSlop={8} style={styles.headerSide}>
-          <AppIcon name="chevronDown" size={24} color={colors.text} />
+          <AppIcon name="chevronLeft" size={24} color={colors.text} />
         </Pressable>
         <Text style={styles.title}>My Playlists</Text>
         <Pressable onPress={handleCreate} hitSlop={8} style={styles.headerSide}>
@@ -98,9 +99,9 @@ export default function PlaylistsScreen() {
         // action or a delete button on /playlist-detail/[id]. handleDelete /
         // deletePlaylist are kept intact for that follow-up.
         <Host style={styles.listHost} colorScheme="dark">
-          <List>
+          <ThemedList>
             {playlists.map((playlist) => (
-              <ListItem
+              <ThemedListItem
                 key={playlist.id}
                 onPress={() => router.push(`/playlist-detail/${playlist.id}`)}
                 leading={<AppIcon name="queue" size={20} color={colors.accent} />}
@@ -108,9 +109,9 @@ export default function PlaylistsScreen() {
                 supportingText={`${playlist.tracks.length} songs`}
               >
                 {playlist.name}
-              </ListItem>
+              </ThemedListItem>
             ))}
-          </List>
+          </ThemedList>
         </Host>
       )}
 

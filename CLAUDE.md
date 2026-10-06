@@ -2,8 +2,8 @@
 
 React Native + Expo (SDK 57) music player. JioSaavn SDK as the data/audio source.
 
-**Native-first UI:** build screens out of `@expo/ui` components and color them with
-`expo-router`'s `Color` API so the app matches each platform's system look. Reach for
+**Native-first UI:** build screens out of `@expo/ui` components and color them with the
+`@/theme` `colors` tokens (Material 3 on both platforms — see Colors). Reach for
 raw React Native primitives only for custom layout/animation that `@expo/ui` can't
 express. `expo-symbols` for icons, Reanimated for animations, `react-native-nitro-player`
 for audio, `react-native-mmkv` for local storage, zustand for state.
@@ -127,35 +127,27 @@ Other UI building blocks:
 - Custom Reanimated components for animation-heavy surfaces (MiniPlayer, NowPlaying,
   artwork atmosphere) where `@expo/ui` can't express the motion.
 
-## Colors: `expo-router` `Color` for native surfaces
+## Colors: Material 3 on both platforms
 
-For native chrome (tab bar, and any surface meant to feel like the OS), color with
-`expo-router`'s `Color` API so it adapts to the platform:
+`@/theme` `colors` is one Material 3 dark palette everywhere (`src/theme/colors.ts`):
 
-```ts
-import { Color } from 'expo-router';
-import { Platform, useColorScheme } from 'react-native';
-
-const surface = Platform.select({
-  ios: Color.ios.systemBackground, // UIKit semantic — auto light/dark
-  android: Color.android.dynamic.surface, // Material You, wallpaper-adaptive
-  default: colors.background,
-});
-```
-
-- `Color.ios.*` — UIKit semantic colors (`systemBackground`, `label`, `separator`,
-  `systemBlue`, …). Auto-adapt to appearance; no `useColorScheme` needed.
-- `Color.android.dynamic.*` — Material You (SDK 31+, wallpaper-adaptive).
-- `Color.android.material.*` — Material 3 static roles. `Color.android.attr.*` — theme attrs.
-- **Any component that reads `Color.android.*` MUST call `useColorScheme()` in its body**
-  so it re-renders on theme change (React Compiler memoization otherwise keeps it stale).
-- `Color` is for NATIVE surfaces only. All app content (text, cards, rows, artwork frames)
-  still uses the dark-first tokens in `@/theme` — don't mix the two on the same element.
+- **Android** — live Material You roles via `expo-router` `Color.android.dynamic.*`.
+- **iOS / web** — the same roles as static hex (`md3`), a TonalSpot dark scheme from seed
+  `#485A8C`. To re-theme, change the seed and regenerate with
+  `@material/material-color-utilities` (`SchemeTonalSpot`, dark).
+- `Color.android.*` returns `null` on iOS even though it's typed non-null — never use it
+  as an iOS value (that silently fell back to purple/pink hexes). Don't use `Color.ios.*`
+  UIKit colors either; the app is deliberately Material on iOS too.
+- Material dark `primary` is a light tone: anything drawn ON `colors.accent` uses
+  `colors.onAccent`, never `colors.text`.
+- Components rendering `colors.*` on Android call `useColorScheme()` so React Compiler
+  memoization doesn't keep stale dynamic colors.
+- `hexColors` = raw hex for Reanimated color interpolation (can't take native color refs).
 
 ## Styling (`@/theme`)
 
 - No hard-coded values that exist in theme. Import from `@/theme`: `colors`, `spacing`, `screenPadding`, `radii`, `typography`, `springs`, `timings`.
-- Dark-first. `colors.background = '#0D0D0F'`.
+- Dark-first (`userInterfaceStyle: "dark"`). `colors.background` = Material `background`.
 - Spacing scale: xxs4 / xs8 / sm12 / md16 / lg24 / xl32 / xxl48.
 - Only filter chips use pill radius; don't pill everything.
 

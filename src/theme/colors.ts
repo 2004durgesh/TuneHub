@@ -2,31 +2,45 @@ import { Color } from 'expo-router';
 import { Platform } from 'react-native';
 import type { ColorValue } from 'react-native';
 
-function pick(ios: ColorValue, android: ColorValue, fallback: string): ColorValue {
-  return Platform.select({ ios, android, default: fallback }) ?? fallback;
+// Material 3 dark scheme (TonalSpot, seed #485A8C). Material You is Android-only —
+// `Color.android.dynamic.*` is null on iOS despite its non-null type — so iOS/web use
+// these static values and Android uses the live wallpaper-derived roles.
+const md3 = {
+  background: '#121318',
+  surface: '#121318',
+  surfaceContainer: '#1E1F25',
+  surfaceContainerHigh: '#292A2F',
+  outlineVariant: '#45464F',
+  onSurface: '#E3E2E9',
+  onSurfaceVariant: '#C5C6D0',
+  outline: '#8F909A',
+  primary: '#B2C5FF',
+  onPrimary: '#182E60',
+  secondary: '#C0C6DD',
+  error: '#FFB4AB',
+} as const;
+
+function material(role: keyof typeof md3): ColorValue {
+  return Platform.OS === 'android' ? Color.android.dynamic[role] : md3[role];
 }
 
-const d = Color.android.dynamic;
-const i = Color.ios;
-
 export const colors = {
-  background: pick(i.systemBackground, d.background, '#0D0D0F'),
-  surface: pick(i.secondarySystemBackground, d.surface, '#16161A'),
-  surfaceElevated: pick(i.tertiarySystemBackground, d.surfaceContainer, '#1E1E24'),
-  surfaceHigh: pick(i.systemGray5, d.surfaceContainerHigh, '#26262E'),
-  border: pick(i.separator, d.outlineVariant, '#2A2A32'),
+  background: material('background'),
+  surface: material('surface'),
+  surfaceElevated: material('surfaceContainer'),
+  surfaceHigh: material('surfaceContainerHigh'),
+  border: material('outlineVariant'),
 
-  text: pick(i.label, d.onSurface, '#FFFFFF'),
-  textSecondary: pick(i.secondaryLabel, d.onSurfaceVariant, '#A0A0AB'),
-  textTertiary: pick(i.tertiaryLabel, d.outline, '#6B6B76'),
+  text: material('onSurface'),
+  textSecondary: material('onSurfaceVariant'),
+  textTertiary: material('outline'),
 
-  accent: pick(i.systemPurple, d.primary, '#8B5CF6'),
-  accentBlue: pick(i.systemBlue, d.primary, '#3B82F6'),
-  accentPink: pick(i.systemPink, d.secondary, '#EC4899'),
+  accent: material('primary'),
+  onAccent: material('onPrimary'),
 
-  like: pick(i.systemRed, d.error, '#EF4444'),
-  success: pick(i.systemGreen, d.primary, '#22C55E'),
-  error: pick(i.systemRed, d.error, '#F87171'),
+  like: material('error'),
+  success: material('primary'),
+  error: material('error'),
 
   overlay: 'rgba(0,0,0,0.6)',
   scrim: 'rgba(0,0,0,0.4)',
@@ -35,9 +49,9 @@ export const colors = {
 
 export type ColorKey = keyof typeof colors;
 
-// Raw hex fallbacks for the two Reanimated color animations (the atmosphere
-// tint), which interpolate string colors and can't take opaque native refs.
+// Raw hex for the Reanimated atmosphere tint, which interpolates strings and
+// can't take opaque native color refs.
 export const hexColors = {
-  background: '#0D0D0F',
-  surface: '#16161A',
+  background: md3.background,
+  surface: md3.surface,
 } as const;

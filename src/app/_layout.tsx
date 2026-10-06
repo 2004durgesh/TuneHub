@@ -1,14 +1,31 @@
-import { DarkTheme, ThemeProvider } from 'expo-router';
-import { Stack } from 'expo-router';
+import { DarkTheme, router, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import { Platform, Pressable } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
+import { AppIcon } from '@/components/app-icon';
 import { usePlayerBridge } from '@/hooks/usePlayer';
 import { colors } from '@/theme';
 
 SplashScreen.preventAutoHideAsync();
+
+// iOS keeps its native back button (chevron-only via headerBackButtonDisplayMode);
+// Android's native one is an arrow, so swap in a chevron to match.
+function androidBackButton({ canGoBack }: { canGoBack?: boolean }) {
+  if (!canGoBack) return null;
+  return (
+    <Pressable
+      onPress={() => router.back()}
+      hitSlop={8}
+      accessibilityRole="button"
+      accessibilityLabel="Back"
+    >
+      <AppIcon name="chevronLeft" size={28} color={colors.text} />
+    </Pressable>
+  );
+}
 
 export default function RootLayout() {
   usePlayerBridge();
@@ -25,6 +42,8 @@ export default function RootLayout() {
           screenOptions={{
             headerShown: false,
             contentStyle: { backgroundColor: colors.background },
+            headerBackButtonDisplayMode: 'minimal',
+            headerLeft: Platform.OS === 'android' ? androidBackButton : undefined,
           }}
         >
           <Stack.Screen name="(tabs)" />
@@ -50,7 +69,16 @@ export default function RootLayout() {
           <Stack.Screen name="liked-songs" />
           <Stack.Screen name="history" />
           <Stack.Screen name="playlists" />
-          <Stack.Screen name="settings/index" />
+          <Stack.Screen
+            name="settings/index"
+            options={{
+              headerShown: true,
+              title: '',
+              headerStyle: { backgroundColor: colors.background },
+              headerTintColor: colors.text,
+              headerShadowVisible: false,
+            }}
+          />
           <Stack.Screen name="settings/playback" options={{ headerShown: true }} />
         </Stack>
       </ThemeProvider>

@@ -39,7 +39,7 @@ export default function LikedSongsScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} hitSlop={8} style={styles.headerSide}>
-          <AppIcon name="chevronDown" size={24} color={colors.text} />
+          <AppIcon name="chevronLeft" size={24} color={colors.text} />
         </Pressable>
         <Text style={styles.title}>Liked Songs</Text>
         <View style={styles.headerSide} />

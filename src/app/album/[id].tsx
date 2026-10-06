@@ -116,7 +116,7 @@ export default function AlbumScreen() {
                 ]}
                 onPress={handlePlayAll}
               >
-                <AppIcon name="play" size={18} color={colors.text} />
+                <AppIcon name="play" size={18} color={colors.onAccent} />
                 <Text style={styles.playButtonText}>Play All</Text>
               </Pressable>
               <Pressable
@@ -199,7 +199,7 @@ const styles = StyleSheet.create({
   },
   playButtonText: {
     ...typography.bodyStrong,
-    color: colors.text,
+    color: colors.onAccent,
   },
   shuffleButtonText: {
     ...typography.bodyStrong,

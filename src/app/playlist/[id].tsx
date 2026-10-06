@@ -106,7 +106,7 @@ export default function PlaylistScreen() {
               style={({ pressed }) => [styles.playAllButton, pressed && styles.pressed]}
               onPress={handlePlayAll}
             >
-              <AppIcon name="play" size={18} color={colors.text} />
+              <AppIcon name="play" size={18} color={colors.onAccent} />
               <Text style={styles.playAllText}>Play All</Text>
             </Pressable>
           </View>
@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
   },
   playAllText: {
     ...typography.bodyStrong,
-    color: colors.text,
+    color: colors.onAccent,
   },
   pressed: {
     opacity: 0.7,

@@ -108,7 +108,7 @@ export default function PlaylistDetailScreen() {
             <Text style={styles.count}>{songs.length} songs</Text>
             {songs.length > 0 && (
               <Pressable style={styles.playBtn} onPress={() => void playSongs(songs, 0)}>
-                <AppIcon name="play" size={18} color={colors.background} />
+                <AppIcon name="play" size={18} color={colors.onAccent} />
                 <Text style={styles.playBtnText}>Play All</Text>
               </Pressable>
             )}
@@ -154,5 +154,5 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     marginTop: spacing.xs,
   },
-  playBtnText: { ...typography.bodyStrong, color: colors.background },
+  playBtnText: { ...typography.bodyStrong, color: colors.onAccent },
 });

@@ -1,9 +1,10 @@
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Stack } from 'expo-router';
-import { Host, List, ListItem, Switch } from '@expo/ui';
+import { Host, Switch } from '@expo/ui';
 import * as Haptics from 'expo-haptics';
 import { AppIcon } from '@/components/app-icon';
+import { ThemedList, ThemedListItem } from '@/components/native/ThemedList';
 import { useSettingsStore } from '@/store/settingsStore';
 import {
   applyEqualizerPreset,
@@ -72,42 +73,42 @@ export default function PlaybackSettingsScreen() {
       />
       <View style={[styles.screen, { paddingBottom: insets.bottom }]}>
         <Host style={styles.listHost} colorScheme="dark">
-          <List>
-            <ListItem supportingText="Streaming quality">Audio Quality</ListItem>
+          <ThemedList>
+            <ThemedListItem supportingText="Streaming quality">Audio Quality</ThemedListItem>
             {QUALITY_OPTIONS.map((opt) => {
               const selected = audioQuality === opt.value;
               return (
-                <ListItem
+                <ThemedListItem
                   key={`${opt.value}-${selected}`}
                   onPress={() => handleQualitySelect(opt.value)}
                   supportingText={opt.description}
                   trailing={selected ? check() : undefined}
                 >
                   {opt.label}
-                </ListItem>
+                </ThemedListItem>
               );
             })}
 
-            <ListItem
+            <ThemedListItem
               trailing={<Switch value={equalizerEnabled} onValueChange={handleEqualizerToggle} />}
               supportingText="Presets & bands"
             >
               Equalizer
-            </ListItem>
+            </ThemedListItem>
             {equalizerEnabled &&
               EQ_PRESETS.map((preset) => {
                 const selected = equalizerPreset === preset;
                 return (
-                  <ListItem
+                  <ThemedListItem
                     key={`${preset}-${selected}`}
                     onPress={() => handlePresetSelect(preset)}
                     trailing={selected ? check() : undefined}
                   >
                     {preset}
-                  </ListItem>
+                  </ThemedListItem>
                 );
               })}
-          </List>
+          </ThemedList>
         </Host>
       </View>
     </>
