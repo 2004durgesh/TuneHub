@@ -15,6 +15,9 @@ export default function SettingsScreen() {
   const reducedMotion = useSettingsStore((s) => s.reducedMotion);
   const toggleAtmosphere = useSettingsStore((s) => s.toggleAtmosphere);
   const toggleReducedMotion = useSettingsStore((s) => s.toggleReducedMotion);
+  const audioQuality = useSettingsStore((s) => s.audioQuality);
+  const equalizerEnabled = useSettingsStore((s) => s.equalizerEnabled);
+  const equalizerPreset = useSettingsStore((s) => s.equalizerPreset);
 
   const appVersion = Constants.expoConfig?.version ?? '1.0.0';
 
@@ -40,17 +43,11 @@ export default function SettingsScreen() {
             onPress={() => router.push('/settings/playback')}
             leading={<AppIcon name="play" size={20} color={colors.accent} />}
             trailing={chevron}
-            supportingText="Streaming quality"
+            supportingText={`${audioQuality.replace('kbps', ' kbps')} · Equalizer ${
+              equalizerEnabled ? equalizerPreset : 'off'
+            }`}
           >
-            Audio Quality
-          </ThemedListItem>
-          <ThemedListItem
-            onPress={() => router.push('/settings/playback')}
-            leading={<AppIcon name="settings" size={20} color={colors.accent} />}
-            trailing={chevron}
-            supportingText="Presets & bands"
-          >
-            Equalizer
+            Playback
           </ThemedListItem>
           <ThemedListItem
             leading={<AppIcon name="album" size={20} color={colors.accent} />}

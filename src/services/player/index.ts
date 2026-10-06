@@ -1,5 +1,4 @@
 export {
-  isPlayerAvailable,
   setupPlayer,
   play,
   pause,

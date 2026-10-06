@@ -1,23 +1,8 @@
-import { Platform } from 'react-native';
+import { TrackPlayer } from 'react-native-nitro-player';
 import type { PlaybackState, Song } from '@/types';
 import { trackToSong } from './trackAdapter';
 
-// Kept separate from nitroPlayer.ts so the lazy require stays inside the
-// player service. Registers TrackPlayer event callbacks and forwards them
-// as plain domain values. No-ops when the native module is unavailable.
-type NitroModule = typeof import('react-native-nitro-player');
-
-let mod: NitroModule | null = null;
-function getMod(): NitroModule | null {
-  if (Platform.OS === 'web') return null;
-  if (mod) return mod;
-  try {
-    mod = require('react-native-nitro-player');
-    return mod;
-  } catch {
-    return null;
-  }
-}
+// Registers TrackPlayer event callbacks and forwards them as plain domain values.
 
 export type PlaybackHandlers = {
   onTrackChange?: (song: Song | null) => void;
@@ -31,11 +16,6 @@ export type PlaybackHandlers = {
  * per event, so we can't truly remove — the no-op prevents stale references).
  */
 export function subscribePlayback(handlers: PlaybackHandlers): () => void {
-  const m = getMod();
-  if (!m) return () => {};
-
-  const { TrackPlayer } = m;
-
   if (handlers.onTrackChange) {
     TrackPlayer.onChangeTrack((track) => {
       handlers.onTrackChange?.(track ? trackToSong(track) : null);

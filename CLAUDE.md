@@ -10,6 +10,10 @@ for audio, `react-native-mmkv` for local storage, zustand for state.
 
 No account, no login — local-first. Dark-first UI.
 
+**Mobile only:** iOS + Android dev builds. No web, no Expo Go — native modules (nitro-player,
+MMKV, Skia, …) are always present, so import them directly; don't add availability guards,
+lazy `require`s or web fallbacks.
+
 ## Layout
 
 - Routes: `src/app/` (Expo Router, `src/app/` is the routes dir; path alias `@/*` → `src/*`).
@@ -21,7 +25,7 @@ No account, no login — local-first. Dark-first UI.
 
 - UI code NEVER imports `jiosaavn-sdk`. Only `src/services/music/` may. Services return domain models from `@/types`.
 - `src/services/music/adapter.ts` is the ONLY place raw SDK objects → domain models.
-- UI code NEVER imports `react-native-nitro-player`. Only `src/services/player/` may, and it imports LAZILY (the module throws at import on web/Expo Go — everything is guarded and no-ops when unavailable). The one exception is the queue hook (`src/services/player/queue.ts`), which resolves `useActualQueue` once at module load behind a `Platform`/try-catch guard.
+- UI code NEVER imports `react-native-nitro-player` (type-only imports like `Playlist` excepted). Only `src/services/player/` may; the live queue reaches the UI through `useQueue()` (`src/services/player/queue.ts`).
 - Three zustand stores in `src/store/`: `playerStore`, `musicStore`, `settingsStore`. Don't mix concerns.
 - Stores are pure state; screens/hooks call services then feed results into stores via setters. Stores don't call services.
 - MMKV via `src/services/storage/mmkv.ts` (exports `storage`). Liked songs + history + settings + search history persist here.
@@ -40,7 +44,8 @@ Map controls to `@expo/ui`:
 | Need                         | Use                                                                            |
 | ---------------------------- | ------------------------------------------------------------------------------ |
 | Toggle                       | `Switch` (`value`, `onValueChange`, `label`)                                   |
-| Seek / value bar             | `Slider` (`value`, `onValueChange`, `min`, `max`, `step`)                      |
+| Value bar                    | `Slider` (`value`, `onValueChange`, `min`, `max`, `step`)                      |
+| Playback seek bar            | `SeekSlider` (`src/components/native/`) — seeks once, on release               |
 | Option list / quality picker | `Picker` + `Picker.Item`                                                       |
 | Grouped settings rows        | `List` + `ListItem`                                                            |
 | Text field / search input    | `TextInput` (RN-TextInput-like: `value`, `onChangeText`, `placeholder`, `ref`) |
@@ -106,18 +111,18 @@ Create a wrapper in `src/components/native/` that exposes ONE cross-platform pro
 picks the surface internally, via file-split:
 
 ```
-src/components/native/SegmentedControl.tsx        # shared types + default/fallback
-src/components/native/SegmentedControl.ios.tsx     # uses @expo/ui/swift-ui
-src/components/native/SegmentedControl.android.tsx # uses @expo/ui/jetpack-compose
+src/components/native/SegmentedControl.tsx      # prop types + Android (@expo/ui/jetpack-compose)
+src/components/native/SegmentedControl.ios.tsx  # iOS (@expo/ui/swift-ui)
 ```
 
-Metro resolves `.ios.tsx`/`.android.tsx` automatically; the base file is the web/Expo Go
-fallback (a plain RN implementation so the app still renders where native isn't available).
-Screens import the wrapper, never `@expo/ui/swift-ui` or `/jetpack-compose` directly.
+Metro picks `.ios.tsx` on iOS and the base file on Android. TypeScript checks against the
+base file (no `moduleSuffixes`), so the base file must exist and own the prop types; the
+`.ios.tsx` file takes them with `import type` (erased at build, so no self-import). See
+`ThemedList` and `SeekSlider`. Screens import the wrapper, never `@expo/ui/swift-ui` or
+`/jetpack-compose` directly.
 
 **Use with great sense:** reach for a per-platform native component only when it genuinely
-improves the feel. Prefer universal; prefer a wrapper over inline platform branches; always
-keep a plain-RN fallback in the base file so web/Expo Go never crash.
+improves the feel. Prefer universal; prefer a wrapper over inline platform branches.
 
 Other UI building blocks:
 
@@ -178,7 +183,9 @@ Other UI building blocks:
 - Playback is playlist-based. "Play these songs now" goes through `src/services/player` `playNow(songs, startIndex)` which manages a dedicated `__nowplaying__` queue playlist. That reserved playlist is filtered out of user-facing lists in `getAllPlaylists()`.
 - User playlists are persisted natively via `PlayerQueue` (see `src/services/player/playerQueue.ts`).
 - Temp queue: play-next = LIFO, up-next = FIFO. Live queue via `useQueue()` (`src/services/player/queue.ts`).
-- Shuffle reorders the upcoming tracks in place (`shuffleUpcoming`); the current track keeps playing.
+- Shuffle is nitro-player's native `PlayerQueue.shufflePlaylist` (needs ≥ 1.7.0-alpha.5), via
+  `shuffleUpcoming()`: the current track moves first and keeps playing, every other track is
+  shuffled behind it. Shuffle is a mode — while it's on, `playNow` shuffles new lists the same way.
 - Equalizer settings apply through `src/services/player/equalizer.ts` (`setEqualizerEnabled`, `applyEqualizerPreset`); persisted EQ re-applies on player setup.
 - Player state reaches the UI through `src/hooks/usePlayer.ts` (bridges nitro-player events → `playerStore`).
 - Requires a dev build (`npx expo run:ios` / `run:android`). Won't play in Expo Go or web.

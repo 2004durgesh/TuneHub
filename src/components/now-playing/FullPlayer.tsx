@@ -1,4 +1,3 @@
-import { Host, Slider } from '@expo/ui';
 import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
@@ -6,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AddToPlaylistSheet } from '@/components/AddToPlaylistSheet';
 import { AppIcon } from '@/components/app-icon';
+import { SeekSlider } from '@/components/native/SeekSlider';
 import { SongActionSheet } from '@/components/SongActionSheet';
 import { useLikedSongs } from '@/hooks/useLikedSongs';
 import { usePlayer } from '@/hooks/usePlayer';
@@ -60,6 +60,8 @@ export function FullPlayer({ width, height, panel, onPanelChange, onCollapse }: 
 
   const [sheetSong, setSheetSong] = useState<Song | null>(null);
   const [addToPlaylistSong, setAddToPlaylistSong] = useState<Song | null>(null);
+  const [scrub, setScrub] = useState<number | null>(null);
+  const shownPosition = scrub ?? position;
 
   const liked = currentSong ? isLiked(currentSong.id) : false;
   const repeatColor = repeat !== 'off' ? colors.accent : colors.textSecondary;
@@ -76,8 +78,8 @@ export function FullPlayer({ width, height, panel, onPanelChange, onCollapse }: 
   const handleShuffle = useCallback(() => {
     const enabling = !shuffle;
     toggleShuffle();
-    if (enabling && currentSong) void shuffleUpcoming(currentSong.id);
-  }, [shuffle, currentSong, toggleShuffle]);
+    if (enabling) void shuffleUpcoming();
+  }, [shuffle, toggleShuffle]);
 
   const togglePanel = (p: Exclude<Panel, null>) => onPanelChange(panel === p ? null : p);
 
@@ -140,16 +142,15 @@ export function FullPlayer({ width, height, panel, onPanelChange, onCollapse }: 
       </View>
 
       <View style={styles.progressRow}>
-        <Text style={styles.timeText}>{formatTime(position)}</Text>
-        <Host style={styles.sliderHost}>
-          <Slider
-            value={position}
-            min={0}
-            max={Math.max(duration, 1)}
-            onValueChange={(v) => seek(v)}
-          />
-        </Host>
-        <Text style={styles.timeText}>-{formatTime(Math.max(0, duration - position))}</Text>
+        <Text style={styles.timeText}>{formatTime(shownPosition)}</Text>
+        <SeekSlider
+          style={styles.slider}
+          value={position}
+          max={duration}
+          onScrub={setScrub}
+          onSeek={seek}
+        />
+        <Text style={styles.timeText}>{formatTime(duration)}</Text>
       </View>
 
       <View style={styles.mainControls}>
@@ -248,7 +249,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     marginBottom: spacing.lg,
   },
-  sliderHost: {
+  slider: {
     flex: 1,
   },
   timeText: {

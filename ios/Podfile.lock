@@ -110,9 +110,6 @@ PODS:
   - hermes-engine (250829098.0.17):
     - hermes-engine/Pre-built (= 250829098.0.17)
   - hermes-engine/Pre-built (250829098.0.17)
-  - ImageColors (2.6.0):
-    - ExpoModulesCore
-    - SwiftDraw (~> 0.27)
   - MMKVCore (2.4.0)
   - NitroMmkv (4.3.2):
     - hermes-engine
@@ -162,7 +159,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - NitroPlayer (1.6.1):
+  - NitroPlayer (1.7.0-alpha.5):
     - google-cast-sdk (~> 4.8)
     - hermes-engine
     - NitroModules
@@ -2361,9 +2358,6 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - SwiftDraw (0.29.0):
-    - SwiftDrawDOM (~> 0.29.0)
-  - SwiftDrawDOM (0.29.0)
   - Yoga (0.0.0)
 
 DEPENDENCIES:
@@ -2392,7 +2386,6 @@ DEPENDENCIES:
   - ExpoWebBrowser (from `../node_modules/expo-web-browser/ios`)
   - FBLazyVector (from `../node_modules/react-native/Libraries/FBLazyVector`)
   - hermes-engine (from `../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
-  - ImageColors (from `../node_modules/react-native-image-colors/ios`)
   - NitroMmkv (from `../node_modules/react-native-mmkv`)
   - NitroModules (from `../node_modules/react-native-nitro-modules`)
   - NitroPlayer (from `../node_modules/react-native-nitro-player`)
@@ -2483,8 +2476,6 @@ SPEC REPOS:
     - google-cast-sdk
     - GTMSessionFetcher
     - MMKVCore
-    - SwiftDraw
-    - SwiftDrawDOM
 
 EXTERNAL SOURCES:
   EXConstants:
@@ -2538,8 +2529,6 @@ EXTERNAL SOURCES:
   hermes-engine:
     :podspec: "../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec"
     :tag: hermes-v250829098.0.17
-  ImageColors:
-    :path: "../node_modules/react-native-image-colors/ios"
   NitroMmkv:
     :path: "../node_modules/react-native-mmkv"
   NitroModules:
@@ -2735,11 +2724,10 @@ SPEC CHECKSUMS:
   google-cast-sdk: e90a401e59b477644157fa782359b31b24448c9f
   GTMSessionFetcher: a6d2b2aa203485893d4511ff64642dc811f7c09f
   hermes-engine: 63c5db7d529c36335fada6582fd293ae2a105d77
-  ImageColors: 3019b37809023d67795162135628e367d70e1766
   MMKVCore: 3d16ce9f7d411e135020915fde98a056859a1efa
   NitroMmkv: 85a251e15c39d7c95fe58cf40786fa126b8d143c
   NitroModules: 38f8754287858ff1294e43fd43f614a664e54050
-  NitroPlayer: 47f433a26c21d3c05cd5094d7c1227c52ffe00b9
+  NitroPlayer: d6d29922f126af7598e2feba8159f117392637b1
   RCTDeprecation: 96f68ebf33f8762466b01d57d6e873c4f30efb07
   RCTRequired: 166eed8ad6d8440e73e56d09a9090366609823d2
   RCTSwiftUI: e818198d11928a78c2b2afe281d072171dab617f
@@ -2819,8 +2807,6 @@ SPEC CHECKSUMS:
   RNReanimated: fcf6a8cdd698fb09a811a8d6c5bcfe36575d965d
   RNScreens: c1a06fd73d0581a2a28a160577be393f579662b9
   RNWorklets: 43af89f696342f91118a2f1f3a879056e2f47331
-  SwiftDraw: 8384ccca4432da70e31bba55ce728c6d08e073dc
-  SwiftDrawDOM: 989e1dbed1adbf919f050d7fddfc358bb4c91c88
   Yoga: 18b74b3ade30bebc1904004dfaceae1dd02a330a
 
 PODFILE CHECKSUM: 894220f2a44f26e69dc8bd76892302290a9f58e0

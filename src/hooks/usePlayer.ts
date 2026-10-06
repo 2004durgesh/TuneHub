@@ -57,13 +57,22 @@ export function usePlayer() {
   const position = usePlayerStore((s) => s.position);
   const duration = usePlayerStore((s) => s.duration);
 
+  // Shuffle is a mode: with it on, a new list starts at the tapped song and the rest play shuffled.
   const playSongs = useCallback((songs: Song[], startIndex = 0) => {
-    return playNowService(songs, startIndex);
+    return playNowService(songs, startIndex, usePlayerStore.getState().shuffle);
   }, []);
 
   const togglePlayPause = useCallback(() => {
     return playbackState === 'playing' ? pauseService() : playService();
   }, [playbackState]);
+
+  // Reflect a seek right away; nitro's next progress report can be up to a second out, and the
+  // seek bar and time label would show the old position until then.
+  const seek = useCallback((seconds: number) => {
+    const { duration: total, setProgress } = usePlayerStore.getState();
+    setProgress(seconds, total);
+    return seekService(seconds);
+  }, []);
 
   return {
     currentSong,
@@ -75,6 +84,6 @@ export function usePlayer() {
     togglePlayPause,
     next: nextService,
     previous: previousService,
-    seek: seekService,
+    seek,
   };
 }

@@ -1,30 +1,6 @@
-import { Platform } from 'react-native';
+import { PlayerQueue, TrackPlayer } from 'react-native-nitro-player';
 import type { RepeatMode, Song } from '@/types';
 import { songToTrack } from './trackAdapter';
-
-// react-native-nitro-player's index calls NitroModules.createHybridObject(...)
-// at import time, which throws on web / Expo Go where the native module is
-// absent. Import it lazily and guard every access.
-type NitroModule = typeof import('react-native-nitro-player');
-
-let mod: NitroModule | null = null;
-
-function getMod(): NitroModule | null {
-  if (Platform.OS === 'web') return null;
-  if (mod) return mod;
-  try {
-    mod = require('react-native-nitro-player');
-    return mod;
-  } catch (e) {
-    console.warn('[player] nitro-player unavailable', e);
-    return null;
-  }
-}
-
-/** True when the native player module is loadable on this platform. */
-export function isPlayerAvailable(): boolean {
-  return getMod() !== null;
-}
 
 // ---------------------------------------------------------------------------
 // Setup
@@ -34,9 +10,7 @@ let configured = false;
 
 export async function setupPlayer(): Promise<void> {
   if (configured) return;
-  const m = getMod();
-  if (!m) return;
-  await m.TrackPlayer.configure({
+  await TrackPlayer.configure({
     showInNotification: true,
     lookaheadCount: 5,
   });
@@ -48,57 +22,41 @@ export async function setupPlayer(): Promise<void> {
 // ---------------------------------------------------------------------------
 
 export async function play(): Promise<void> {
-  const m = getMod();
-  if (!m) return;
-  await m.TrackPlayer.play();
+  await TrackPlayer.play();
 }
 
 export async function pause(): Promise<void> {
-  const m = getMod();
-  if (!m) return;
-  await m.TrackPlayer.pause();
+  await TrackPlayer.pause();
 }
 
 export async function next(): Promise<void> {
-  const m = getMod();
-  if (!m) return;
-  await m.TrackPlayer.skipToNext();
+  await TrackPlayer.skipToNext();
 }
 
 export async function previous(): Promise<void> {
-  const m = getMod();
-  if (!m) return;
   // skipToPrevious on the first track stops playback; restart the song instead.
-  const { currentIndex } = await m.TrackPlayer.getState();
+  const { currentIndex } = await TrackPlayer.getState();
   if (currentIndex <= 0) {
-    await m.TrackPlayer.seek(0);
+    await TrackPlayer.seek(0);
     return;
   }
-  await m.TrackPlayer.skipToPrevious();
+  await TrackPlayer.skipToPrevious();
 }
 
 export async function seek(pos: number): Promise<void> {
-  const m = getMod();
-  if (!m) return;
-  await m.TrackPlayer.seek(pos);
+  await TrackPlayer.seek(pos);
 }
 
 export async function setVolume(v: number): Promise<void> {
-  const m = getMod();
-  if (!m) return;
-  await m.TrackPlayer.setVolume(v);
+  await TrackPlayer.setVolume(v);
 }
 
 export async function setRepeat(mode: RepeatMode): Promise<void> {
-  const m = getMod();
-  if (!m) return;
-  await m.TrackPlayer.setRepeatMode(mode);
+  await TrackPlayer.setRepeatMode(mode);
 }
 
 export async function setSpeed(s: number): Promise<void> {
-  const m = getMod();
-  if (!m) return;
-  await m.TrackPlayer.setPlaybackSpeed(s);
+  await TrackPlayer.setPlaybackSpeed(s);
 }
 
 // ---------------------------------------------------------------------------
@@ -112,37 +70,38 @@ let nowPlayingId: string | null = null;
  * Ensure the dedicated now-playing playlist exists and return its id.
  * Looks it up by name first (survives module reloads), then creates it once.
  */
-async function ensureNowPlaying(m: NitroModule): Promise<string> {
+async function ensureNowPlaying(): Promise<string> {
   if (nowPlayingId) return nowPlayingId;
-  const existing = m.PlayerQueue.getAllPlaylists().find((p) => p.name === NOW_PLAYING_NAME);
+  const existing = PlayerQueue.getAllPlaylists().find((p) => p.name === NOW_PLAYING_NAME);
   if (existing) {
     nowPlayingId = existing.id;
     return nowPlayingId;
   }
-  nowPlayingId = await m.PlayerQueue.createPlaylist(NOW_PLAYING_NAME);
+  nowPlayingId = await PlayerQueue.createPlaylist(NOW_PLAYING_NAME);
   return nowPlayingId;
 }
 
 /**
  * Replace the now-playing queue with `songs` and start playback at
  * `startIndex`. Playback is playlist-based, so we recreate the dedicated
- * queue playlist each time to guarantee a clean slate.
+ * queue playlist each time to guarantee a clean slate. With `shuffle`, the
+ * tapped song plays first and all the others follow in random order.
  */
-export async function playNow(songs: Song[], startIndex = 0): Promise<void> {
-  const m = getMod();
-  if (!m || songs.length === 0) return;
+export async function playNow(songs: Song[], startIndex = 0, shuffle = false): Promise<void> {
+  if (songs.length === 0) return;
 
   // Recreate the playlist to clear any prior contents.
-  const prev = m.PlayerQueue.getAllPlaylists().find((p) => p.name === NOW_PLAYING_NAME);
+  const prev = PlayerQueue.getAllPlaylists().find((p) => p.name === NOW_PLAYING_NAME);
   if (prev) {
-    await m.PlayerQueue.deletePlaylist(prev.id);
+    await PlayerQueue.deletePlaylist(prev.id);
   }
-  nowPlayingId = await m.PlayerQueue.createPlaylist(NOW_PLAYING_NAME);
+  nowPlayingId = await PlayerQueue.createPlaylist(NOW_PLAYING_NAME);
 
-  const tracks = songs.map(songToTrack);
-  await m.PlayerQueue.addTracksToPlaylist(nowPlayingId, tracks);
-  await m.PlayerQueue.loadPlaylist(nowPlayingId, startIndex);
-  await m.TrackPlayer.play();
+  await PlayerQueue.addTracksToPlaylist(nowPlayingId, songs.map(songToTrack));
+  await PlayerQueue.loadPlaylist(nowPlayingId, startIndex);
+  // Once loaded, the tapped song is the current track, which the shuffle pins first.
+  if (shuffle) await PlayerQueue.shufflePlaylist(nowPlayingId);
+  await TrackPlayer.play();
 }
 
 /**
@@ -150,48 +109,31 @@ export async function playNow(songs: Song[], startIndex = 0): Promise<void> {
  * Registers the track first so the temporary queue can resolve it by id.
  */
 export async function playNext(song: Song): Promise<void> {
-  const m = getMod();
-  if (!m) return;
   const track = songToTrack(song);
-  await m.PlayerQueue.addTracksToPlaylist(await ensureNowPlaying(m), [track]);
-  await m.TrackPlayer.playNext(track.id);
+  await PlayerQueue.addTracksToPlaylist(await ensureNowPlaying(), [track]);
+  await TrackPlayer.playNext(track.id);
 }
 
 /** Append a song to the end of the up-next queue. */
 export async function addToUpNext(song: Song): Promise<void> {
-  const m = getMod();
-  if (!m) return;
   const track = songToTrack(song);
-  await m.PlayerQueue.addTracksToPlaylist(await ensureNowPlaying(m), [track]);
-  await m.TrackPlayer.addToUpNext(track.id);
+  await PlayerQueue.addTracksToPlaylist(await ensureNowPlaying(), [track]);
+  await TrackPlayer.addToUpNext(track.id);
 }
 
 /** Alias kept for call sites that think in terms of a generic "add to queue". */
 export const addToQueue = addToUpNext;
 
 /**
- * Shuffle the tracks that come AFTER the currently playing one in the
- * now-playing queue. The current track keeps playing uninterrupted; only the
- * upcoming order changes. No-op when fewer than two upcoming tracks exist.
+ * Shuffle the now-playing queue: the current track moves to the front and keeps
+ * playing uninterrupted, and every other track (already-played ones too) is
+ * shuffled behind it. One native pass that also updates the live queue.
  */
-export async function shuffleUpcoming(currentTrackId: string): Promise<void> {
-  const m = getMod();
-  if (!m || !nowPlayingId) return;
-  const pl = m.PlayerQueue.getPlaylist(nowPlayingId);
-  if (!pl) return;
-
-  const curIdx = pl.tracks.findIndex((t) => t.id === currentTrackId);
-  const upcoming = pl.tracks.slice(curIdx + 1);
-  if (upcoming.length < 2) return;
-
-  // Fisher–Yates shuffle of the upcoming slice.
-  for (let i = upcoming.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [upcoming[i], upcoming[j]] = [upcoming[j], upcoming[i]];
-  }
-
-  // Apply the new order by moving each track to its target absolute index.
-  for (let k = 0; k < upcoming.length; k++) {
-    await m.PlayerQueue.reorderTrackInPlaylist(nowPlayingId, upcoming[k].id, curIdx + 1 + k);
-  }
+export async function shuffleUpcoming(): Promise<void> {
+  // Ask the player what's playing: the module cache (`nowPlayingId`) is empty after a JS reload
+  // while native playback carries on. Only ever shuffle our reserved queue playlist, never a
+  // user's saved one (the shuffle is persisted).
+  const playlistId = PlayerQueue.getCurrentPlaylistId();
+  if (!playlistId || PlayerQueue.getPlaylist(playlistId)?.name !== NOW_PLAYING_NAME) return;
+  await PlayerQueue.shufflePlaylist(playlistId);
 }
