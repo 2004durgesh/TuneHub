@@ -15,6 +15,8 @@ import { useHistory } from '@/hooks/useHistory';
 import { useHomeData } from '@/hooks/useHomeData';
 import { useMiniPlayerInset } from '@/hooks/useMiniPlayerPlacement';
 import { usePlayer } from '@/hooks/usePlayer';
+import { getSongById } from '@/services/music';
+import { useSettingsStore } from '@/store';
 import { colors, radii, spacing, typography } from '@/theme';
 import type { ArtistSummary, DiscoveryItem, Song } from '@/types';
 
@@ -170,18 +172,22 @@ export default function HomeScreen() {
     useHomeData();
   const { history } = useHistory();
   const { playSongs } = usePlayer();
+  const audioQuality = useSettingsStore((s) => s.audioQuality);
   const [sheetSong, setSheetSong] = useState<Song | null>(null);
   const [addToPlaylistSong, setAddToPlaylistSong] = useState<Song | null>(null);
 
   const handleDiscoveryPress = useCallback(
-    (item: DiscoveryItem) => {
-      if (item.kind === 'album') {
+    async (item: DiscoveryItem) => {
+      if (item.kind === 'song') {
+        const song = await getSongById(item.id, audioQuality).catch(() => null);
+        if (song) await playSongs([song], 0);
+      } else if (item.kind === 'album') {
         router.push(`/album/${item.id}`);
       } else {
         router.push(`/playlist/${item.id}`);
       }
     },
-    [router],
+    [router, audioQuality, playSongs],
   );
 
   const handleArtistPress = useCallback(

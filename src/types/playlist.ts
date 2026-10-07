@@ -18,7 +18,7 @@ export type DiscoveryItem = {
   title: string;
   subtitle: string | null;
   artworkUrl: string;
-  kind: 'playlist' | 'album' | 'chart';
+  kind: 'playlist' | 'album' | 'chart' | 'song';
 };
 
 export type SearchResults = {

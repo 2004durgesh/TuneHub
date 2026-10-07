@@ -1,5 +1,6 @@
-import { FlatList } from 'react-native';
+import Animated from 'react-native-reanimated';
 
+import { EdgeFadeItem, useEdgeFade } from '@/components/EdgeFade';
 import { SongRow } from '@/components/SongRow';
 import { EmptyState } from '@/components/states/EmptyState';
 import { usePlayer } from '@/hooks/usePlayer';
@@ -9,6 +10,7 @@ import { useQueue } from '@/services/player';
 export function QueuePanel() {
   const { queue } = useQueue();
   const { currentSong, playSongs } = usePlayer();
+  const fade = useEdgeFade();
 
   if (queue.length === 0) {
     return (
@@ -17,16 +19,19 @@ export function QueuePanel() {
   }
 
   return (
-    <FlatList
+    <Animated.FlatList
+      {...fade.scrollProps}
       data={queue}
       keyExtractor={(s, i) => `${s.id}-${i}`}
       showsVerticalScrollIndicator={false}
       renderItem={({ item, index }) => (
-        <SongRow
-          song={item}
-          onPress={() => void playSongs(queue, index)}
-          isPlaying={currentSong?.id === item.id}
-        />
+        <EdgeFadeItem frame={fade.frame} index={index}>
+          <SongRow
+            song={item}
+            onPress={() => void playSongs(queue, index)}
+            isPlaying={currentSong?.id === item.id}
+          />
+        </EdgeFadeItem>
       )}
     />
   );

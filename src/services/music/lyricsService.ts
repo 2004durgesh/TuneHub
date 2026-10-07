@@ -1,31 +1,15 @@
-// The JioSaavn SDK doesn't expose a lyrics method, so we hit the public
-// lyrics endpoint directly. This still lives inside services/music so UI code
-// never reaches for the network itself.
-const LYRICS_ENDPOINT = 'https://www.jiosaavn.com/api.php';
+import { songApi } from './client';
 
-type LyricsResponse = {
-  lyrics?: string;
-  lyrics_copyright?: string;
-  snippet?: string;
-};
+export type Lyrics = { text: string; copyright: string | null };
 
 /**
- * Fetch full lyrics for a song by its lyricsId. Returns plain text with line
- * breaks, or null when the song has no lyrics / the request fails.
+ * Full lyrics for a song as plain text with line breaks, or null when the song has no lyrics /
+ * the request fails. Takes `Song.lyricsId`, or the song id — the endpoint accepts either.
  */
-export async function getLyrics(lyricsId: string): Promise<string | null> {
-  const url =
-    `${LYRICS_ENDPOINT}?__call=lyrics.getLyrics&lyrics_id=${encodeURIComponent(lyricsId)}` +
-    `&ctx=web6dot0&api_version=4&_format=json&_marker=0`;
-
+export async function getLyrics(lyricsId: string): Promise<Lyrics | null> {
   try {
-    const res = await fetch(url, {
-      headers: { 'Content-Type': 'application/json' },
-    });
-    if (!res.ok) return null;
-    const data = (await res.json()) as LyricsResponse;
-    if (!data.lyrics) return null;
-    return data.lyrics.replace(/<br\s*\/?>/gi, '\n').trim();
+    const { lyrics, copyright } = await songApi.getLyrics(lyricsId);
+    return lyrics ? { text: lyrics, copyright } : null;
   } catch {
     return null;
   }

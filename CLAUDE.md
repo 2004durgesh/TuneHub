@@ -25,6 +25,9 @@ lazy `require`s or web fallbacks.
 
 - UI code NEVER imports `jiosaavn-sdk`. Only `src/services/music/` may. Services return domain models from `@/types`.
 - `src/services/music/adapter.ts` is the ONLY place raw SDK objects → domain models.
+- `jiosaavn-sdk` (≥ 1.1.0, maintained by the project owner) returns clean text (HTML entities
+  decoded) and has `songApi.getLyrics(id)` — `lyricsService` wraps it. Fix SDK bugs upstream
+  rather than with local patches.
 - UI code NEVER imports `react-native-nitro-player` (type-only imports like `Playlist` excepted). Only `src/services/player/` may; the live queue reaches the UI through `useQueue()` (`src/services/player/queue.ts`).
 - Three zustand stores in `src/store/`: `playerStore`, `musicStore`, `settingsStore`. Don't mix concerns.
 - Stores are pure state; screens/hooks call services then feed results into stores via setters. Stores don't call services.

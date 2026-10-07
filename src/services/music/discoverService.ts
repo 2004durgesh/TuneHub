@@ -9,7 +9,7 @@ export async function getCharts(): Promise<DiscoveryItem[]> {
 
 export async function getNewReleases(page = 1, limit = 20): Promise<DiscoveryItem[]> {
   const releases = await discoverApi.getNewReleases({ page, limit });
-  return releases.map((r) => toDiscoveryItem(r, 'album'));
+  return releases.map((r) => toDiscoveryItem(r, r.type === 'song' ? 'song' : 'album'));
 }
 
 export async function getFeaturedPlaylists(page = 1, limit = 20): Promise<DiscoveryItem[]> {

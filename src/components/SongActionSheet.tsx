@@ -76,7 +76,7 @@ export function SongActionSheet({ song, onClose, onAddToPlaylist }: Props) {
   }
 
   function handleGoToArtist() {
-    if (song == null) return;
+    if (!song?.artistId) return;
     router.push(`/artist/${song.artistId}`);
     onClose();
   }
@@ -114,7 +114,10 @@ export function SongActionSheet({ song, onClose, onAddToPlaylist }: Props) {
           {song.albumId != null && (
             <ActionRow icon="album" label="Go to Album" onPress={handleGoToAlbum} />
           )}
-          <ActionRow icon="artist" label="Go to Artist" onPress={handleGoToArtist} />
+          {/* Songs saved before ids round-tripped through the player have none. */}
+          {song.artistId !== '' && (
+            <ActionRow icon="artist" label="Go to Artist" onPress={handleGoToArtist} />
+          )}
           <ActionRow icon="share" label="Share" onPress={handleShare} />
         </View>
       )}

@@ -1,27 +1,29 @@
-import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { StyleSheet, Text } from 'react-native';
+import Animated from 'react-native-reanimated';
 
+import { EdgeFadeItem, useEdgeFade } from '@/components/EdgeFade';
 import { EmptyState } from '@/components/states/EmptyState';
 import { LoadingState } from '@/components/states/LoadingState';
 import { usePlayer } from '@/hooks/usePlayer';
-import { getLyrics } from '@/services/music';
+import { getLyrics, type Lyrics } from '@/services/music';
 import { colors, spacing, typography } from '@/theme';
 
 /** Lyrics for the current song, shown in place of the artwork in the expanded player. */
 export function LyricsPanel() {
   const { currentSong } = usePlayer();
-  const lyricsId = currentSong?.lyricsId ?? null;
-  const [result, setResult] = useState<{ id: string; text: string | null } | null>(null);
+  const lyricsId = currentSong ? (currentSong.lyricsId ?? currentSong.id) : null;
+  const [result, setResult] = useState<{ id: string; lyrics: Lyrics | null } | null>(null);
 
   useEffect(() => {
     if (!lyricsId) return;
     let active = true;
     getLyrics(lyricsId)
-      .then((text) => {
-        if (active) setResult({ id: lyricsId, text });
+      .then((lyrics) => {
+        if (active) setResult({ id: lyricsId, lyrics });
       })
       .catch(() => {
-        if (active) setResult({ id: lyricsId, text: null });
+        if (active) setResult({ id: lyricsId, lyrics: null });
       });
     return () => {
       active = false;
@@ -30,7 +32,7 @@ export function LyricsPanel() {
 
   if (lyricsId && result?.id !== lyricsId) return <LoadingState />;
 
-  const lyrics = lyricsId ? result?.text : null;
+  const lyrics = lyricsId ? result?.lyrics : null;
   if (!lyrics) {
     return (
       <EmptyState
@@ -41,18 +43,58 @@ export function LyricsPanel() {
     );
   }
 
+  return <LyricsBody key={lyricsId} lyrics={lyrics} />;
+}
+
+function LyricsBody({ lyrics }: { lyrics: Lyrics }) {
+  const fade = useEdgeFade();
+  const lines = useMemo(
+    () =>
+      lyrics.text.split(/\n\s*\n/).flatMap((stanza) =>
+        stanza
+          .split('\n')
+          .map((line) => line.trim())
+          .filter(Boolean)
+          .map((text, i) => ({ text, startsStanza: i === 0 })),
+      ),
+    [lyrics.text],
+  );
+
   return (
-    <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-      <Text style={styles.lyrics}>{lyrics}</Text>
-    </ScrollView>
+    <Animated.ScrollView
+      {...fade.scrollProps}
+      contentContainerStyle={styles.content}
+      showsVerticalScrollIndicator={false}
+    >
+      {lines.map((line, i) => (
+        <EdgeFadeItem
+          key={i}
+          frame={fade.frame}
+          style={line.startsStanza && i > 0 ? styles.stanzaStart : undefined}
+        >
+          <Text style={styles.line}>{line.text}</Text>
+        </EdgeFadeItem>
+      ))}
+      {lyrics.copyright && <Text style={styles.copyright}>{lyrics.copyright}</Text>}
+    </Animated.ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  content: { paddingHorizontal: spacing.sm, paddingBottom: spacing.lg },
-  lyrics: {
-    ...typography.body,
-    color: colors.textSecondary,
-    lineHeight: 28,
+  content: {
+    paddingHorizontal: spacing.xs,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.xxl,
+    gap: spacing.xxs,
+  },
+  stanzaStart: { marginTop: spacing.lg },
+  line: {
+    ...typography.lyric,
+    color: colors.text,
+  },
+  copyright: {
+    ...typography.caption,
+    color: colors.textTertiary,
+    marginTop: spacing.lg,
   },
 });
