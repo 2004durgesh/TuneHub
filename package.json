@@ -6,9 +6,7 @@
     "@expo/ui": "~57.0.18",
     "expo": "~57.0.23",
     "expo-constants": "~57.0.18",
-    "expo-device": "~57.0.2",
     "expo-font": "~57.0.4",
-    "expo-glass-effect": "~57.0.3",
     "expo-haptics": "~57.0.3",
     "expo-image": "~57.0.5",
     "expo-linking": "~57.0.10",
@@ -17,10 +15,8 @@
     "expo-status-bar": "~57.0.1",
     "expo-symbols": "~57.0.3",
     "expo-system-ui": "~57.0.4",
-    "expo-web-browser": "~57.0.3",
     "jiosaavn-sdk": "^1.1.0",
     "react": "19.2.3",
-    "react-dom": "19.2.3",
     "react-native": "0.86.3",
     "react-native-gesture-handler": "~2.32.0",
     "react-native-mmkv": "^4.3.2",
@@ -30,13 +26,13 @@
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "~4.26.0",
     "react-native-skia": "^3.0.4",
-    "react-native-web": "~0.21.0",
     "react-native-worklets": "0.10.1",
     "zustand": "^5.0.15"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.2",
     "@commitlint/config-conventional": "^21.2.2",
+    "@release-it/conventional-changelog": "^12.0.2",
     "@types/react": "~19.2.2",
     "eslint": "^9.0.0",
     "eslint-config-expo": "~57.0.2",
@@ -44,18 +40,18 @@
     "lefthook": "^2.1.14",
     "patch-package": "^8.0.1",
     "prettier": "^3.9.7",
+    "release-it": "^21.1.0",
     "typescript": "~6.0.3"
   },
   "scripts": {
     "postinstall": "patch-package",
     "start": "expo start",
-    "reset-project": "node ./scripts/reset-project.js",
     "android": "expo run:android",
     "ios": "expo run:ios",
-    "web": "expo start --web",
     "lint": "expo lint",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "release": "release-it"
   },
   "private": true
 }
