@@ -28,6 +28,11 @@ import { MINI_ART_LEFT, MINI_ART_SIZE, MINI_ART_TOP, MiniBar } from './MiniBar';
 const SIDE = spacing.xs;
 const HAIRLINE = StyleSheet.hairlineWidth;
 const SWIPE_VELOCITY = 600;
+const LYRICS_OPEN_AT = 0.4;
+const ART_SHRINK = 0.08;
+const DRAG_PLAYER = 0;
+const DRAG_LYRICS = 1;
+const DRAG_PENDING = 2;
 // Theme colors resolve to hex strings at runtime on every platform.
 const MINI_BG = colors.surfaceElevated as string;
 const FULL_BG = colors.background as string;
@@ -59,16 +64,21 @@ function NowPlayingSurface() {
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [panel, setPanel] = useState<Panel>(null);
+  // Lyrics are mounted while a swipe up on the artwork reveals them, before `panel` commits.
+  const [peek, setPeek] = useState(false);
 
   const progress = useSharedValue(0);
   const dragStart = useSharedValue(0);
   const offset = useSharedValue(placement.bottom);
-  const artOpacity = useSharedValue(1);
+  // 0 = artwork, 1 = lyrics/queue in the artwork's slot.
+  const reveal = useSharedValue(0);
+  const dragMode = useSharedValue(DRAG_PLAYER);
 
   const artSize = fullArtworkSize(W);
   const artTop = fullArtworkTop(insets.top);
   const miniWidth = W - SIDE * 2;
   const travel = H * 0.7;
+  const revealTravel = artSize * 0.6;
 
   // Shared values use .get()/.set() (not .value) so React Compiler allows writes in callbacks.
 
@@ -77,15 +87,38 @@ function NowPlayingSurface() {
     offset.set(reducedMotion ? placement.bottom : withSpring(placement.bottom, springs.smooth));
   }, [placement.bottom, reducedMotion, offset]);
 
-  // Lyrics/queue take the artwork's slot.
-  useEffect(() => {
-    artOpacity.set(withTiming(panel ? 0 : 1, timings.fast));
-  }, [panel, artOpacity]);
+  const openPanel = useCallback(
+    (next: Exclude<Panel, null>) => {
+      setPanel(next);
+      reveal.set(reducedMotion ? 1 : withTiming(1, timings.base));
+    },
+    [reducedMotion, reveal],
+  );
+
+  const closePanel = useCallback(() => {
+    if (reducedMotion) {
+      reveal.set(0);
+      setPanel(null);
+      return;
+    }
+    reveal.set(
+      withTiming(0, timings.base, (finished) => {
+        if (finished) scheduleOnRN(setPanel, null);
+      }),
+    );
+  }, [reducedMotion, reveal]);
+
+  const commitLyrics = useCallback(() => {
+    setPanel('lyrics');
+    setPeek(false);
+  }, []);
 
   const finishCollapse = useCallback(() => {
     setOpen(false);
     setPanel(null);
-  }, []);
+    setPeek(false);
+    reveal.set(0);
+  }, [reveal]);
 
   const animateTo = useCallback(
     (target: 0 | 1) => {
@@ -96,13 +129,14 @@ function NowPlayingSurface() {
         if (target === 0) finishCollapse();
         return;
       }
+      if (target === 0) reveal.set(withTiming(0, timings.base));
       progress.set(
         withSpring(target, springs.smooth, (finished) => {
           if (finished && target === 0) scheduleOnRN(finishCollapse);
         }),
       );
     },
-    [reducedMotion, progress, finishCollapse],
+    [reducedMotion, progress, reveal, finishCollapse],
   );
 
   // Navigating (e.g. "Go to Album" from the action sheet) collapses the player.
@@ -117,27 +151,64 @@ function NowPlayingSurface() {
   useEffect(() => {
     if (!expanded) return;
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
-      if (panel) setPanel(null);
+      if (panel) closePanel();
       else animateTo(0);
       return true;
     });
     return () => sub.remove();
-  }, [expanded, panel, animateTo]);
+  }, [expanded, panel, animateTo, closePanel]);
 
-  // Drag tracks the finger; release springs to the nearest end, or the flick direction.
+  // Drag tracks the finger; release springs to the nearest end, or the flick direction. In the
+  // expanded player a swipe up that starts on the artwork reveals the lyrics instead.
   // Disabled while lyrics/queue are open so their lists scroll instead.
   const pan = Gesture.Pan()
     .enabled(panel === null)
     .activeOffsetY([-10, 10])
     .failOffsetX([-24, 24])
-    .onStart(() => {
+    .onStart((e) => {
+      const onArtwork = e.absoluteY >= artTop && e.absoluteY <= artTop + artSize;
+      if (progress.get() > 0.99 && onArtwork) {
+        dragMode.set(DRAG_PENDING);
+        return;
+      }
+      dragMode.set(DRAG_PLAYER);
       dragStart.set(progress.get());
       scheduleOnRN(setOpen, true);
     })
     .onUpdate((e) => {
-      progress.set(Math.min(1, Math.max(0, dragStart.get() - e.translationY / travel)));
+      if (dragMode.get() === DRAG_PENDING && e.translationY !== 0) {
+        if (e.translationY < 0) {
+          dragMode.set(DRAG_LYRICS);
+          scheduleOnRN(setPeek, true);
+        } else {
+          dragMode.set(DRAG_PLAYER);
+          dragStart.set(progress.get());
+        }
+      }
+      if (dragMode.get() === DRAG_LYRICS) {
+        reveal.set(Math.min(1, Math.max(0, -e.translationY / revealTravel)));
+      } else if (dragMode.get() === DRAG_PLAYER) {
+        progress.set(Math.min(1, Math.max(0, dragStart.get() - e.translationY / travel)));
+      }
     })
     .onEnd((e) => {
+      if (dragMode.get() === DRAG_PENDING) return;
+      if (dragMode.get() === DRAG_LYRICS) {
+        const show =
+          e.velocityY < -SWIPE_VELOCITY ||
+          (e.velocityY < SWIPE_VELOCITY && reveal.get() > LYRICS_OPEN_AT);
+        if (show) scheduleOnRN(commitLyrics);
+        reveal.set(
+          withSpring(
+            show ? 1 : 0,
+            { ...springs.smooth, velocity: -e.velocityY / revealTravel },
+            (finished) => {
+              if (finished && !show) scheduleOnRN(setPeek, false);
+            },
+          ),
+        );
+        return;
+      }
       const target =
         e.velocityY < -SWIPE_VELOCITY
           ? 1
@@ -193,16 +264,20 @@ function NowPlayingSurface() {
   }));
 
   // The artwork is one full-size canvas, moved and scaled from the mini slot to the hero slot.
+  // Revealing lyrics/queue lifts, shrinks and fades it out of its slot.
   const artStyle = useAnimatedStyle(() => {
     const p = progress.value;
+    const r = reveal.value;
     const miniTop = H - offset.value - MINI_PLAYER_HEIGHT;
-    const x = interpolate(p, [0, 1], [SIDE + MINI_ART_LEFT, (W - artSize) / 2]);
-    const y = interpolate(p, [0, 1], [miniTop + MINI_ART_TOP, artTop]);
-    const size = interpolate(p, [0, 1], [MINI_ART_SIZE, artSize]);
+    const base = interpolate(p, [0, 1], [MINI_ART_SIZE, artSize]);
+    const size = base * (1 - r * ART_SHRINK);
+    const inset = (base - size) / 2;
+    const x = interpolate(p, [0, 1], [SIDE + MINI_ART_LEFT, (W - artSize) / 2]) + inset;
+    const y = interpolate(p, [0, 1], [miniTop + MINI_ART_TOP, artTop]) + inset - r * spacing.lg;
     // RN scales around the center, so shift by half the shrinkage to pin the top-left corner.
     const shift = (artSize - size) / 2;
     return {
-      opacity: artOpacity.value,
+      opacity: 1 - r,
       transform: [{ translateX: x - shift }, { translateY: y - shift }, { scale: size / artSize }],
     };
   });
@@ -232,7 +307,10 @@ function NowPlayingSurface() {
                   width={W}
                   height={H}
                   panel={panel}
-                  onPanelChange={setPanel}
+                  content={panel ?? (peek ? 'lyrics' : null)}
+                  reveal={reveal}
+                  onOpenPanel={openPanel}
+                  onClosePanel={closePanel}
                   onCollapse={() => animateTo(0)}
                 />
               </Animated.View>

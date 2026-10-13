@@ -177,6 +177,11 @@ Other UI building blocks:
   full chrome is revealed by the growing clip. Tap/swipe up expands; swipe down, the chevron,
   Android back, or any navigation collapses. Lyrics and queue are panels inside the expanded
   player (they replace the artwork), not routes. Never add a `/player` route.
+- In the expanded player a swipe up that starts on the artwork reveals the lyrics, tracking the
+  finger (`reveal` shared value: the artwork lifts/shrinks/fades, the panel slides in); the
+  "Your Queue" text opens the queue the same way; a × closes either. A Pan's `onStart` reports
+  `translationY` 0, so a drag on the artwork picks lyrics vs collapse on its first `onUpdate`.
+  Shuffle and repeat sit right of the song title, the heart left of it.
 - The collapsed bar's position comes from `useMiniPlayerPlacement` (above the native tab bar on
   tab screens, above the safe area on pushed screens — there's no JS API for the tab-bar height,
   so it's iOS 49 / Android 80 dp). Scrolling screens add `useMiniPlayerInset()` to their bottom

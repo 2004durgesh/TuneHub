@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import Animated, { FadeIn, type SharedValue, useAnimatedStyle } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AddToPlaylistSheet } from '@/components/AddToPlaylistSheet';
@@ -17,6 +17,8 @@ import { LyricsPanel } from './LyricsPanel';
 import { QueuePanel } from './QueuePanel';
 
 const ICON_BTN_SIZE = 44;
+const INFO_BTN_SIZE = 40;
+const CLOSE_BTN_SIZE = 32;
 const PLAY_BTN_SIZE = 56;
 
 export type Panel = 'lyrics' | 'queue' | null;
@@ -31,7 +33,7 @@ export function fullArtworkSize(width: number): number {
 }
 
 const REPEAT_CYCLE: RepeatMode[] = ['off', 'Playlist', 'track'];
-const PANEL_TITLE = { lyrics: 'LYRICS', queue: 'UP NEXT' } as const;
+const PANEL_TITLE = { lyrics: 'LYRICS', queue: 'YOUR QUEUE' } as const;
 
 function formatTime(s: number): string {
   const m = Math.floor(s / 60);
@@ -42,12 +44,26 @@ type Props = {
   width: number;
   height: number;
   panel: Panel;
-  onPanelChange: (panel: Panel) => void;
+  /** The panel being drawn: also lyrics while a swipe up on the artwork is revealing them. */
+  content: Panel;
+  /** 0 = artwork, 1 = panel fully revealed. */
+  reveal: SharedValue<number>;
+  onOpenPanel: (panel: Exclude<Panel, null>) => void;
+  onClosePanel: () => void;
   onCollapse: () => void;
 };
 
 /** Expanded player chrome; the artwork and backdrop are drawn by NowPlaying. */
-export function FullPlayer({ width, height, panel, onPanelChange, onCollapse }: Props) {
+export function FullPlayer({
+  width,
+  height,
+  panel,
+  content,
+  reveal,
+  onOpenPanel,
+  onClosePanel,
+  onCollapse,
+}: Props) {
   const insets = useSafeAreaInsets();
   const { currentSong, position, duration, isPlaying, togglePlayPause, next, previous, seek } =
     usePlayer();
@@ -66,8 +82,11 @@ export function FullPlayer({ width, height, panel, onPanelChange, onCollapse }: 
   const liked = currentSong ? isLiked(currentSong.id) : false;
   const repeatColor = repeat !== 'off' ? colors.accent : colors.textSecondary;
   const shuffleColor = shuffle ? colors.accent : colors.textSecondary;
-  const panelColor = (p: Exclude<Panel, null>) =>
-    panel === p ? colors.accent : colors.textSecondary;
+
+  const panelStyle = useAnimatedStyle(() => ({
+    opacity: reveal.value,
+    transform: [{ translateY: (1 - reveal.value) * spacing.xl }],
+  }));
 
   const handleRepeat = useCallback(async () => {
     const nextMode = REPEAT_CYCLE[(REPEAT_CYCLE.indexOf(repeat) + 1) % REPEAT_CYCLE.length];
@@ -81,7 +100,7 @@ export function FullPlayer({ width, height, panel, onPanelChange, onCollapse }: 
     if (enabling) void shuffleUpcoming();
   }, [shuffle, toggleShuffle]);
 
-  const togglePanel = (p: Exclude<Panel, null>) => onPanelChange(panel === p ? null : p);
+  const handleQueue = () => (panel === 'queue' ? onClosePanel() : onOpenPanel('queue'));
 
   return (
     <View
@@ -106,30 +125,40 @@ export function FullPlayer({ width, height, panel, onPanelChange, onCollapse }: 
       </View>
 
       <View style={[styles.artworkSlot, { height: fullArtworkSize(width) }]}>
-        {panel && (
-          <Animated.View
-            key={panel}
-            style={styles.panel}
-            entering={FadeIn.duration(200)}
-            exiting={FadeOut.duration(150)}
-          >
-            {panel === 'lyrics' ? <LyricsPanel /> : <QueuePanel />}
+        {content && (
+          <Animated.View style={[styles.panel, panelStyle]}>
+            <View style={styles.panelBar}>
+              <Pressable
+                style={styles.closeBtn}
+                onPress={onClosePanel}
+                hitSlop={8}
+                accessibilityLabel={content === 'lyrics' ? 'Close lyrics' : 'Close queue'}
+              >
+                <AppIcon name="close" size={16} color={colors.text} />
+              </Pressable>
+            </View>
+            <Animated.View key={content} style={styles.panel} entering={FadeIn.duration(200)}>
+              {content === 'lyrics' ? <LyricsPanel /> : <QueuePanel />}
+            </Animated.View>
           </Animated.View>
         )}
       </View>
 
       <View style={styles.infoRow}>
-        <Pressable
-          style={styles.iconBtn}
-          onPress={() => currentSong && toggleLike(currentSong)}
-          hitSlop={8}
-        >
-          <AppIcon
-            name={liked ? 'heartFill' : 'heart'}
-            size={24}
-            color={liked ? colors.like : colors.textSecondary}
-          />
-        </Pressable>
+        <View style={styles.infoSide}>
+          <Pressable
+            style={styles.infoBtn}
+            onPress={() => currentSong && toggleLike(currentSong)}
+            hitSlop={4}
+            accessibilityLabel={liked ? 'Unlike' : 'Like'}
+          >
+            <AppIcon
+              name={liked ? 'heartFill' : 'heart'}
+              size={24}
+              color={liked ? colors.like : colors.textSecondary}
+            />
+          </Pressable>
+        </View>
         <View style={styles.titleArea}>
           <Text style={styles.title} numberOfLines={1}>
             {currentSong?.title ?? '—'}
@@ -138,7 +167,30 @@ export function FullPlayer({ width, height, panel, onPanelChange, onCollapse }: 
             {currentSong?.artistName ?? '—'}
           </Text>
         </View>
-        <View style={styles.iconBtn} />
+        <View style={[styles.infoSide, styles.infoSideEnd]}>
+          <Pressable
+            style={styles.infoBtn}
+            onPress={handleShuffle}
+            hitSlop={4}
+            accessibilityLabel="Shuffle"
+            accessibilityState={{ selected: shuffle }}
+          >
+            <AppIcon name="shuffle" size={22} color={shuffleColor} />
+          </Pressable>
+          <Pressable
+            style={styles.infoBtn}
+            onPress={handleRepeat}
+            hitSlop={4}
+            accessibilityLabel="Repeat"
+            accessibilityState={{ selected: repeat !== 'off' }}
+          >
+            <AppIcon
+              name={repeat === 'track' ? 'repeatOne' : 'repeat'}
+              size={22}
+              color={repeatColor}
+            />
+          </Pressable>
+        </View>
       </View>
 
       <View style={styles.progressRow}>
@@ -165,24 +217,17 @@ export function FullPlayer({ width, height, panel, onPanelChange, onCollapse }: 
         </Pressable>
       </View>
 
-      <View style={styles.secondaryControls}>
-        <Pressable style={styles.iconBtn} onPress={handleRepeat} hitSlop={8}>
-          <AppIcon
-            name={repeat === 'track' ? 'repeatOne' : 'repeat'}
-            size={22}
-            color={repeatColor}
-          />
-        </Pressable>
-        <Pressable style={styles.iconBtn} onPress={() => togglePanel('lyrics')} hitSlop={8}>
-          <AppIcon name="lyrics" size={22} color={panelColor('lyrics')} />
-        </Pressable>
-        <Pressable style={styles.iconBtn} onPress={() => togglePanel('queue')} hitSlop={8}>
-          <AppIcon name="queue" size={22} color={panelColor('queue')} />
-        </Pressable>
-        <Pressable style={styles.iconBtn} onPress={handleShuffle} hitSlop={8}>
-          <AppIcon name="shuffle" size={22} color={shuffleColor} />
-        </Pressable>
-      </View>
+      <Pressable
+        style={styles.queueBtn}
+        onPress={handleQueue}
+        hitSlop={8}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: panel === 'queue' }}
+      >
+        <Text style={[styles.queueText, panel === 'queue' && styles.queueTextActive]}>
+          Your Queue
+        </Text>
+      </Pressable>
 
       <SongActionSheet
         song={sheetSong}
@@ -217,10 +262,36 @@ const styles = StyleSheet.create({
   panel: {
     flex: 1,
   },
+  panelBar: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginBottom: spacing.xxs,
+  },
+  closeBtn: {
+    width: CLOSE_BTN_SIZE,
+    height: CLOSE_BTN_SIZE,
+    borderRadius: CLOSE_BTN_SIZE / 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surfaceHigh,
+  },
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: spacing.lg,
+  },
+  infoSide: {
+    width: INFO_BTN_SIZE * 2,
+    flexDirection: 'row',
+  },
+  infoSideEnd: {
+    justifyContent: 'flex-end',
+  },
+  infoBtn: {
+    width: INFO_BTN_SIZE,
+    height: INFO_BTN_SIZE,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   iconBtn: {
     width: ICON_BTN_SIZE,
@@ -270,10 +341,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  secondaryControls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.xl,
+  queueBtn: {
+    alignSelf: 'center',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+  },
+  queueText: {
+    ...typography.bodyStrong,
+    color: colors.textSecondary,
+  },
+  queueTextActive: {
+    color: colors.accent,
   },
 });
