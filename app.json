@@ -2,14 +2,15 @@
   "expo": {
     "name": "tunehub",
     "slug": "tunehub",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "tunehub",
     "userInterfaceStyle": "dark",
     "ios": {
       "icon": "./assets/expo.icon",
-      "bundleIdentifier": "com.anonymous.tunehub"
+      "bundleIdentifier": "com.anonymous.tunehub",
+      "buildNumber": "2"
     },
     "android": {
       "adaptiveIcon": {
@@ -19,7 +20,8 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.tunehub"
+      "package": "com.anonymous.tunehub",
+      "versionCode": 2
     },
     "plugins": [
       "expo-router",
