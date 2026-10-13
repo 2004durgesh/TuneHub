@@ -241,6 +241,10 @@ Other UI building blocks:
   the debug keystore) and `npm run build-ios` an unsigned sideload `.ipa` — then commits, tags
   `v<version>` and creates the GitHub release with the APKs and IPA attached. JS-only updates for
   that binary: `npm run ota` (`scripts/publish-ota.sh`, needs `GITHUB_TOKEN`).
+- Android release builds run R8 + resource shrinking (`android/gradle.properties`); after adding a
+  native module, smoke-test a release APK (launch, play, download) for stripped classes. Native
+  code is built for ARM only (`reactNativeArchitectures`); x86 emulators need
+  `-PreactNativeArchitectures=x86_64`.
 - nitro-ota's native hooks are applied by hand to the committed native projects (its Expo plugin is
   in `app.json` for future prebuilds): `MainApplication.kt` passes `jsBundleFilePath =
 getStoredBundlePath(applicationContext)`, `AppDelegate.swift` returns
@@ -254,8 +258,19 @@ getStoredBundlePath(applicationContext)`, `AppDelegate.swift` returns
 - Spring configs from `@/theme` `springs` (default `springs.smooth`). Timing from `timings`.
 - Dynamic artwork atmosphere: `src/hooks/useArtworkColors.ts` extracts a four-color palette
   with Skia (decode → 24×24 CPU surface → bucket the pixels), cached per URL. The mini bar tints
-  toward it; the expanded player renders `PlayerBackdrop` (Skia): blurred palette blobs drifting
-  over the dark base, crossfading between tracks.
+  toward it; the expanded player renders `PlayerBackdrop` (Skia): palette blobs drifting over the
+  dark base, crossfading between tracks. Keep it cheap — it's on screen whenever the player is
+  open: one runtime shader draws all four soft blobs (no circle nodes, no blur layer), on a
+  quarter-resolution canvas scaled up 4×, advanced only 24×/s by a `useFrameCallback`. The old
+  version (four animated circles + full-screen blur at 60 fps) cost ~90% of a core on the
+  emulator; this one ~11%, static ~3%. A JS `setInterval` clock costs more (~25%), not less.
+- Covers for the player go through `src/hooks/useArtworkImage.ts` (`loadArtworkImage` /
+  `useArtworkImage`): one download + decode per URL shared by `ArtworkTransition` and
+  `useArtworkColors`, and `usePlayerBridge` prefetches the up-next cover on every track change.
+- Song lists: `SongRow` has a fixed height (`SONG_ROW_HEIGHT`); spread `SONG_LIST_WINDOW` on
+  every song `FlatList`/`SectionList`, and add `getItemLayout={songRowLayout}` when the list has
+  no `ListHeaderComponent` (offsets would be off by the header).
+- `expo-image` defaults to a disk-only cache; `Artwork`/`ArtworkCard` use `cachePolicy="memory-disk"`.
 - Skia is `react-native-skia` (v3, Graphite backend) — the renamed successor of
   `@shopify/react-native-skia`; never install the old package. Skia `color` props need hex
   strings (`hexColors`), not RN `ColorValue`. Drive Skia props with Reanimated shared/derived

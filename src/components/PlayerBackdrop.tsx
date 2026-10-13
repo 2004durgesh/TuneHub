@@ -1,22 +1,23 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { StyleSheet, useWindowDimensions } from 'react-native';
 import {
-  cancelAnimation,
-  Easing,
-  type SharedValue,
   useDerivedValue,
+  useFrameCallback,
   useSharedValue,
-  withRepeat,
   withTiming,
 } from 'react-native-reanimated';
-import { Canvas, Circle, Fill, Group, Skia, TileMode } from 'react-native-skia';
+import { Canvas, Fill, Shader, Skia } from 'react-native-skia';
 
 import { hexColors, timings } from '@/theme';
 import type { ArtworkColors } from '@/types';
 
-const TAU = Math.PI * 2;
 const DRIFT_MS = 24000;
-const BLUR_SIGMA = 70;
+const DRIFT_FPS = 24;
+const DRIFT_FRAME_MS = 1000 / DRIFT_FPS;
+// Drawn at 1/SCALE resolution and scaled up: the blobs are soft anyway, so it looks the same for
+// SCALE² fewer pixels.
+const SCALE = 4;
+const BLUR_SIGMA = 70 / SCALE;
 // Dims the blobs over the dark base so player text stays legible on bright artwork.
 const BLOB_OPACITY = 0.55;
 
@@ -27,46 +28,67 @@ const FALLBACK: ArtworkColors = {
   detail: hexColors.surfaceHigh,
 };
 
-type BlobProps = {
-  clock: SharedValue<number>;
-  color: SharedValue<string>;
-  x: number;
-  y: number;
-  dx: number;
-  dy: number;
-  r: number;
-  phase: number;
-};
-
-// Orbits (x, y). Integer multiples of TAU keep the loop seamless when the clock wraps 1 → 0.
-function Blob({ clock, color, x, y, dx, dy, r, phase }: BlobProps) {
-  const cx = useDerivedValue(() => x + dx * Math.cos(clock.value * TAU + phase));
-  const cy = useDerivedValue(() => y + dy * Math.sin(clock.value * TAU * 2 + phase));
-  return <Circle cx={cx} cy={cy} r={r} color={color} />;
+function compileShader(sksl: string) {
+  const effect = Skia.RuntimeEffect.Make(sksl);
+  if (!effect) throw new Error('PlayerBackdrop: blob shader failed to compile');
+  return effect;
 }
+
+// Four drifting soft blobs in one pass (a blurred disc is a smoothstep falloff). Orbits use
+// integer multiples of TAU so the loop is seamless when the clock wraps 1 → 0.
+const BLOBS = compileShader(`
+uniform float2 res;
+uniform float clock;
+uniform float sigma;
+uniform float opacity;
+uniform half4 base;
+uniform half4 c1;
+uniform half4 c2;
+uniform half4 c3;
+uniform half4 c4;
+
+const float TAU = 6.2831853;
+
+float blob(float2 xy, float2 center, float radius) {
+  return 1.0 - smoothstep(radius - 2.0 * sigma, radius + 2.0 * sigma, distance(xy, center));
+}
+
+float2 orbit(float2 anchor, float2 swing, float phase) {
+  return res * (anchor + swing * float2(cos(clock * TAU + phase), sin(clock * TAU * 2.0 + phase)));
+}
+
+half4 over(half4 under, half4 color, float a) {
+  return half4(color.rgb * half(a) + under.rgb * half(1.0 - a), half(a) + under.a * half(1.0 - a));
+}
+
+half4 main(float2 xy) {
+  float r = res.x * 0.6;
+  half4 layer = half4(0.0);
+  layer = over(layer, c4, blob(xy, orbit(float2(0.5, 0.5), float2(0.1, 0.05), 0.0), r * 1.3));
+  layer = over(layer, c1, blob(xy, orbit(float2(0.2, 0.22), float2(0.18, 0.08), 0.0), r));
+  layer = over(layer, c2, blob(xy, orbit(float2(0.85, 0.45), float2(0.15, 0.1), 2.1), r * 0.9));
+  layer = over(layer, c3, blob(xy, orbit(float2(0.3, 0.8), float2(0.2, 0.07), 4.2), r));
+  half o = half(opacity);
+  return half4(base.rgb * (1.0 - o * layer.a) + layer.rgb * o, 1.0);
+}
+`);
 
 type Props = {
   palette: ArtworkColors | null;
   animate: boolean;
 };
 
-/**
- * Living mesh-gradient backdrop for the player: blurred blobs in the artwork's palette drift
- * slowly and crossfade to the next track's colors.
- */
+/** Mesh-gradient backdrop for the player: soft blobs in the artwork's palette drift slowly and crossfade to the next track's colors. */
 export function PlayerBackdrop({ palette, animate }: Props) {
-  const { width, height } = useWindowDimensions();
+  const window = useWindowDimensions();
+  const width = window.width / SCALE;
+  const height = window.height / SCALE;
   const clock = useSharedValue(0);
+  const lastTick = useSharedValue(-DRIFT_FRAME_MS);
   const c1 = useSharedValue<string>(FALLBACK.primary);
   const c2 = useSharedValue<string>(FALLBACK.secondary);
   const c3 = useSharedValue<string>(FALLBACK.detail);
   const c4 = useSharedValue<string>(FALLBACK.background);
-
-  const blurLayer = useMemo(() => {
-    const paint = Skia.Paint();
-    paint.setImageFilter(Skia.ImageFilter.MakeBlur(BLUR_SIGMA, BLUR_SIGMA, TileMode.Clamp, null));
-    return paint;
-  }, []);
 
   useEffect(() => {
     const p = palette ?? FALLBACK;
@@ -83,60 +105,44 @@ export function PlayerBackdrop({ palette, animate }: Props) {
     }
   }, [palette, animate, c1, c2, c3, c4]);
 
+  // The drift is slow and the blobs are soft, so it only advances DRIFT_FPS times a second.
+  // (A JS timer instead costs more: every step crosses from the JS thread to the UI thread.)
+  const drift = useFrameCallback(({ timeSinceFirstFrame }) => {
+    if (timeSinceFirstFrame - lastTick.get() < DRIFT_FRAME_MS) return;
+    lastTick.set(timeSinceFirstFrame);
+    clock.set((timeSinceFirstFrame % DRIFT_MS) / DRIFT_MS);
+  }, animate);
   useEffect(() => {
-    if (!animate) return;
-    clock.value = 0;
-    clock.value = withRepeat(withTiming(1, { duration: DRIFT_MS, easing: Easing.linear }), -1);
-    return () => cancelAnimation(clock);
-  }, [animate, clock]);
+    drift.setActive(animate);
+  }, [animate, drift]);
 
-  const r = width * 0.6;
+  const uniforms = useDerivedValue(() => ({
+    res: [width, height],
+    clock: clock.value,
+    sigma: BLUR_SIGMA,
+    opacity: BLOB_OPACITY,
+    base: Skia.Color(hexColors.background),
+    c1: Skia.Color(c1.value),
+    c2: Skia.Color(c2.value),
+    c3: Skia.Color(c3.value),
+    c4: Skia.Color(c4.value),
+  }));
 
   return (
-    <Canvas style={StyleSheet.absoluteFill} pointerEvents="none">
-      <Fill color={hexColors.background} />
-      <Group layer={blurLayer} opacity={BLOB_OPACITY}>
-        <Blob
-          clock={clock}
-          color={c4}
-          x={width * 0.5}
-          y={height * 0.5}
-          dx={width * 0.1}
-          dy={height * 0.05}
-          r={r * 1.3}
-          phase={0}
-        />
-        <Blob
-          clock={clock}
-          color={c1}
-          x={width * 0.2}
-          y={height * 0.22}
-          dx={width * 0.18}
-          dy={height * 0.08}
-          r={r}
-          phase={0}
-        />
-        <Blob
-          clock={clock}
-          color={c2}
-          x={width * 0.85}
-          y={height * 0.45}
-          dx={width * 0.15}
-          dy={height * 0.1}
-          r={r * 0.9}
-          phase={2.1}
-        />
-        <Blob
-          clock={clock}
-          color={c3}
-          x={width * 0.3}
-          y={height * 0.8}
-          dx={width * 0.2}
-          dy={height * 0.07}
-          r={r}
-          phase={4.2}
-        />
-      </Group>
+    <Canvas style={[styles.canvas, { width, height }]} pointerEvents="none">
+      <Fill>
+        <Shader source={BLOBS} uniforms={uniforms} />
+      </Fill>
     </Canvas>
   );
 }
+
+const styles = StyleSheet.create({
+  canvas: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    transformOrigin: 'top left',
+    transform: [{ scale: SCALE }],
+  },
+});

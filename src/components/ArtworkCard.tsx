@@ -17,6 +17,7 @@ export default function ArtworkCard({ imageUrl, title, subtitle, width, onPress 
         source={{ uri: imageUrl }}
         style={[styles.image, { width, height: width }]}
         contentFit="cover"
+        cachePolicy="memory-disk"
         transition={200}
       />
       <View style={styles.textContainer}>

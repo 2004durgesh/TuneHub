@@ -16,9 +16,9 @@ import {
   Shader,
   Skia,
   type SkImage,
-  useImage,
 } from 'react-native-skia';
 
+import { useArtworkImage } from '@/hooks/useArtworkImage';
 import { hexColors } from '@/theme';
 
 const DISSOLVE_MS = 900;
@@ -77,7 +77,7 @@ type Slots = { a: SkImage | null; b: SkImage | null; showing: 'a' | 'b' };
  * transition starts once the new image has decoded, so it never dissolves into a blank frame.
  */
 export function ArtworkTransition({ uri, size, radius, animate }: Props) {
-  const image = useImage(uri || null);
+  const image = useArtworkImage(uri);
   // Two ping-ponged slots (progress 0 = a, 1 = b). A new cover goes into the hidden slot and
   // progress animates toward it, so the first frame after the swap still shows the old cover.
   // Swapping images and resetting progress instead flashed the new cover for a frame, because

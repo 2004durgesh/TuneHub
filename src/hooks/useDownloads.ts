@@ -91,17 +91,23 @@ export function removeAllDownloads(): void {
   useDownloadStore.getState().clear();
 }
 
+// Resuming transfers (and checking every downloaded file) waits until the first screen has loaded.
+const RESUME_DELAY_MS = 3000;
+
 export function useDownloadsBridge() {
   useEffect(() => {
-    const { downloads, remove } = useDownloadStore.getState();
-    for (const download of Object.values(downloads)) {
-      const id = download.song.id;
-      if (download.status === 'completed') {
-        if (!localSongUri(id)) remove(id);
-      } else if (download.status !== 'failed') {
-        void start(download.song);
+    const timer = setTimeout(() => {
+      const { downloads, remove } = useDownloadStore.getState();
+      for (const download of Object.values(downloads)) {
+        const id = download.song.id;
+        if (download.status === 'completed') {
+          if (!localSongUri(id)) remove(id);
+        } else if (download.status !== 'failed') {
+          void start(download.song);
+        }
       }
-    }
+    }, RESUME_DELAY_MS);
+    return () => clearTimeout(timer);
   }, []);
 }
 

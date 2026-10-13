@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { AlphaType, ColorType, rect, Skia, type SkImage } from 'react-native-skia';
 import type { ArtworkColors } from '@/types';
+import { loadArtworkImage } from './useArtworkImage';
 
 const SAMPLE = 24;
 const CACHE_LIMIT = 50;
@@ -107,7 +108,7 @@ function buildPalette(pixels: Uint8Array): ArtworkColors | null {
 async function extractPalette(url: string): Promise<ArtworkColors | null> {
   const cached = cache.get(url);
   if (cached) return cached;
-  const image = Skia.Image.MakeImageFromEncoded(await Skia.Data.fromURI(url));
+  const image = await loadArtworkImage(url);
   const pixels = image ? samplePixels(image) : null;
   const palette = pixels ? buildPalette(pixels) : null;
   if (palette) {

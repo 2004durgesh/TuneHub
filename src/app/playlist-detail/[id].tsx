@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppIcon } from '@/components/app-icon';
 import { Artwork } from '@/components/Artwork';
 import { DownloadAllButton } from '@/components/DownloadAllButton';
-import { SongRow } from '@/components/SongRow';
+import { SONG_LIST_WINDOW, SongRow } from '@/components/SongRow';
 import { ErrorState } from '@/components/states/ErrorState';
 import { useMiniPlayerInset } from '@/hooks/useMiniPlayerPlacement';
 import { usePlayer } from '@/hooks/usePlayer';
@@ -85,6 +85,7 @@ export default function PlaylistDetailScreen() {
       />
       <FlatList
         data={songs}
+        {...SONG_LIST_WINDOW}
         keyExtractor={(s) => s.id}
         contentContainerStyle={[
           styles.content,

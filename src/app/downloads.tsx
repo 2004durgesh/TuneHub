@@ -4,7 +4,7 @@ import { Stack, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppIcon } from '@/components/app-icon';
 import { Artwork } from '@/components/Artwork';
-import { SongRow } from '@/components/SongRow';
+import { SONG_LIST_WINDOW, SongRow } from '@/components/SongRow';
 import { SongActionSheet } from '@/components/SongActionSheet';
 import { AddToPlaylistSheet } from '@/components/AddToPlaylistSheet';
 import { EmptyState } from '@/components/states/EmptyState';
@@ -197,6 +197,7 @@ export default function DownloadsScreen() {
       ) : (
         <SectionList
           sections={sections}
+          {...SONG_LIST_WINDOW}
           keyExtractor={(item) => item.song.id}
           stickySectionHeadersEnabled={false}
           renderSectionHeader={({ section }) =>

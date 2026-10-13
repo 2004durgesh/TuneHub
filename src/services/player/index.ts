@@ -13,6 +13,7 @@ export {
   addToUpNext,
   addToQueue,
   shuffleUpcoming,
+  getUpNextSong,
 } from './nitroPlayer';
 
 export { setEqualizerEnabled, applyEqualizerPreset, getEqualizerPresets } from './equalizer';

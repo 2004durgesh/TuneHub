@@ -3,7 +3,7 @@ import { useState, useCallback } from 'react';
 import { Stack, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppIcon } from '@/components/app-icon';
-import { SongRow } from '@/components/SongRow';
+import { SONG_LIST_WINDOW, SongRow, songRowLayout } from '@/components/SongRow';
 import { SongActionSheet } from '@/components/SongActionSheet';
 import { AddToPlaylistSheet } from '@/components/AddToPlaylistSheet';
 import { EmptyState } from '@/components/states/EmptyState';
@@ -74,6 +74,8 @@ export default function HistoryScreen() {
       ) : (
         <FlatList
           data={history}
+          {...SONG_LIST_WINDOW}
+          getItemLayout={songRowLayout}
           keyExtractor={(item, index) => `${item.id}-${index}`}
           renderItem={({ item }) => (
             <SongRow song={item} onPress={handleSongPress} onLongPress={handleLongPress} />

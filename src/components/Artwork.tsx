@@ -19,6 +19,7 @@ export function Artwork({ uri, size, borderRadius = radii.artwork, style }: Prop
         style,
       ]}
       contentFit="cover"
+      cachePolicy="memory-disk"
       transition={200}
     />
   );

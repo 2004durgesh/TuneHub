@@ -1,7 +1,7 @@
 import Animated from 'react-native-reanimated';
 
 import { EdgeFadeItem, useEdgeFade } from '@/components/EdgeFade';
-import { SongRow } from '@/components/SongRow';
+import { SONG_LIST_WINDOW, SongRow, songRowLayout } from '@/components/SongRow';
 import { EmptyState } from '@/components/states/EmptyState';
 import { usePlayer } from '@/hooks/usePlayer';
 import { useQueue } from '@/services/player';
@@ -21,6 +21,8 @@ export function QueuePanel() {
   return (
     <Animated.FlatList
       {...fade.scrollProps}
+      {...SONG_LIST_WINDOW}
+      getItemLayout={songRowLayout}
       data={queue}
       keyExtractor={(s, i) => `${s.id}-${i}`}
       showsVerticalScrollIndicator={false}

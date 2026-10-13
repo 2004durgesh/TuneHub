@@ -2,8 +2,10 @@ import { useCallback, useEffect } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import type { Song } from '@/types';
 import { usePlayerStore, useSettingsStore } from '@/store';
+import { loadArtworkImage } from './useArtworkImage';
 import { recordPlay } from './useHistory';
 import {
+  getUpNextSong,
   setupPlayer,
   subscribePlayback,
   playNow as playNowService,
@@ -41,7 +43,12 @@ export function usePlayerBridge() {
     const unsubscribe = subscribePlayback({
       onTrackChange: (song) => {
         setCurrentSong(song);
-        if (song) recordPlay(song);
+        if (!song) return;
+        recordPlay(song);
+        // Warm the next cover so skipping dissolves straight into it.
+        void getUpNextSong()
+          .then((upNext) => upNext && loadArtworkImage(upNext.artworkUrl))
+          .catch(() => {});
       },
       onStateChange: setPlaybackState,
       onProgress: setProgress,

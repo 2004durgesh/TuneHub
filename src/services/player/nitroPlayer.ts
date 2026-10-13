@@ -1,6 +1,6 @@
 import { PlayerQueue, TrackPlayer } from 'react-native-nitro-player';
 import type { RepeatMode, Song } from '@/types';
-import { songToTrack } from './trackAdapter';
+import { songToTrack, trackToSong } from './trackAdapter';
 
 // ---------------------------------------------------------------------------
 // Setup
@@ -123,6 +123,17 @@ export async function addToUpNext(song: Song): Promise<void> {
 
 /** Alias kept for call sites that think in terms of a generic "add to queue". */
 export const addToQueue = addToUpNext;
+
+/** The song that plays after the current one, in actual play order, or null at the end. */
+export async function getUpNextSong(): Promise<Song | null> {
+  const [queue, { currentTrack }] = await Promise.all([
+    TrackPlayer.getActualQueue(),
+    TrackPlayer.getState(),
+  ]);
+  if (!currentTrack) return null;
+  const next = queue[queue.findIndex((track) => track.id === currentTrack.id) + 1];
+  return next ? trackToSong(next) : null;
+}
 
 /**
  * Shuffle the now-playing queue: the current track moves to the front and keeps
