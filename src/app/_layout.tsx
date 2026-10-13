@@ -7,6 +7,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AppIcon } from '@/components/app-icon';
 import { NowPlaying } from '@/components/now-playing/NowPlaying';
+import { UpdateAvailableSheet } from '@/components/UpdateAvailableSheet';
 import { UpdateToast } from '@/components/UpdateToast';
 import { useDownloadsBridge } from '@/hooks/useDownloads';
 import { useOtaUpdates } from '@/hooks/useOtaUpdates';
@@ -89,6 +90,7 @@ export default function RootLayout() {
         {/* Mini player and full player as one morphing surface above every screen. */}
         <NowPlaying />
         <UpdateToast />
+        <UpdateAvailableSheet />
       </ThemeProvider>
     </GestureHandlerRootView>
   );

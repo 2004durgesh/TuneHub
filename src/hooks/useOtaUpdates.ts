@@ -1,5 +1,12 @@
-import { useEffect } from 'react';
-import { syncOtaUpdate } from '@/services/ota';
+import { useEffect, useState } from 'react';
+import {
+  appVersion,
+  getLatestRelease,
+  isNewerVersion,
+  isSkippedRelease,
+  type Release,
+  syncOtaUpdate,
+} from '@/services/ota';
 import { useOtaStore } from '@/store';
 
 // Leaves the first screen's requests and rendering alone; the update applies on a later launch.
@@ -23,4 +30,27 @@ export function useOtaUpdates() {
       dispose?.();
     };
   }, []);
+}
+
+/** The latest GitHub release when it's newer than the installed app and wasn't skipped. */
+export function useNewRelease() {
+  const [release, setRelease] = useState<Release | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      getLatestRelease()
+        .then((latest) => {
+          if (cancelled || !latest || isSkippedRelease(latest.version)) return;
+          if (isNewerVersion(latest.version, appVersion)) setRelease(latest);
+        })
+        .catch(() => {});
+    }, START_DELAY_MS);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, []);
+
+  return release;
 }

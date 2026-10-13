@@ -2,6 +2,8 @@ import * as Application from 'expo-application';
 import { Platform } from 'react-native';
 import { getStoredOtaVersion, OTAUpdateManager, reloadApp } from 'react-native-nitro-ota';
 
+import { storage } from '@/services/storage/mmkv';
+
 const REPO = '2004durgesh/TuneHub';
 export const REPO_URL = `https://github.com/${REPO}`;
 
@@ -73,13 +75,31 @@ export async function getLatestRelease(): Promise<Release | null> {
   return { version: tag_name.replace(/^v/, ''), url: html_url };
 }
 
-export function isNewerVersion(candidate: string, current: string): boolean {
-  const parts = (version: string) => version.split('-')[0].split('.').map(Number);
-  const a = parts(candidate);
-  const b = parts(current);
+const versionParts = (version: string) => version.split('-')[0].split('.').map(Number);
+
+function firstDifference(candidate: string, current: string) {
+  const a = versionParts(candidate);
+  const b = versionParts(current);
   for (let i = 0; i < Math.max(a.length, b.length); i++) {
     const diff = (a[i] ?? 0) - (b[i] ?? 0);
-    if (diff !== 0) return diff > 0;
+    if (diff !== 0) return { index: i, newer: diff > 0 };
   }
-  return false;
+  return null;
 }
+
+export function isNewerVersion(candidate: string, current: string): boolean {
+  return firstDifference(candidate, current)?.newer ?? false;
+}
+
+export type UpdateKind = 'Major' | 'Minor' | 'Patch';
+
+export function updateKind(candidate: string, current: string): UpdateKind {
+  const index = firstDifference(candidate, current)?.index ?? 2;
+  return index === 0 ? 'Major' : index === 1 ? 'Minor' : 'Patch';
+}
+
+const SKIPPED_RELEASE_KEY = 'update_skipped_version';
+
+export const isSkippedRelease = (version: string) =>
+  storage.getString(SKIPPED_RELEASE_KEY) === version;
+export const skipRelease = (version: string) => storage.set(SKIPPED_RELEASE_KEY, version);

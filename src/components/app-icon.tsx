@@ -37,6 +37,7 @@ const ICONS = {
   retry: { ios: 'arrow.clockwise', android: 'refresh', web: 'refresh' },
   info: { ios: 'info.circle', android: 'info', web: 'info' },
   update: { ios: 'arrow.triangle.2.circlepath', android: 'system_update', web: 'system_update' },
+  newVersion: { ios: 'arrow.up.circle', android: 'arrow_circle_up', web: 'arrow_circle_up' },
   code: {
     ios: 'chevron.left.forwardslash.chevron.right',
     android: 'code',

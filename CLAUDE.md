@@ -234,6 +234,9 @@ Other UI building blocks:
 - OTAs target the binary's version (`expo-application` `nativeApplicationVersion`), so a bundle
   never runs on native code it wasn't built for. Native changes (new modules, config) need a new
   binary release; only ship JS-only changes as OTA.
+- New binaries: `UpdateAvailableSheet` (root layout) checks GitHub's latest release 3s after launch
+  and offers it when newer than the installed app; Not Now / swipe-away skips that version (MMKV
+  `update_skipped_version`), a later release prompts again.
 - `npm run release` (release-it, needs `GITHUB_TOKEN`): conventional changelog, bump, then the
   `after:bump` hooks — `scripts/sync-versions.js` copies the version into `app.json`,
   `android/app/build.gradle` and `ios/tunehub/Info.plist` (and bumps the build number),
