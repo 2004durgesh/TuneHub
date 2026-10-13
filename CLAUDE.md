@@ -29,7 +29,10 @@ lazy `require`s or web fallbacks.
   decoded) and has `songApi.getLyrics(id)` — `lyricsService` wraps it. Fix SDK bugs upstream
   rather than with local patches.
 - UI code NEVER imports `react-native-nitro-player` (type-only imports like `Playlist` excepted). Only `src/services/player/` may; the live queue reaches the UI through `useQueue()` (`src/services/player/queue.ts`).
-- Three zustand stores in `src/store/`: `playerStore`, `musicStore`, `settingsStore`. Don't mix concerns.
+- Zustand stores in `src/store/`: `playerStore`, `musicStore`, `settingsStore`, `downloadStore`,
+  `otaStore`. Don't mix concerns.
+- UI code NEVER imports `expo-file-system` (only `src/services/downloads/`) or
+  `react-native-nitro-ota` / `expo-application` (only `src/services/ota/`).
 - Stores are pure state; screens/hooks call services then feed results into stores via setters. Stores don't call services.
 - MMKV via `src/services/storage/mmkv.ts` (exports `storage`). Liked songs + history + settings + search history persist here.
 
@@ -193,6 +196,46 @@ Other UI building blocks:
 - Player state reaches the UI through `src/hooks/usePlayer.ts` (bridges nitro-player events → `playerStore`).
 - Requires a dev build (`npx expo run:ios` / `run:android`). Won't play in Expo Go or web.
 
+## Downloads (offline songs)
+
+- `expo-file-system` (not RNFS). Files live in `Documents/downloads/<songId>.m4a`; transfers write
+  `<songId>.part` and are renamed on completion, so a song file only exists complete. Max 2 at once.
+- Disk is the source of truth for "is it downloaded": `songToTrack` plays `localSongUri(id)` when the
+  file exists, else `streamUrl`, and stashes the remote `streamUrl` in `extraPayload` so songs read
+  back from the player (history, likes) never persist a `file://` URL.
+- `downloadStore` (MMKV key `downloads`) is UI state: status/progress plus the `Song` snapshot for
+  the Downloads screen. `src/hooks/useDownloads.ts` drives it (`downloadSong`, `removeDownload`,
+  `removeAllDownloads`); `useDownloadsBridge()` in the root layout restarts unfinished downloads
+  and drops records whose file is gone.
+- Downloads start from `SongActionSheet` (one song, `single: true`) or `DownloadAllButton` (albums
+  and playlists: download all → progress `n/total`, tap to stop → all done, tap to remove).
+  `DownloadAllButton` saves a `DownloadCollection` (MMKV key `download_collections`, id
+  `album:` / `playlist:` / `library:` + source id) listing its song ids.
+- A song file is shared: removing or stopping a collection only deletes songs that aren't
+  `single` and aren't in another collection; removing a song deletes it from every collection.
+- `/downloads` (Library → Downloads) groups by collection — collapsible headers (long-press to
+  remove) — then a "Songs" section for single downloads.
+
+## OTA updates & releases
+
+- JS-only updates via `react-native-nitro-ota`, hosted as assets on the binary's own GitHub release
+  (`v<version>`): `ota-<platform>.json` manifest + zip (+ bsdiff patches). `useOtaUpdates()` (root
+  layout, release builds only) confirms the running bundle and downloads newer ones;
+  `UpdateToast` shows progress and offers a restart; Settings → About shows the running bundle.
+- OTAs target the binary's version (`expo-application` `nativeApplicationVersion`), so a bundle
+  never runs on native code it wasn't built for. Native changes (new modules, config) need a new
+  binary release; only ship JS-only changes as OTA.
+- `npm run release` (release-it): conventional changelog, bump, `scripts/sync-versions.js` copies the
+  version into `app.json`, `android/app/build.gradle` and `ios/tunehub/Info.plist` (and bumps the
+  build number), then tags `v<version>` and opens a GitHub release. Publish that release (not
+  draft) before OTAs: `npm run ota` (`scripts/publish-ota.sh`, needs `GITHUB_TOKEN`).
+- nitro-ota's native hooks are applied by hand to the committed native projects (its Expo plugin is
+  in `app.json` for future prebuilds): `MainApplication.kt` passes `jsBundleFilePath =
+getStoredBundlePath(applicationContext)`, `AppDelegate.swift` returns
+  `NitroOtaBundleManager.shared.getStoredBundlePath()` in release, and the Podfile adds
+  `pod "NitroOtaBundleManager"`. nitro-ota pins `react-native-nitro-modules` to exactly `0.35.1`.
+- `npx expo prebuild` regenerates (wipes) `ios/` and `android/` — avoid it; edit native files directly.
+
 ## Animations & atmosphere
 
 - `react-native-reanimated` (v4) only. Never `Animated` from RN core.
@@ -219,3 +262,4 @@ Other UI building blocks:
 
 - `npm start` — Metro. `npm run ios` / `npm run android` — dev client. `npm run lint`.
 - Typecheck: `npx tsc --noEmit`.
+- `npm run release` — new binary version. `npm run ota` — publish a JS-only update for it.

@@ -5,6 +5,7 @@ import type { Song } from '@/types';
 import { AppIcon } from '@/components/app-icon';
 import type { IconName } from '@/components/app-icon';
 import { SheetModal } from '@/components/SheetModal';
+import { downloadSong, removeDownload, useDownload } from '@/hooks/useDownloads';
 import { useLikedSongs } from '@/hooks/useLikedSongs';
 import { usePlayer } from '@/hooks/usePlayer';
 import { colors, spacing, typography } from '@/theme';
@@ -46,6 +47,7 @@ export function SongActionSheet({ song, onClose, onAddToPlaylist }: Props) {
   const router = useRouter();
   const { toggleLike, isLiked } = useLikedSongs();
   const { playSongs } = usePlayer();
+  const download = useDownload(song?.id);
 
   const liked = song != null ? isLiked(song.id) : false;
 
@@ -66,6 +68,18 @@ export function SongActionSheet({ song, onClose, onAddToPlaylist }: Props) {
   function handleToggleLike() {
     if (song == null) return;
     toggleLike(song);
+    onClose();
+  }
+
+  function handleDownload() {
+    if (song == null) return;
+    downloadSong(song);
+    onClose();
+  }
+
+  function handleRemoveDownload() {
+    if (song == null) return;
+    removeDownload(song.id);
     onClose();
   }
 
@@ -104,6 +118,21 @@ export function SongActionSheet({ song, onClose, onAddToPlaylist }: Props) {
 
           <ActionRow icon="play" label="Play Now" onPress={handlePlayNow} />
           <ActionRow icon="playlistAdd" label="Add to Playlist" onPress={handleAddToPlaylist} />
+          {download?.status === 'completed' ? (
+            <ActionRow icon="trash" label="Remove Download" onPress={handleRemoveDownload} />
+          ) : download?.status === 'queued' || download?.status === 'downloading' ? (
+            <ActionRow
+              icon="close"
+              label={
+                download.status === 'queued'
+                  ? 'Cancel Download'
+                  : `Cancel Download · ${Math.round(download.progress * 100)}%`
+              }
+              onPress={handleRemoveDownload}
+            />
+          ) : (
+            <ActionRow icon="download" label="Download" onPress={handleDownload} />
+          )}
           <ActionRow
             icon={liked ? 'heartFill' : 'heart'}
             label={liked ? 'Unlike' : 'Like'}

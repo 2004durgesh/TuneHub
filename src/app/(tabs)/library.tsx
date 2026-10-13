@@ -8,6 +8,7 @@ import { AddToPlaylistSheet } from '@/components/AddToPlaylistSheet';
 import { SongActionSheet } from '@/components/SongActionSheet';
 import { SongRow } from '@/components/SongRow';
 import { EmptyState } from '@/components/states/EmptyState';
+import { useDownloads } from '@/hooks/useDownloads';
 import { useHistory } from '@/hooks/useHistory';
 import { useLikedSongs } from '@/hooks/useLikedSongs';
 import { useMiniPlayerInset } from '@/hooks/useMiniPlayerPlacement';
@@ -49,6 +50,7 @@ export default function LibraryScreen() {
   const router = useRouter();
   const { likedSongs } = useLikedSongs();
   const { history } = useHistory();
+  const { downloads } = useDownloads();
   const { playSongs } = usePlayer();
   const [sheetSong, setSheetSong] = useState<Song | null>(null);
   const [addToPlaylistSong, setAddToPlaylistSong] = useState<Song | null>(null);
@@ -89,6 +91,12 @@ export default function LibraryScreen() {
           onPress={() => router.push('/liked-songs')}
         />
         <NavRow icon="queue" label="Playlists" onPress={() => router.push('/playlists')} />
+        <NavRow
+          icon="download"
+          label="Downloads"
+          count={downloads.filter((d) => d.status === 'completed').length}
+          onPress={() => router.push('/downloads')}
+        />
       </View>
 
       {/* Recently played preview */}

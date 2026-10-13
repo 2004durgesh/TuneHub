@@ -11,6 +11,9 @@
   "npm": {
     "publish": false
   },
+  "hooks": {
+    "after:bump": "node scripts/sync-versions.js ${version}"
+  },
   "plugins": {
     "@release-it/conventional-changelog": {
       "preset": { "name": "conventionalcommits" },

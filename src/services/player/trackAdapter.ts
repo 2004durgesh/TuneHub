@@ -1,4 +1,5 @@
 import type { TrackItem } from 'react-native-nitro-player';
+import { localSongUri } from '@/services/downloads';
 import type { Song } from '@/types';
 
 /**
@@ -13,9 +14,10 @@ export function songToTrack(song: Song): TrackItem {
     artist: song.artistName,
     album: song.albumName ?? '',
     duration: song.duration,
-    url: song.streamUrl,
+    url: localSongUri(song.id) ?? song.streamUrl,
     artwork: song.artworkUrl,
     extraPayload: {
+      streamUrl: song.streamUrl,
       artistId: song.artistId,
       albumId: song.albumId,
       artworkSmall: song.artworkSmall,
@@ -46,7 +48,7 @@ export function trackToSong(track: TrackItem): Song {
     artworkUrl: artwork,
     artworkSmall: text(extra.artworkSmall) ?? artwork,
     duration: track.duration,
-    streamUrl: track.url,
+    streamUrl: text(extra.streamUrl) ?? track.url,
     hasLyrics: extra.hasLyrics === true,
     lyricsId: text(extra.lyricsId),
     language: text(extra.language) ?? '',

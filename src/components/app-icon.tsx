@@ -32,6 +32,16 @@ const ICONS = {
   artist: { ios: 'music.mic', android: 'mic', web: 'mic' },
   warning: { ios: 'exclamationmark.triangle.fill', android: 'warning', web: 'warning' },
   check: { ios: 'checkmark', android: 'check', web: 'check' },
+  download: { ios: 'arrow.down.circle', android: 'download', web: 'download' },
+  downloaded: { ios: 'arrow.down.circle.fill', android: 'download_done', web: 'download_done' },
+  retry: { ios: 'arrow.clockwise', android: 'refresh', web: 'refresh' },
+  info: { ios: 'info.circle', android: 'info', web: 'info' },
+  update: { ios: 'arrow.triangle.2.circlepath', android: 'system_update', web: 'system_update' },
+  code: {
+    ios: 'chevron.left.forwardslash.chevron.right',
+    android: 'code',
+    web: 'code',
+  },
 } as const;
 
 export type IconName = keyof typeof ICONS;

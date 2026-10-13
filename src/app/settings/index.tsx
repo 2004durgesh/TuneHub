@@ -1,10 +1,10 @@
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Host, Switch } from '@expo/ui';
-import Constants from 'expo-constants';
 import { AppIcon } from '@/components/app-icon';
 import { ThemedList, ThemedListItem } from '@/components/native/ThemedList';
 import { useSettingsStore } from '@/store/settingsStore';
+import { appVersion } from '@/services/ota';
 import { clearHistory } from '@/services/storage/history';
 import { colors, spacing, typography } from '@/theme';
 
@@ -18,8 +18,6 @@ export default function SettingsScreen() {
   const audioQuality = useSettingsStore((s) => s.audioQuality);
   const equalizerEnabled = useSettingsStore((s) => s.equalizerEnabled);
   const equalizerPreset = useSettingsStore((s) => s.equalizerPreset);
-
-  const appVersion = Constants.expoConfig?.version ?? '1.0.0';
 
   function handleClearHistory() {
     Alert.alert(
@@ -64,7 +62,9 @@ export default function SettingsScreen() {
             Reduced Motion
           </ThemedListItem>
           <ThemedListItem
-            leading={<AppIcon name="warning" size={20} color={colors.accent} />}
+            onPress={() => router.push('/settings/about')}
+            leading={<AppIcon name="info" size={20} color={colors.accent} />}
+            trailing={chevron}
             supportingText={`Version ${appVersion}`}
           >
             About

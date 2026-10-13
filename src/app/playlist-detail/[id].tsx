@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppIcon } from '@/components/app-icon';
 import { Artwork } from '@/components/Artwork';
+import { DownloadAllButton } from '@/components/DownloadAllButton';
 import { SongRow } from '@/components/SongRow';
 import { ErrorState } from '@/components/states/ErrorState';
 import { LoadingState } from '@/components/states/LoadingState';
@@ -112,10 +113,22 @@ export default function PlaylistDetailScreen() {
             <Text style={styles.title}>{playlist.name}</Text>
             <Text style={styles.count}>{songs.length} songs</Text>
             {songs.length > 0 && (
-              <Pressable style={styles.playBtn} onPress={() => void playSongs(songs, 0)}>
-                <AppIcon name="play" size={18} color={colors.onAccent} />
-                <Text style={styles.playBtnText}>Play All</Text>
-              </Pressable>
+              <View style={styles.actions}>
+                <Pressable style={styles.playBtn} onPress={() => void playSongs(songs, 0)}>
+                  <AppIcon name="play" size={18} color={colors.onAccent} />
+                  <Text style={styles.playBtnText}>Play All</Text>
+                </Pressable>
+                <DownloadAllButton
+                  collection={{
+                    id: `library:${playlist.id}`,
+                    kind: 'playlist',
+                    title: playlist.name,
+                    artworkUrl: playlist.artwork ?? songs[0]?.artworkUrl ?? '',
+                  }}
+                  songs={songs}
+                  style={styles.downloadBtn}
+                />
+              </View>
             )}
           </View>
         )}
@@ -149,6 +162,7 @@ const styles = StyleSheet.create({
   },
   title: { ...typography.sectionHeader, color: colors.text, textAlign: 'center' },
   count: { ...typography.metadata, color: colors.textSecondary },
+  actions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xs },
   playBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -157,7 +171,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
     borderRadius: 24,
-    marginTop: spacing.xs,
   },
+  downloadBtn: { borderRadius: 24 },
   playBtnText: { ...typography.bodyStrong, color: colors.onAccent },
 });

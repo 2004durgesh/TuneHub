@@ -7,6 +7,9 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AppIcon } from '@/components/app-icon';
 import { NowPlaying } from '@/components/now-playing/NowPlaying';
+import { UpdateToast } from '@/components/UpdateToast';
+import { useDownloadsBridge } from '@/hooks/useDownloads';
+import { useOtaUpdates } from '@/hooks/useOtaUpdates';
 import { usePlayerBridge } from '@/hooks/usePlayer';
 import { colors } from '@/theme';
 
@@ -30,6 +33,8 @@ function androidBackButton({ canGoBack }: { canGoBack?: boolean }) {
 
 export default function RootLayout() {
   usePlayerBridge();
+  useDownloadsBridge();
+  useOtaUpdates();
 
   useEffect(() => {
     SplashScreen.hideAsync();
@@ -67,6 +72,7 @@ export default function RootLayout() {
           <Stack.Screen name="liked-songs" />
           <Stack.Screen name="history" />
           <Stack.Screen name="playlists" />
+          <Stack.Screen name="downloads" />
           <Stack.Screen
             name="settings/index"
             options={{
@@ -78,9 +84,11 @@ export default function RootLayout() {
             }}
           />
           <Stack.Screen name="settings/playback" options={{ headerShown: true }} />
+          <Stack.Screen name="settings/about" options={{ headerShown: true }} />
         </Stack>
         {/* Mini player and full player as one morphing surface above every screen. */}
         <NowPlaying />
+        <UpdateToast />
       </ThemeProvider>
     </GestureHandlerRootView>
   );

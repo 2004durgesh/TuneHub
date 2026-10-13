@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppIcon } from '@/components/app-icon';
 import { Artwork } from '@/components/Artwork';
+import { DownloadAllButton } from '@/components/DownloadAllButton';
 import { SongRow } from '@/components/SongRow';
 import { ErrorState } from '@/components/states/ErrorState';
 import { LoadingState } from '@/components/states/LoadingState';
@@ -107,13 +108,24 @@ export default function PlaylistScreen() {
               </Text>
             )}
             <Text style={styles.songCount}>{songCountText}</Text>
-            <Pressable
-              style={({ pressed }) => [styles.playAllButton, pressed && styles.pressed]}
-              onPress={handlePlayAll}
-            >
-              <AppIcon name="play" size={18} color={colors.onAccent} />
-              <Text style={styles.playAllText}>Play All</Text>
-            </Pressable>
+            <View style={styles.actionRow}>
+              <Pressable
+                style={({ pressed }) => [styles.playAllButton, pressed && styles.pressed]}
+                onPress={handlePlayAll}
+              >
+                <AppIcon name="play" size={18} color={colors.onAccent} />
+                <Text style={styles.playAllText}>Play All</Text>
+              </Pressable>
+              <DownloadAllButton
+                collection={{
+                  id: `playlist:${playlist.id}`,
+                  kind: 'playlist',
+                  title: playlist.title,
+                  artworkUrl: playlist.artworkUrl,
+                }}
+                songs={playlist.songs}
+              />
+            </View>
           </View>
         }
         renderItem={({ item }) => (
@@ -157,6 +169,10 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.textTertiary,
     marginBottom: spacing.lg,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
   },
   playAllButton: {
     flexDirection: 'row',

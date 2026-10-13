@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppIcon } from '@/components/app-icon';
 import { Artwork } from '@/components/Artwork';
+import { DownloadAllButton } from '@/components/DownloadAllButton';
 import { SongRow } from '@/components/SongRow';
 import { ErrorState } from '@/components/states/ErrorState';
 import { LoadingState } from '@/components/states/LoadingState';
@@ -135,6 +136,15 @@ export default function AlbumScreen() {
                 <AppIcon name="shuffle" size={18} color={colors.accent} />
                 <Text style={styles.shuffleButtonText}>Shuffle</Text>
               </Pressable>
+              <DownloadAllButton
+                collection={{
+                  id: `album:${album.id}`,
+                  kind: 'album',
+                  title: album.title,
+                  artworkUrl: album.artworkUrl,
+                }}
+                songs={album.songs}
+              />
             </View>
           </View>
         }

@@ -24,5 +24,9 @@ module.exports = defineConfig([
       '@typescript-eslint/no-require-imports': 'off',
     },
   },
+  {
+    files: ['scripts/**/*.js'],
+    languageOptions: { globals: { __dirname: 'readonly' } },
+  },
   eslintConfigPrettier,
 ]);
