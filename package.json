@@ -55,6 +55,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "release": "release-it",
+    "build-android": "bash scripts/build-android.sh",
+    "build-ios": "bash scripts/build-ios.sh",
     "ota": "bash scripts/publish-ota.sh"
   },
   "private": true

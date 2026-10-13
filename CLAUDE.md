@@ -225,10 +225,13 @@ Other UI building blocks:
 - OTAs target the binary's version (`expo-application` `nativeApplicationVersion`), so a bundle
   never runs on native code it wasn't built for. Native changes (new modules, config) need a new
   binary release; only ship JS-only changes as OTA.
-- `npm run release` (release-it): conventional changelog, bump, `scripts/sync-versions.js` copies the
-  version into `app.json`, `android/app/build.gradle` and `ios/tunehub/Info.plist` (and bumps the
-  build number), then tags `v<version>` and opens a GitHub release. Publish that release (not
-  draft) before OTAs: `npm run ota` (`scripts/publish-ota.sh`, needs `GITHUB_TOKEN`).
+- `npm run release` (release-it, needs `GITHUB_TOKEN`): conventional changelog, bump, then the
+  `after:bump` hooks — `scripts/sync-versions.js` copies the version into `app.json`,
+  `android/app/build.gradle` and `ios/tunehub/Info.plist` (and bumps the build number),
+  `npm run build-android` builds per-ABI release APKs (`tunehub-<abi>-v<version>.apk`, signed with
+  the debug keystore) and `npm run build-ios` an unsigned sideload `.ipa` — then commits, tags
+  `v<version>` and creates the GitHub release with the APKs and IPA attached. JS-only updates for
+  that binary: `npm run ota` (`scripts/publish-ota.sh`, needs `GITHUB_TOKEN`).
 - nitro-ota's native hooks are applied by hand to the committed native projects (its Expo plugin is
   in `app.json` for future prebuilds): `MainApplication.kt` passes `jsBundleFilePath =
 getStoredBundlePath(applicationContext)`, `AppDelegate.swift` returns

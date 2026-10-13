@@ -6,13 +6,21 @@
   },
   "github": {
     "release": true,
-    "releaseName": "v${version}"
+    "releaseName": "v${version}",
+    "assets": [
+      "android/app/build/outputs/apk/release/tunehub-*-v${version}.apk",
+      "ios/build/tunehub-v${version}.ipa"
+    ]
   },
   "npm": {
     "publish": false
   },
   "hooks": {
-    "after:bump": "node scripts/sync-versions.js ${version}"
+    "after:bump": [
+      "node scripts/sync-versions.js ${version}",
+      "npm run build-android",
+      "npm run build-ios"
+    ]
   },
   "plugins": {
     "@release-it/conventional-changelog": {
