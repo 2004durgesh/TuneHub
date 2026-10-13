@@ -50,12 +50,13 @@ export function usePlayerBridge() {
   }, [setCurrentSong, setPlaybackState, setProgress]);
 }
 
-/** Playback controls + current state for any screen/component. */
+/**
+ * Playback controls + current state for any screen/component. Position isn't included: it ticks
+ * every second, and it would re-render every caller — use `usePlaybackProgress` where it's shown.
+ */
 export function usePlayer() {
   const currentSong = usePlayerStore((s) => s.currentSong);
   const playbackState = usePlayerStore((s) => s.playbackState);
-  const position = usePlayerStore((s) => s.position);
-  const duration = usePlayerStore((s) => s.duration);
 
   // Shuffle is a mode: with it on, a new list starts at the tapped song and the rest play shuffled.
   const playSongs = useCallback((songs: Song[], startIndex = 0) => {
@@ -77,8 +78,6 @@ export function usePlayer() {
   return {
     currentSong,
     playbackState,
-    position,
-    duration,
     isPlaying: playbackState === 'playing',
     playSongs,
     togglePlayPause,
@@ -86,4 +85,8 @@ export function usePlayer() {
     previous: previousService,
     seek,
   };
+}
+
+export function usePlaybackProgress() {
+  return usePlayerStore(useShallow((s) => ({ position: s.position, duration: s.duration })));
 }

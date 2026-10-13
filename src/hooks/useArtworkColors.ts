@@ -127,9 +127,10 @@ async function extractPalette(url: string): Promise<ArtworkColors | null> {
  */
 export function useArtworkColors(artworkUrl: string | undefined): ArtworkColors | null {
   const [result, setResult] = useState<ArtworkColors | null>(null);
+  const cached = artworkUrl ? cache.get(artworkUrl) : undefined;
 
   useEffect(() => {
-    if (!artworkUrl) return;
+    if (!artworkUrl || cache.has(artworkUrl)) return;
     let active = true;
     extractPalette(artworkUrl)
       .then((palette) => {
@@ -143,5 +144,5 @@ export function useArtworkColors(artworkUrl: string | undefined): ArtworkColors 
     };
   }, [artworkUrl]);
 
-  return artworkUrl ? result : null;
+  return artworkUrl ? (cached ?? result) : null;
 }

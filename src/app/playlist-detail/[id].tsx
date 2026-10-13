@@ -1,5 +1,5 @@
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { Stack, useLocalSearchParams } from 'expo-router';
+import { useState } from 'react';
 import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -8,7 +8,6 @@ import { Artwork } from '@/components/Artwork';
 import { DownloadAllButton } from '@/components/DownloadAllButton';
 import { SongRow } from '@/components/SongRow';
 import { ErrorState } from '@/components/states/ErrorState';
-import { LoadingState } from '@/components/states/LoadingState';
 import { useMiniPlayerInset } from '@/hooks/useMiniPlayerPlacement';
 import { usePlayer } from '@/hooks/usePlayer';
 import { getPlaylist, removeSongFromPlaylist, renamePlaylist } from '@/services/player/playerQueue';
@@ -19,33 +18,19 @@ import type { Song } from '@/types';
 import type { Playlist } from 'react-native-nitro-player';
 
 export default function PlaylistDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const router = useRouter();
+  const { id = '' } = useLocalSearchParams<{ id: string }>();
   const { top } = useSafeAreaInsets();
   const miniPlayerInset = useMiniPlayerInset();
   const { playSongs, currentSong } = usePlayer();
 
-  const [playlist, setPlaylist] = useState<Playlist | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const load = () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const p = getPlaylist(id ?? '');
-      setPlaylist(p);
-    } catch {
-      setError('Could not load playlist');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  // A synchronous native read, so it happens during render instead of in an effect.
+  const [loaded, setLoaded] = useState<{ id: string; playlist: Playlist | null }>(() => ({
+    id,
+    playlist: getPlaylist(id),
+  }));
+  if (loaded.id !== id) setLoaded({ id, playlist: getPlaylist(id) });
+  const playlist = loaded.playlist;
+  const load = () => setLoaded({ id, playlist: getPlaylist(id) });
 
   const songs: Song[] = playlist?.tracks.map(trackToSong) ?? [];
 
@@ -60,7 +45,7 @@ export default function PlaylistDetailScreen() {
         text: 'Remove',
         style: 'destructive',
         onPress: async () => {
-          await removeSongFromPlaylist(id ?? '', song.id);
+          await removeSongFromPlaylist(id, song.id);
           load();
         },
       },
@@ -73,7 +58,7 @@ export default function PlaylistDetailScreen() {
       'Enter new name',
       async (newName) => {
         if (newName?.trim()) {
-          await renamePlaylist(id ?? '', newName.trim());
+          await renamePlaylist(id, newName.trim());
           load();
         }
       },
@@ -82,9 +67,7 @@ export default function PlaylistDetailScreen() {
     );
   };
 
-  if (loading) return <LoadingState />;
-  if (error || !playlist)
-    return <ErrorState message={error ?? 'Playlist not found'} onRetry={load} />;
+  if (!playlist) return <ErrorState message="Playlist not found" onRetry={load} />;
 
   return (
     <>

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Alert, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { Playlist } from 'react-native-nitro-player';
 import type { Song } from '@/types';
@@ -14,20 +14,20 @@ type Props = {
 };
 
 export function AddToPlaylistSheet({ song, onClose }: Props) {
-  const [playlists, setPlaylists] = useState<Playlist[]>([]);
+  // Re-read (a synchronous native call) whenever the sheet opens for a song; the old list stays
+  // while it closes so it doesn't empty mid-dismiss.
+  const [playlists, setPlaylists] = useState<Playlist[]>(getAllPlaylists);
+  const [listedFor, setListedFor] = useState(song);
+  if (song !== listedFor) {
+    setListedFor(song);
+    if (song != null) setPlaylists(getAllPlaylists());
+  }
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newName, setNewName] = useState('');
   // Bumped on each open so the name field remounts empty.
   const [nameFieldKey, setNameFieldKey] = useState(0);
   // Song captured when the create flow starts, since the sheet closes first.
   const [pendingSong, setPendingSong] = useState<Song | null>(null);
-
-  // Refresh the playlist list whenever the sheet is opened for a song.
-  useEffect(() => {
-    if (song != null) {
-      setPlaylists(getAllPlaylists());
-    }
-  }, [song]);
 
   const handleAdd = useCallback(
     (playlistId: string) => {

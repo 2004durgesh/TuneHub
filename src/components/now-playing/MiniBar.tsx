@@ -13,6 +13,9 @@ import type { ArtworkColors } from '@/types';
 
 const PROGRESS_HEIGHT = 2;
 
+const playedFraction = ({ position, duration }: { position: number; duration: number }) =>
+  position / Math.max(duration, 1);
+
 // NowPlaying draws the (morphing) artwork over this empty slot, so these must match the layout.
 export const MINI_ART_SIZE = 48;
 export const MINI_ART_LEFT = spacing.sm;
@@ -29,15 +32,19 @@ type Props = {
 export function MiniBar({ width, palette, onExpand }: Props) {
   const { currentSong, isPlaying, togglePlayPause, next } = usePlayer();
   const { toggleLike, isLiked } = useLikedSongs();
-  const position = usePlayerStore((s) => s.position);
-  const duration = usePlayerStore((s) => s.duration);
   const dynamicAtmosphere = useSettingsStore((s) => s.dynamicAtmosphere);
 
-  const progress = useSharedValue(0);
+  // Fed straight from the store: the per-second position ticks never re-render the bar.
+  const progress = useSharedValue(playedFraction(usePlayerStore.getState()));
   const trackWidth = useSharedValue(0);
-  useEffect(() => {
-    progress.value = withTiming(position / Math.max(duration, 1), timings.fast);
-  }, [position, duration, progress]);
+  useEffect(
+    () =>
+      usePlayerStore.subscribe((state, prev) => {
+        if (state.position === prev.position && state.duration === prev.duration) return;
+        progress.set(withTiming(playedFraction(state), timings.fast));
+      }),
+    [progress],
+  );
   const progressStyle = useAnimatedStyle(() => ({ width: trackWidth.value * progress.value }));
 
   const tint = useSharedValue<string>(hexColors.surface);

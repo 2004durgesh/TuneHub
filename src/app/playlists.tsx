@@ -1,5 +1,5 @@
 import { Alert, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { Stack, useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Host } from '@expo/ui';
@@ -26,10 +26,6 @@ export default function PlaylistsScreen() {
   const refresh = useCallback(() => {
     setPlaylists(getAllPlaylists());
   }, []);
-
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
 
   useFocusEffect(
     useCallback(() => {

@@ -6,7 +6,7 @@ import { EdgeFadeItem, useEdgeFade } from '@/components/EdgeFade';
 import { EmptyState } from '@/components/states/EmptyState';
 import { LoadingState } from '@/components/states/LoadingState';
 import { usePlayer } from '@/hooks/usePlayer';
-import { getLyrics, type Lyrics } from '@/services/music';
+import { getCachedLyrics, getLyrics, type Lyrics } from '@/services/music';
 import { colors, spacing, typography } from '@/theme';
 
 /** Lyrics for the current song, shown in place of the artwork in the expanded player. */
@@ -15,8 +15,11 @@ export function LyricsPanel() {
   const lyricsId = currentSong ? (currentSong.lyricsId ?? currentSong.id) : null;
   const [result, setResult] = useState<{ id: string; lyrics: Lyrics | null } | null>(null);
 
+  // Already-fetched lyrics render on the first frame, so re-opening the panel doesn't refetch.
+  const cached = lyricsId ? getCachedLyrics(lyricsId) : undefined;
+
   useEffect(() => {
-    if (!lyricsId) return;
+    if (!lyricsId || getCachedLyrics(lyricsId) !== undefined) return;
     let active = true;
     getLyrics(lyricsId)
       .then((lyrics) => {
@@ -30,9 +33,14 @@ export function LyricsPanel() {
     };
   }, [lyricsId]);
 
-  if (lyricsId && result?.id !== lyricsId) return <LoadingState />;
-
-  const lyrics = lyricsId ? result?.lyrics : null;
+  const lyrics = !lyricsId
+    ? null
+    : cached !== undefined
+      ? cached
+      : result?.id === lyricsId
+        ? result.lyrics
+        : undefined;
+  if (lyrics === undefined) return <LoadingState />;
   if (!lyrics) {
     return (
       <EmptyState

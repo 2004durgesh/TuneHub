@@ -199,6 +199,10 @@ Other UI building blocks:
   shuffled behind it. Shuffle is a mode — while it's on, `playNow` shuffles new lists the same way.
 - Equalizer settings apply through `src/services/player/equalizer.ts` (`setEqualizerEnabled`, `applyEqualizerPreset`); persisted EQ re-applies on player setup.
 - Player state reaches the UI through `src/hooks/usePlayer.ts` (bridges nitro-player events → `playerStore`).
+  Position ticks every second, so `usePlayer()` deliberately omits it — otherwise every screen
+  using it re-renders each second while music plays. Read it with `usePlaybackProgress()` in the
+  smallest component that shows it (`FullPlayer`'s `ProgressRow`), or drive a shared value from
+  `usePlayerStore.subscribe` (`MiniBar`'s progress line).
 - Requires a dev build (`npx expo run:ios` / `run:android`). Won't play in Expo Go or web.
 
 ## Downloads (offline songs)

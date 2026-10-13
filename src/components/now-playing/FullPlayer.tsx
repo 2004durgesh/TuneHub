@@ -8,7 +8,7 @@ import { AppIcon } from '@/components/app-icon';
 import { SeekSlider } from '@/components/native/SeekSlider';
 import { SongActionSheet } from '@/components/SongActionSheet';
 import { useLikedSongs } from '@/hooks/useLikedSongs';
-import { usePlayer } from '@/hooks/usePlayer';
+import { usePlaybackProgress, usePlayer } from '@/hooks/usePlayer';
 import { setRepeat as setRepeatService, shuffleUpcoming } from '@/services/player';
 import { usePlayerStore } from '@/store';
 import { colors, screenPadding, spacing, typography } from '@/theme';
@@ -40,6 +40,26 @@ function formatTime(s: number): string {
   return `${m}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 }
 
+// Its own component so the per-second position updates re-render only this row.
+function ProgressRow({ onSeek }: { onSeek: (seconds: number) => void }) {
+  const { position, duration } = usePlaybackProgress();
+  const [scrub, setScrub] = useState<number | null>(null);
+
+  return (
+    <View style={styles.progressRow}>
+      <Text style={styles.timeText}>{formatTime(scrub ?? position)}</Text>
+      <SeekSlider
+        style={styles.slider}
+        value={position}
+        max={duration}
+        onScrub={setScrub}
+        onSeek={onSeek}
+      />
+      <Text style={styles.timeText}>{formatTime(duration)}</Text>
+    </View>
+  );
+}
+
 type Props = {
   width: number;
   height: number;
@@ -65,8 +85,7 @@ export function FullPlayer({
   onCollapse,
 }: Props) {
   const insets = useSafeAreaInsets();
-  const { currentSong, position, duration, isPlaying, togglePlayPause, next, previous, seek } =
-    usePlayer();
+  const { currentSong, isPlaying, togglePlayPause, next, previous, seek } = usePlayer();
   const { isLiked, toggleLike } = useLikedSongs();
 
   const repeat = usePlayerStore((s) => s.repeat);
@@ -76,8 +95,6 @@ export function FullPlayer({
 
   const [sheetSong, setSheetSong] = useState<Song | null>(null);
   const [addToPlaylistSong, setAddToPlaylistSong] = useState<Song | null>(null);
-  const [scrub, setScrub] = useState<number | null>(null);
-  const shownPosition = scrub ?? position;
 
   const liked = currentSong ? isLiked(currentSong.id) : false;
   const repeatColor = repeat !== 'off' ? colors.accent : colors.textSecondary;
@@ -193,17 +210,7 @@ export function FullPlayer({
         </View>
       </View>
 
-      <View style={styles.progressRow}>
-        <Text style={styles.timeText}>{formatTime(shownPosition)}</Text>
-        <SeekSlider
-          style={styles.slider}
-          value={position}
-          max={duration}
-          onScrub={setScrub}
-          onSeek={seek}
-        />
-        <Text style={styles.timeText}>{formatTime(duration)}</Text>
-      </View>
+      <ProgressRow onSeek={seek} />
 
       <View style={styles.mainControls}>
         <Pressable style={styles.iconBtn} onPress={previous} hitSlop={8}>
