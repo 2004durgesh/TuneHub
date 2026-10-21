@@ -34,7 +34,7 @@ function maxBy<T>(items: T[], score: (item: T) => number): T | undefined {
 
 // Downscale on a CPU surface so pixels can be read synchronously, as RGBA on every platform.
 function samplePixels(image: SkImage): Uint8Array | null {
-  const surface = Skia.Surface.Make(SAMPLE, SAMPLE);
+  const surface = Skia.Surface.MakeRaster(SAMPLE, SAMPLE);
   if (!surface) return null;
   surface
     .getCanvas()

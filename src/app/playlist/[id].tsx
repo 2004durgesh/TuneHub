@@ -1,12 +1,13 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppIcon } from '@/components/app-icon';
 import { Artwork } from '@/components/Artwork';
 import { DownloadAllButton } from '@/components/DownloadAllButton';
-import { SONG_LIST_WINDOW, SongRow } from '@/components/SongRow';
+import { SONG_ROW_HEIGHT, SongRow } from '@/components/SongRow';
+import { LazyList } from '@/components/native/LazyList';
 import { ErrorState } from '@/components/states/ErrorState';
 import { LoadingState } from '@/components/states/LoadingState';
 import { useMiniPlayerInset } from '@/hooks/useMiniPlayerPlacement';
@@ -93,17 +94,12 @@ export default function PlaylistScreen() {
   return (
     <>
       <Stack.Screen options={{ title: '', headerTransparent: true, headerBackTitle: '' }} />
-      <FlatList
+      <LazyList
         data={playlist.songs}
-        {...SONG_LIST_WINDOW}
+        estimatedItemSize={SONG_ROW_HEIGHT}
         keyExtractor={(song) => song.id}
-        style={styles.list}
-        contentContainerStyle={[
-          styles.listContent,
-          { paddingBottom: spacing.xxl + miniPlayerInset },
-        ]}
-        showsVerticalScrollIndicator={false}
-        ListHeaderComponent={
+        bottomInset={spacing.xxl + miniPlayerInset}
+        header={
           <View style={[styles.header, { paddingTop: top + spacing.xl }]}>
             <View style={styles.artworkContainer}>
               <Artwork uri={playlist.artworkUrl} size={240} borderRadius={radii.artwork} />
@@ -146,13 +142,6 @@ export default function PlaylistScreen() {
 }
 
 const styles = StyleSheet.create({
-  list: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  listContent: {
-    paddingBottom: spacing.xxl,
-  },
   header: {
     alignItems: 'center',
     paddingHorizontal: screenPadding,

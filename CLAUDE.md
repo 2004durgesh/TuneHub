@@ -1,6 +1,6 @@
 # TuneHub
 
-React Native + Expo (SDK 57) music player. JioSaavn SDK as the data/audio source.
+React Native + Expo (SDK 58, RN 0.88) music player. JioSaavn SDK as the data/audio source.
 
 **Native-first UI:** build screens out of `@expo/ui` components and color them with the
 `@/theme` `colors` tokens (Material 3 on both platforms — see Colors). Reach for
@@ -18,7 +18,7 @@ lazy `require`s or web fallbacks.
 
 - Routes: `src/app/` (Expo Router, `src/app/` is the routes dir; path alias `@/*` → `src/*`).
 - Root `src/app/_layout.tsx` is a `Stack`; the tab group is `src/app/(tabs)/` with a
-  `NativeTabs` layout (`expo-router/unstable-native-tabs`): Home, Search, Library.
+  `NativeTabs` layout (`expo-router/native-tabs`): Home, Search, Library.
 - Everything else under `src/`: `theme/`, `types/`, `services/`, `store/`, `hooks/`, `components/`.
 
 ## Architecture rules
@@ -41,7 +41,7 @@ lazy `require`s or web fallbacks.
 Default to `@expo/ui` for controls and native chrome. Import universal components from
 `@expo/ui`; they render real SwiftUI on iOS and Jetpack Compose on Android.
 
-**Available universal components** (`import { … } from '@expo/ui'`, v57.0.18):
+**Available universal components** (`import { … } from '@expo/ui'`, v58.0.21):
 `Host`, `Column`, `Row`, `Text`, `Button`, `ScrollView`, `Switch`, `Slider`, `Checkbox`,
 `Picker`, `List`, `ListItem`, `Collapsible`, `FieldGroup`, `Icon`, `Spacer`, `TextInput`.
 
@@ -255,15 +255,27 @@ Other UI building blocks:
   in `app.json` for future prebuilds): `MainApplication.kt` passes `jsBundleFilePath =
 getStoredBundlePath(applicationContext)`, `AppDelegate.swift` returns
   `NitroOtaBundleManager.shared.getStoredBundlePath()` in release, and the Podfile adds
-  `pod "NitroOtaBundleManager"`. nitro-ota pins `react-native-nitro-modules` to exactly `0.35.1`.
-- `npx expo prebuild` regenerates (wipes) `ios/` and `android/` — avoid it; edit native files directly.
+  `pod "NitroOtaBundleManager"`.
+- nitro-ota (≤ 0.14.1) pins `react-native-nitro-modules` to exactly `0.35.1`, but RN 0.88 on iOS
+  needs ≥ 0.36.2 (it only calls `installJSIBindingsWithRuntime:callInvoker:`; 0.35.x crashes at launch
+  with "installJSIBindingsWithRuntime: was not called"). `package.json` `overrides` forces 0.37.1
+  onto nitro-ota; drop the override once nitro-ota supports it. Test OTA in a release build after
+  changing Nitro. `overrides` also pins `react-dom` to React's version (it's only an optional peer).
+- `npx expo prebuild` regenerates (wipes) `ios/` and `android/` — avoid it; edit native files
+  directly. For an SDK upgrade, `npx expo prebuild --clean` and then re-apply the hand edits:
+  `android/app/build.gradle` ABI `splits` + release APK naming (`applicationVariants`), and in
+  `android/gradle.properties` `android.enableShrinkResourcesInReleaseBuilds=true` and ARM-only
+  `reactNativeArchitectures`. nitro-ota's plugin regenerates its native hooks itself. Keep
+  `android/local.properties` (gitignored) and run `pod install` with `LANG=en_US.UTF-8`.
+- The SDK 58 binary must ship as a new version: OTAs on `v1.1.0` are SDK 57 bundles, and a
+  1.1.0 binary on SDK 58 would download them.
 
 ## Animations & atmosphere
 
 - `react-native-reanimated` (v4) only. Never `Animated` from RN core.
 - Spring configs from `@/theme` `springs` (default `springs.smooth`). Timing from `timings`.
 - Dynamic artwork atmosphere: `src/hooks/useArtworkColors.ts` extracts a four-color palette
-  with Skia (decode → 24×24 CPU surface → bucket the pixels), cached per URL. The mini bar tints
+  with Skia (decode → 24×24 CPU surface via `Skia.Surface.MakeRaster` → bucket the pixels), cached per URL. The mini bar tints
   toward it; the expanded player renders `PlayerBackdrop` (Skia): palette blobs drifting over the
   dark base, crossfading between tracks. Keep it cheap — it's on screen whenever the player is
   open: one runtime shader draws all four soft blobs (no circle nodes, no blur layer), on a
@@ -273,9 +285,17 @@ getStoredBundlePath(applicationContext)`, `AppDelegate.swift` returns
 - Covers for the player go through `src/hooks/useArtworkImage.ts` (`loadArtworkImage` /
   `useArtworkImage`): one download + decode per URL shared by `ArtworkTransition` and
   `useArtworkColors`, and `usePlayerBridge` prefetches the up-next cover on every track change.
-- Song lists: `SongRow` has a fixed height (`SONG_ROW_HEIGHT`); spread `SONG_LIST_WINDOW` on
-  every song `FlatList`/`SectionList`, and add `getItemLayout={songRowLayout}` when the list has
-  no `ListHeaderComponent` (offsets would be off by the header).
+- Vertical song lists (album, JioSaavn playlist, your playlist, liked songs, history) use
+  `LazyList` (`src/components/native/`): Compose `LazyColumn.Items` / SwiftUI
+  `LazyVStack.ForEach` recycle rows natively, each `SongRow` hosted in an
+  `RNHostView matchContents={{ vertical: true }}`; `header` scrolls with the rows, `bottomInset`
+  pads the end. `overscanCount` is 25: at the default 10, rows were bound mid-fling and frames
+  dropped (p90 27 ms vs 18 ms). Measured on Android vs FlatList (50 songs): opens faster
+  (35.6 vs 52.7 ms of React work) with the same scroll frames, but recycling re-renders rows as
+  they enter, ~6× the React work while scrolling. No JS scroll events, so no `EdgeFade`.
+- The other song lists (queue panel, downloads) are `FlatList`/`SectionList`: `SongRow` has a
+  fixed height (`SONG_ROW_HEIGHT`); spread `SONG_LIST_WINDOW` on them, and add
+  `getItemLayout={songRowLayout}` when the list has no `ListHeaderComponent`.
 - `expo-image` defaults to a disk-only cache; `Artwork`/`ArtworkCard` use `cachePolicy="memory-disk"`.
 - Skia is `react-native-skia` (v3, Graphite backend) — the renamed successor of
   `@shopify/react-native-skia`; never install the old package. Skia `color` props need hex

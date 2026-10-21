@@ -1,12 +1,13 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppIcon } from '@/components/app-icon';
 import { Artwork } from '@/components/Artwork';
 import { DownloadAllButton } from '@/components/DownloadAllButton';
-import { SONG_LIST_WINDOW, SongRow } from '@/components/SongRow';
+import { SONG_ROW_HEIGHT, SongRow } from '@/components/SongRow';
+import { LazyList } from '@/components/native/LazyList';
 import { ErrorState } from '@/components/states/ErrorState';
 import { useMiniPlayerInset } from '@/hooks/useMiniPlayerPlacement';
 import { playSongs, useCurrentSongId } from '@/hooks/usePlayer';
@@ -83,16 +84,13 @@ export default function PlaylistDetailScreen() {
           ),
         }}
       />
-      <FlatList
+      <LazyList
         data={songs}
-        {...SONG_LIST_WINDOW}
+        estimatedItemSize={SONG_ROW_HEIGHT}
         keyExtractor={(s) => s.id}
-        contentContainerStyle={[
-          styles.content,
-          { paddingTop: top + 56, paddingBottom: spacing.xxl + miniPlayerInset },
-        ]}
-        ListHeaderComponent={() => (
-          <View style={styles.hero}>
+        bottomInset={spacing.xxl + miniPlayerInset}
+        header={
+          <View style={[styles.hero, { paddingTop: top + 56 }]}>
             <Artwork uri={playlist.artwork ?? ''} size={200} />
             <Text style={styles.title}>{playlist.name}</Text>
             <Text style={styles.count}>{songs.length} songs</Text>
@@ -115,7 +113,7 @@ export default function PlaylistDetailScreen() {
               </View>
             )}
           </View>
-        )}
+        }
         renderItem={({ item, index }) => (
           <SongRow
             song={item}
@@ -129,15 +127,12 @@ export default function PlaylistDetailScreen() {
             }
           />
         )}
-        style={styles.container}
       />
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  content: { paddingBottom: spacing.xxl },
   hero: {
     alignItems: 'center',
     paddingHorizontal: spacing.md,

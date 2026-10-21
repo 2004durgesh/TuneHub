@@ -1,9 +1,10 @@
-import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useState } from 'react';
 import { Stack, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppIcon } from '@/components/app-icon';
-import { SONG_LIST_WINDOW, SongRow, songRowLayout } from '@/components/SongRow';
+import { SONG_ROW_HEIGHT, SongRow } from '@/components/SongRow';
+import { LazyList } from '@/components/native/LazyList';
 import { SongActionSheet } from '@/components/SongActionSheet';
 import { AddToPlaylistSheet } from '@/components/AddToPlaylistSheet';
 import { EmptyState } from '@/components/states/EmptyState';
@@ -68,19 +69,14 @@ export default function HistoryScreen() {
           subtitle="Songs you play will appear here"
         />
       ) : (
-        <FlatList
+        <LazyList
           data={history}
-          {...SONG_LIST_WINDOW}
-          getItemLayout={songRowLayout}
+          estimatedItemSize={SONG_ROW_HEIGHT}
           keyExtractor={(item, index) => `${item.id}-${index}`}
           renderItem={({ item }) => (
             <SongRow song={item} onPress={handleSongPress} onLongPress={handleLongPress} />
           )}
-          contentContainerStyle={[
-            styles.listContent,
-            { paddingBottom: spacing.xxl + miniPlayerInset },
-          ]}
-          showsVerticalScrollIndicator={false}
+          bottomInset={spacing.xxl + miniPlayerInset}
         />
       )}
 
@@ -114,8 +110,5 @@ const styles = StyleSheet.create({
     ...typography.sectionHeader,
     color: colors.text,
     textAlign: 'center',
-  },
-  listContent: {
-    paddingBottom: spacing.xxl,
   },
 });

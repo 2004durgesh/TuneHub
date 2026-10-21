@@ -1,4 +1,4 @@
-import { NativeTabs } from 'expo-router/unstable-native-tabs';
+import { NativeTabs } from 'expo-router/native-tabs';
 import { useColorScheme } from 'react-native';
 
 import { colors } from '@/theme';
@@ -11,6 +11,7 @@ export default function AppTabs() {
       backgroundColor={colors.surface}
       tintColor={colors.accent}
       labelStyle={{ selected: { color: colors.accent } }}
+      activityEnabled
     >
       <NativeTabs.Trigger name="index">
         <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>

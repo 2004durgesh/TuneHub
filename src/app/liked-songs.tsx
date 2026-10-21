@@ -1,9 +1,10 @@
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useState } from 'react';
 import { Stack, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppIcon } from '@/components/app-icon';
-import { SONG_LIST_WINDOW, SongRow, songRowLayout } from '@/components/SongRow';
+import { SONG_ROW_HEIGHT, SongRow } from '@/components/SongRow';
+import { LazyList } from '@/components/native/LazyList';
 import { SongActionSheet } from '@/components/SongActionSheet';
 import { AddToPlaylistSheet } from '@/components/AddToPlaylistSheet';
 import { EmptyState } from '@/components/states/EmptyState';
@@ -53,10 +54,9 @@ export default function LikedSongsScreen() {
       {likedSongs.length === 0 ? (
         <EmptyState icon="heart" title="No liked songs yet" subtitle="Like a song to see it here" />
       ) : (
-        <FlatList
+        <LazyList
           data={likedSongs}
-          {...SONG_LIST_WINDOW}
-          getItemLayout={songRowLayout}
+          estimatedItemSize={SONG_ROW_HEIGHT}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <SongRow
@@ -67,11 +67,7 @@ export default function LikedSongsScreen() {
               rightElement={<AppIcon name="heartFill" size={20} color={colors.like} />}
             />
           )}
-          contentContainerStyle={[
-            styles.listContent,
-            { paddingBottom: spacing.xxl + miniPlayerInset },
-          ]}
-          showsVerticalScrollIndicator={false}
+          bottomInset={spacing.xxl + miniPlayerInset}
         />
       )}
 
@@ -111,8 +107,5 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     paddingHorizontal: spacing.md,
     marginBottom: spacing.sm,
-  },
-  listContent: {
-    paddingBottom: spacing.xxl,
   },
 });
