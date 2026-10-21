@@ -91,7 +91,7 @@ export default function PlaylistDetailScreen() {
         bottomInset={spacing.xxl + miniPlayerInset}
         header={
           <View style={[styles.hero, { paddingTop: top + 56 }]}>
-            <Artwork uri={playlist.artwork ?? ''} size={200} />
+            <Artwork uri={playlist.artwork ?? songs[0]?.artworkUrl ?? ''} size={200} />
             <Text style={styles.title}>{playlist.name}</Text>
             <Text style={styles.count}>{songs.length} songs</Text>
             {songs.length > 0 && (

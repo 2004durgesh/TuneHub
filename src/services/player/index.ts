@@ -24,7 +24,7 @@ export {
   renamePlaylist,
   getAllPlaylists,
   getPlaylist,
-  addSongToPlaylist,
+  addSongsToPlaylist,
   removeSongFromPlaylist,
   reorderSong,
 } from './playerQueue';

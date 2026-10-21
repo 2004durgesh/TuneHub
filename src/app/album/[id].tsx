@@ -3,9 +3,12 @@ import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { AddToPlaylistSheet } from '@/components/AddToPlaylistSheet';
 import { AppIcon } from '@/components/app-icon';
 import { Artwork } from '@/components/Artwork';
 import { DownloadAllButton } from '@/components/DownloadAllButton';
+import { OutlinedIconButton } from '@/components/OutlinedIconButton';
+import { SongActionSheet } from '@/components/SongActionSheet';
 import { SONG_ROW_HEIGHT, SongRow } from '@/components/SongRow';
 import { LazyList } from '@/components/native/LazyList';
 import { ErrorState } from '@/components/states/ErrorState';
@@ -25,6 +28,8 @@ export default function AlbumScreen() {
   const currentSongId = useCurrentSongId();
 
   const [album, setAlbum] = useState<Album | null>(null);
+  const [menuSong, setMenuSong] = useState<Song | null>(null);
+  const [adding, setAdding] = useState<{ songs: readonly Song[]; name?: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -141,6 +146,12 @@ export default function AlbumScreen() {
                 <AppIcon name="shuffle" size={18} color={colors.accent} />
                 <Text style={styles.shuffleButtonText}>Shuffle</Text>
               </Pressable>
+              <OutlinedIconButton
+                onPress={() => setAdding({ songs: album.songs, name: album.title })}
+                accessibilityLabel="Add all to playlist"
+              >
+                <AppIcon name="playlistAdd" size={20} color={colors.accent} />
+              </OutlinedIconButton>
               <DownloadAllButton
                 collection={{
                   id: `album:${album.id}`,
@@ -154,8 +165,23 @@ export default function AlbumScreen() {
           </View>
         }
         renderItem={({ item }) => (
-          <SongRow song={item} onPress={handleSongPress} isPlaying={currentSongId === item.id} />
+          <SongRow
+            song={item}
+            onPress={handleSongPress}
+            onLongPress={setMenuSong}
+            isPlaying={currentSongId === item.id}
+          />
         )}
+      />
+      <SongActionSheet
+        song={menuSong}
+        onClose={() => setMenuSong(null)}
+        onAddToPlaylist={() => menuSong && setAdding({ songs: [menuSong] })}
+      />
+      <AddToPlaylistSheet
+        songs={adding?.songs ?? null}
+        suggestedName={adding?.name}
+        onClose={() => setAdding(null)}
       />
     </>
   );
@@ -190,15 +216,18 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   actionRow: {
+    alignSelf: 'stretch',
     flexDirection: 'row',
     gap: spacing.sm,
     marginTop: spacing.md,
   },
   actionButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: spacing.xs,
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.sm,
     paddingVertical: spacing.sm,
     borderRadius: radii.sm,
   },

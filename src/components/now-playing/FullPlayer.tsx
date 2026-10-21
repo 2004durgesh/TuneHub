@@ -246,7 +246,10 @@ export function FullPlayer({
         onClose={() => setSheetSong(null)}
         onAddToPlaylist={() => setAddToPlaylistSong(sheetSong)}
       />
-      <AddToPlaylistSheet song={addToPlaylistSong} onClose={() => setAddToPlaylistSong(null)} />
+      <AddToPlaylistSheet
+        songs={addToPlaylistSong && [addToPlaylistSong]}
+        onClose={() => setAddToPlaylistSong(null)}
+      />
     </View>
   );
 }

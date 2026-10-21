@@ -3,8 +3,10 @@ import { useEffect, useState } from 'react';
 import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { AddToPlaylistSheet } from '@/components/AddToPlaylistSheet';
 import ArtworkCard from '@/components/ArtworkCard';
 import { Artwork } from '@/components/Artwork';
+import { SongActionSheet } from '@/components/SongActionSheet';
 import { SongRow } from '@/components/SongRow';
 import { ErrorState } from '@/components/states/ErrorState';
 import { LoadingState } from '@/components/states/LoadingState';
@@ -27,6 +29,8 @@ export default function ArtistScreen() {
   const currentSongId = useCurrentSongId();
 
   const [artist, setArtist] = useState<Artist | null>(null);
+  const [menuSong, setMenuSong] = useState<Song | null>(null);
+  const [addingSong, setAddingSong] = useState<Song | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [bioExpanded, setBioExpanded] = useState(false);
@@ -70,7 +74,7 @@ export default function ArtistScreen() {
   };
 
   const handleSeeAllSongs = () => {
-    router.push(`/artist/${id}/songs`);
+    router.push({ pathname: '/artist/[id]/songs', params: { id, name: artist?.name ?? '' } });
   };
 
   if (loading) {
@@ -95,9 +99,7 @@ export default function ArtistScreen() {
 
   return (
     <>
-      <Stack.Screen
-        options={{ title: artist.name, headerTransparent: true, headerBackTitle: '' }}
-      />
+      <Stack.Screen options={{ title: '', headerTransparent: true, headerBackTitle: '' }} />
       <ScrollView
         style={styles.container}
         contentContainerStyle={[
@@ -142,6 +144,7 @@ export default function ArtistScreen() {
                 key={song.id}
                 song={song}
                 onPress={handleSongPress}
+                onLongPress={setMenuSong}
                 isPlaying={currentSongId === song.id}
               />
             ))}
@@ -204,6 +207,12 @@ export default function ArtistScreen() {
           </View>
         )}
       </ScrollView>
+      <SongActionSheet
+        song={menuSong}
+        onClose={() => setMenuSong(null)}
+        onAddToPlaylist={() => setAddingSong(menuSong)}
+      />
+      <AddToPlaylistSheet songs={addingSong && [addingSong]} onClose={() => setAddingSong(null)} />
     </>
   );
 }

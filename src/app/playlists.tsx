@@ -7,7 +7,7 @@ import type { Playlist } from 'react-native-nitro-player';
 import { AppIcon } from '@/components/app-icon';
 import { ThemedList, ThemedListItem } from '@/components/native/ThemedList';
 import { ThemedTextInput } from '@/components/native/ThemedTextInput';
-import { SheetModal } from '@/components/SheetModal';
+import { SheetModal } from '@/components/native/SheetModal';
 import { EmptyState } from '@/components/states/EmptyState';
 import { useMiniPlayerInset } from '@/hooks/useMiniPlayerPlacement';
 import { getAllPlaylists, createPlaylist, deletePlaylist } from '@/services/player/playerQueue';

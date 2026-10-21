@@ -26,8 +26,17 @@ export function getPlaylist(id: string): Playlist | null {
   return PlayerQueue.getPlaylist(id);
 }
 
-export async function addSongToPlaylist(id: string, song: Song): Promise<void> {
-  await PlayerQueue.addTrackToPlaylist(id, songToTrack(song));
+/** Appends the songs the playlist doesn't have yet, in order, and returns how many it added. */
+export async function addSongsToPlaylist(id: string, songs: readonly Song[]): Promise<number> {
+  const present = new Set(PlayerQueue.getPlaylist(id)?.tracks.map((track) => track.id));
+  const fresh: Song[] = [];
+  for (const song of songs) {
+    if (present.has(song.id)) continue;
+    present.add(song.id);
+    fresh.push(song);
+  }
+  if (fresh.length > 0) await PlayerQueue.addTracksToPlaylist(id, fresh.map(songToTrack));
+  return fresh.length;
 }
 
 export async function removeSongFromPlaylist(id: string, songId: string): Promise<void> {

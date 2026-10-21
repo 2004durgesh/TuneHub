@@ -1,14 +1,8 @@
-import type { ReactNode } from 'react';
 import { View } from 'react-native';
 import { BottomSheet, RNHostView } from '@expo/ui';
 
 import { colors } from '@/theme';
-
-type Props = {
-  visible: boolean;
-  onClose: () => void;
-  children: ReactNode;
-};
+import type { SheetModalProps } from './SheetModal';
 
 /**
  * Bottom sheet built on `@expo/ui`'s native `BottomSheet`. Omitting `snapPoints`
@@ -16,7 +10,7 @@ type Props = {
  * bridge into the native (Compose/SwiftUI) tree and stay interactive — plain RN
  * views placed directly in a `BottomSheet` render but don't receive touches.
  */
-export function SheetModal({ visible, onClose, children }: Props) {
+export function SheetModal({ visible, onClose, children }: SheetModalProps) {
   return (
     <BottomSheet
       isPresented={visible}

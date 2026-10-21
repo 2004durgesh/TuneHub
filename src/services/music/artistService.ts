@@ -14,9 +14,13 @@ export async function getArtist(id: string, quality: AudioQuality = '320kbps'): 
   return toArtist(raw, quality);
 }
 
+/**
+ * One page of an artist's songs, most popular first. Pages start at 0 and vary in size (10, 7, 5…),
+ * and the reported total overshoots, so keep loading until a page comes back empty.
+ */
 export async function getArtistSongs(
   id: string,
-  page = 1,
+  page = 0,
   quality: AudioQuality = '320kbps',
 ): Promise<Song[]> {
   const res = await artistApi.getArtistSongs({

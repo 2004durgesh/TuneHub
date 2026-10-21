@@ -5,6 +5,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AppIcon } from '@/components/app-icon';
 import { NowPlaying } from '@/components/now-playing/NowPlaying';
+import { Toast } from '@/components/Toast';
 import { UpdateAvailableSheet } from '@/components/UpdateAvailableSheet';
 import { UpdateToast } from '@/components/UpdateToast';
 import { useDownloadsBridge } from '@/hooks/useDownloads';
@@ -57,6 +58,15 @@ export default function RootLayout() {
             options={{ headerShown: true, headerTransparent: true, headerTintColor: colors.text }}
           />
           <Stack.Screen
+            name="artist/[id]/songs"
+            options={{
+              headerShown: true,
+              headerStyle: { backgroundColor: colors.background },
+              headerTintColor: colors.text,
+              headerShadowVisible: false,
+            }}
+          />
+          <Stack.Screen
             name="playlist/[id]"
             options={{ headerShown: true, headerTransparent: true, headerTintColor: colors.text }}
           />
@@ -83,6 +93,7 @@ export default function RootLayout() {
         </Stack>
         {/* Mini player and full player as one morphing surface above every screen. */}
         <NowPlaying />
+        <Toast />
         <UpdateToast />
         <UpdateAvailableSheet />
         <PerfWindows />

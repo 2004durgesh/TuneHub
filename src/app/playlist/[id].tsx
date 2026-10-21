@@ -3,9 +3,12 @@ import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { AddToPlaylistSheet } from '@/components/AddToPlaylistSheet';
 import { AppIcon } from '@/components/app-icon';
 import { Artwork } from '@/components/Artwork';
 import { DownloadAllButton } from '@/components/DownloadAllButton';
+import { OutlinedIconButton } from '@/components/OutlinedIconButton';
+import { SongActionSheet } from '@/components/SongActionSheet';
 import { SONG_ROW_HEIGHT, SongRow } from '@/components/SongRow';
 import { LazyList } from '@/components/native/LazyList';
 import { ErrorState } from '@/components/states/ErrorState';
@@ -25,6 +28,8 @@ export default function PlaylistScreen() {
   const currentSongId = useCurrentSongId();
 
   const [playlist, setPlaylist] = useState<RemotePlaylist | null>(null);
+  const [menuSong, setMenuSong] = useState<Song | null>(null);
+  const [adding, setAdding] = useState<{ songs: readonly Song[]; name?: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -121,6 +126,12 @@ export default function PlaylistScreen() {
                 <AppIcon name="play" size={18} color={colors.onAccent} />
                 <Text style={styles.playAllText}>Play All</Text>
               </Pressable>
+              <OutlinedIconButton
+                onPress={() => setAdding({ songs: playlist.songs, name: playlist.title })}
+                accessibilityLabel="Add all to playlist"
+              >
+                <AppIcon name="playlistAdd" size={20} color={colors.accent} />
+              </OutlinedIconButton>
               <DownloadAllButton
                 collection={{
                   id: `playlist:${playlist.id}`,
@@ -134,8 +145,23 @@ export default function PlaylistScreen() {
           </View>
         }
         renderItem={({ item }) => (
-          <SongRow song={item} onPress={handleSongPress} isPlaying={currentSongId === item.id} />
+          <SongRow
+            song={item}
+            onPress={handleSongPress}
+            onLongPress={setMenuSong}
+            isPlaying={currentSongId === item.id}
+          />
         )}
+      />
+      <SongActionSheet
+        song={menuSong}
+        onClose={() => setMenuSong(null)}
+        onAddToPlaylist={() => menuSong && setAdding({ songs: [menuSong] })}
+      />
+      <AddToPlaylistSheet
+        songs={adding?.songs ?? null}
+        suggestedName={adding?.name}
+        onClose={() => setAdding(null)}
       />
     </>
   );

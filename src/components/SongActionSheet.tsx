@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import type { Song } from '@/types';
 import { AppIcon } from '@/components/app-icon';
 import type { IconName } from '@/components/app-icon';
-import { SheetModal } from '@/components/SheetModal';
+import { SheetModal } from '@/components/native/SheetModal';
 import { downloadSong, removeDownload, useDownload } from '@/hooks/useDownloads';
 import { useLikedSongs } from '@/hooks/useLikedSongs';
 import { playSongs } from '@/hooks/usePlayer';

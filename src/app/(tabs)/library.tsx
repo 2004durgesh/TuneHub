@@ -135,7 +135,10 @@ function LibraryScreen() {
           setAddToPlaylistSong(s);
         }}
       />
-      <AddToPlaylistSheet song={addToPlaylistSong} onClose={() => setAddToPlaylistSong(null)} />
+      <AddToPlaylistSheet
+        songs={addToPlaylistSong && [addToPlaylistSong]}
+        onClose={() => setAddToPlaylistSong(null)}
+      />
     </ScrollView>
   );
 }

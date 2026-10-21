@@ -65,14 +65,19 @@ Map controls to `@expo/ui`:
   `ViewStyle` — only `padding*`, `backgroundColor`, `border*`, `borderRadius`, `opacity`,
   `width`, `height`. No flexbox. For layout use `@expo/ui` `Row`/`Column`/`Spacer`, or a
   plain RN `View`.
-- **Native `BottomSheet` (`@expo/ui`) — use this exact recipe** (see `src/components/SheetModal.tsx`):
-  - OMIT `snapPoints` so the sheet auto-sizes to its content (passing them, or nothing,
-    made it default to a ~half-height detent — that was the old "50%" bug).
-  - RN views placed DIRECTLY in a `BottomSheet` render but DON'T receive touches. Wrap the
-    RN subtree in `<RNHostView>` (a single child — wrap multiple in one `View`) so it
-    bridges into the native Compose/SwiftUI tree and stays interactive.
-  - Do NOT put `matchContents` on that `RNHostView` — it collapses to zero and the sheet
-    won't open. Let it fill the parent (default).
+- **Bottom sheets — always `SheetModal`** (`src/components/native/SheetModal.tsx` + `.ios.tsx`),
+  which sizes to its content on both platforms:
+  - RN views placed DIRECTLY in a native sheet render but DON'T receive touches. Wrap the RN
+    subtree in `<RNHostView>` (a single child — wrap multiple in one `View`) so it bridges into
+    the native Compose/SwiftUI tree and stays interactive.
+  - Android uses Compose `ModalBottomSheet` directly with `skipPartiallyExpanded` and
+    `RNHostView matchContents={{ vertical: true }}`. The universal `BottomSheet` keeps M3's
+    half-open state unless given snap points (which also stretch it full screen), so tall
+    sheets opened halfway with rows under the navigation bar, and a filling `RNHostView` made
+    every sheet full height.
+  - iOS uses the universal `BottomSheet` with NO `snapPoints` (SwiftUI sizes it to content) and
+    an `RNHostView` WITHOUT `matchContents` — there, `matchContents` collapses it to zero and
+    the sheet won't open.
   - `containerColor`/`contentColor` set the sheet's native background/foreground.
   - Two sheets still can't transition instantly (see the rule below); `SongActionSheet`
     delays opening `AddToPlaylistSheet` by ~350ms.
@@ -91,7 +96,9 @@ Map controls to `@expo/ui`:
   - `colorScheme="dark"` on the `Host` themes the native list dark.
   - `ListItem` slots: `leading` (an `AppIcon` composes fine), `trailing` (a `Switch`
     composes fine — but a plain `Text` is greedy and squeezes the headline to 1 char; put
-    values in `supportingText` instead), `supportingText` (subtitle), `onPress` (row tap).
+    values in `supportingText` instead), `supportingText` (subtitle — on iOS `ThemedListItem`
+    restyles a string one to 14 pt `textSecondary`; the universal one copies the headline's font),
+    `onPress` (row tap).
   - Headline is the ListItem's string child.
 
 ### Three surfaces — universal is small; the rich components are per-platform
@@ -167,8 +174,15 @@ Other UI building blocks:
 ## Components
 
 - `SongRow` is the universal song list item — don't make variants.
-- `SongActionSheet` is the universal song context menu — reuse everywhere. Wire its
-  `onAddToPlaylist` to open `AddToPlaylistSheet` on any screen that shows it.
+- `SongActionSheet` is the universal song context menu — reuse everywhere (every song row
+  long-presses into it). Wire its `onAddToPlaylist` to open `AddToPlaylistSheet` on any screen
+  that shows it.
+- `AddToPlaylistSheet` takes `songs`: one from the song menu, or a whole album/playlist from the
+  header's add-all button (`OutlinedIconButton`, beside Play All), with `suggestedName` prefilling
+  New Playlist. `addSongsToPlaylist` skips songs the playlist already has; the sheet marks
+  playlists that have them all (✓) and confirms with `showToast` ("Added 20 songs to X · View").
+- `showToast(message, action?)` (`src/components/Toast.tsx`) is the app's confirmation toast,
+  mounted once in the root layout and placed above the mini player.
 - `SheetModal` is the universal bottom-sheet base — build every sheet on it.
 - `NowPlaying` (`src/components/now-playing/`) is the mini player AND the full player — one
   surface in the root layout above every screen, not a route. A single `progress` shared value
@@ -285,14 +299,24 @@ getStoredBundlePath(applicationContext)`, `AppDelegate.swift` returns
 - Covers for the player go through `src/hooks/useArtworkImage.ts` (`loadArtworkImage` /
   `useArtworkImage`): one download + decode per URL shared by `ArtworkTransition` and
   `useArtworkColors`, and `usePlayerBridge` prefetches the up-next cover on every track change.
-- Vertical song lists (album, JioSaavn playlist, your playlist, liked songs, history) use
+- Vertical song lists (album, JioSaavn playlist, your playlist, liked songs, history, an artist's
+  songs) use
   `LazyList` (`src/components/native/`): Compose `LazyColumn.Items` / SwiftUI
   `LazyVStack.ForEach` recycle rows natively, each `SongRow` hosted in an
   `RNHostView matchContents={{ vertical: true }}`; `header` scrolls with the rows, `bottomInset`
   pads the end. `overscanCount` is 25: at the default 10, rows were bound mid-fling and frames
   dropped (p90 27 ms vs 18 ms). Measured on Android vs FlatList (50 songs): opens faster
   (35.6 vs 52.7 ms of React work) with the same scroll frames, but recycling re-renders rows as
-  they enter, ~6× the React work while scrolling. No JS scroll events, so no `EdgeFade`.
+  they enter, ~6× the React work while scrolling. No JS scroll events, so no `EdgeFade`. Keys go
+  through `uniqueKeys` (native lazy lists throw on a repeated key, and a playlist can hold the same
+  song twice). Fast Refresh doesn't update content inside `header`; reload the app to see it.
+  `footer` renders after the rows. There's no scroll callback, so `onEndReached` fires when the
+  recycler mounts the last row (`EndReached`), i.e. once the end is within the overscan window.
+- `/artist/[id]/songs` ("See all songs") pages through `getArtistSongs`: pages start at 0, vary in
+  size and the reported total overshoots, so it loads until a page adds no new songs; a failed
+  page shows a retry footer. Pushed with the artist `name` param for its title.
+- Screens with a transparent header over a hero (album, playlist, artist) keep `title: ''` — the
+  name is already in the hero, and a header title overlaps the artwork.
 - The other song lists (queue panel, downloads) are `FlatList`/`SectionList`: `SongRow` has a
   fixed height (`SONG_ROW_HEIGHT`); spread `SONG_LIST_WINDOW` on them, and add
   `getItemLayout={songRowLayout}` when the list has no `ListHeaderComponent`.

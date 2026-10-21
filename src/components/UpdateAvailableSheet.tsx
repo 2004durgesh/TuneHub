@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { AppIcon } from '@/components/app-icon';
-import { SheetModal } from '@/components/SheetModal';
+import { SheetModal } from '@/components/native/SheetModal';
 import { useNewRelease } from '@/hooks/useOtaUpdates';
 import { appVersion, skipRelease, updateKind } from '@/services/ota';
 import { colors, radii, spacing, typography } from '@/theme';

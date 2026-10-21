@@ -1,6 +1,7 @@
-import { Alert, Pressable, StyleSheet, Text } from 'react-native';
+import { Alert, StyleSheet, Text } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { AppIcon } from '@/components/app-icon';
+import { OutlinedIconButton } from '@/components/OutlinedIconButton';
 import {
   cancelCollectionDownloads,
   downloadCollection,
@@ -8,7 +9,7 @@ import {
   useDownloadCounts,
   useHasDownloadCollection,
 } from '@/hooks/useDownloads';
-import { colors, radii, spacing, typography } from '@/theme';
+import { colors, typography } from '@/theme';
 import type { DownloadCollectionInfo, Song } from '@/types';
 
 type Props = {
@@ -56,10 +57,9 @@ export function DownloadAllButton({ collection, songs, style }: Props) {
   }
 
   return (
-    <Pressable
+    <OutlinedIconButton
       onPress={handlePress}
-      style={({ pressed }) => [styles.button, style, pressed && styles.pressed]}
-      accessibilityRole="button"
+      style={style}
       accessibilityLabel={
         downloading ? 'Stop downloading' : done ? 'Remove downloads' : 'Download all'
       }
@@ -69,25 +69,11 @@ export function DownloadAllButton({ collection, songs, style }: Props) {
       ) : (
         <AppIcon name={done ? 'downloaded' : 'download'} size={20} color={colors.accent} />
       )}
-    </Pressable>
+    </OutlinedIconButton>
   );
 }
 
 const styles = StyleSheet.create({
-  button: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    minWidth: spacing.xxl,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.sm,
-    borderRadius: radii.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  pressed: {
-    opacity: 0.7,
-  },
   progress: {
     ...typography.metadata,
     color: colors.accent,
