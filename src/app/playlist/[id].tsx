@@ -1,5 +1,5 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -10,7 +10,7 @@ import { SONG_LIST_WINDOW, SongRow } from '@/components/SongRow';
 import { ErrorState } from '@/components/states/ErrorState';
 import { LoadingState } from '@/components/states/LoadingState';
 import { useMiniPlayerInset } from '@/hooks/useMiniPlayerPlacement';
-import { usePlayer } from '@/hooks/usePlayer';
+import { playSongs, useCurrentSongId } from '@/hooks/usePlayer';
 import { getPlaylist } from '@/services/music/playlistService';
 import { useSettingsStore } from '@/store/settingsStore';
 import { colors, radii, screenPadding, spacing, typography } from '@/theme';
@@ -21,43 +21,51 @@ export default function PlaylistScreen() {
   const { top } = useSafeAreaInsets();
   const miniPlayerInset = useMiniPlayerInset();
   const audioQuality = useSettingsStore((s) => s.audioQuality);
-  const { playSongs, currentSong } = usePlayer();
+  const currentSongId = useCurrentSongId();
 
   const [playlist, setPlaylist] = useState<RemotePlaylist | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchPlaylist = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await getPlaylist(id, 1, 50, audioQuality);
-      setPlaylist(data);
-    } catch {
-      setError('Could not load playlist. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  }, [id, audioQuality]);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
-    void fetchPlaylist();
-  }, [fetchPlaylist]);
+    let cancelled = false;
+    getPlaylist(id, 1, 50, audioQuality).then(
+      (data) => {
+        if (cancelled) return;
+        setPlaylist(data);
+        setError(null);
+        setLoading(false);
+      },
+      () => {
+        if (cancelled) return;
+        setError('Could not load playlist. Please try again.');
+        setLoading(false);
+      },
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [id, audioQuality, attempt]);
 
-  const handleSongPress = useCallback(
-    (song: Song) => {
-      if (!playlist?.songs.length) return;
-      const index = playlist.songs.findIndex((s) => s.id === song.id);
-      void playSongs(playlist.songs, Math.max(index, 0));
-    },
-    [playlist, playSongs],
-  );
+  const retry = () => {
+    setLoading(true);
+    setError(null);
+    setAttempt((n) => n + 1);
+  };
 
-  const handlePlayAll = useCallback(() => {
+  const handleSongPress = (song: Song) => {
+    if (!playlist?.songs.length) return;
+    const index = playlist.songs.findIndex((s) => s.id === song.id);
+    void playSongs(playlist.songs, Math.max(index, 0));
+  };
+
+  const handlePlayAll = () => {
     if (playlist?.songs.length) {
       void playSongs(playlist.songs, 0);
     }
-  }, [playlist, playSongs]);
+  };
 
   if (loading) {
     return (
@@ -72,7 +80,7 @@ export default function PlaylistScreen() {
     return (
       <>
         <Stack.Screen options={{ title: '', headerTransparent: true, headerBackTitle: '' }} />
-        <ErrorState message={error ?? 'Playlist not found'} onRetry={fetchPlaylist} />
+        <ErrorState message={error ?? 'Playlist not found'} onRetry={retry} />
       </>
     );
   }
@@ -130,7 +138,7 @@ export default function PlaylistScreen() {
           </View>
         }
         renderItem={({ item }) => (
-          <SongRow song={item} onPress={handleSongPress} isPlaying={currentSong?.id === item.id} />
+          <SongRow song={item} onPress={handleSongPress} isPlaying={currentSongId === item.id} />
         )}
       />
     </>

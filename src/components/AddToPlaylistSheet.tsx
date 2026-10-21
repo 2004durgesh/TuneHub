@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { Alert, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { Playlist } from 'react-native-nitro-player';
 import type { Song } from '@/types';
@@ -29,21 +29,18 @@ export function AddToPlaylistSheet({ song, onClose }: Props) {
   // Song captured when the create flow starts, since the sheet closes first.
   const [pendingSong, setPendingSong] = useState<Song | null>(null);
 
-  const handleAdd = useCallback(
-    (playlistId: string) => {
-      if (song == null) return;
-      void addSongToPlaylist(playlistId, song).then(onClose);
-    },
-    [song, onClose],
-  );
+  const handleAdd = (playlistId: string) => {
+    if (song == null) return;
+    void addSongToPlaylist(playlistId, song).then(onClose);
+  };
 
-  const createAndAdd = useCallback((name: string, target: Song) => {
+  const createAndAdd = (name: string, target: Song) => {
     const trimmed = name.trim();
     if (!trimmed) return;
     void createPlaylist(trimmed).then((id) => addSongToPlaylist(id, target));
-  }, []);
+  };
 
-  const handleNewPlaylist = useCallback(() => {
+  const handleNewPlaylist = () => {
     const target = song;
     if (target == null) return;
     // Close this sheet first, then prompt — avoids stacking two Modals.
@@ -64,13 +61,13 @@ export function AddToPlaylistSheet({ song, onClose }: Props) {
         setShowCreateModal(true);
       }
     }, 350);
-  }, [song, onClose, createAndAdd]);
+  };
 
-  const handleCreateConfirm = useCallback(() => {
+  const handleCreateConfirm = () => {
     setShowCreateModal(false);
     if (pendingSong != null) createAndAdd(newName, pendingSong);
     setPendingSong(null);
-  }, [newName, pendingSong, createAndAdd]);
+  };
 
   return (
     <>

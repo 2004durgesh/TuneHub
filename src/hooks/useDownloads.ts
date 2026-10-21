@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import {
   deleteAllSongFiles,
@@ -113,16 +113,13 @@ export function useDownloadsBridge() {
 
 export function useDownloads() {
   const byId = useDownloadStore((s) => s.downloads);
-  const downloads = useMemo(
-    () => Object.values(byId).sort((a, b) => b.addedAt - a.addedAt),
-    [byId],
-  );
+  const downloads = Object.values(byId).sort((a, b) => b.addedAt - a.addedAt);
   return { downloads, byId, downloadSong, removeDownload, removeAllDownloads };
 }
 
 export function useDownloadCollections() {
   const byId = useDownloadStore((s) => s.collections);
-  return useMemo(() => Object.values(byId).sort((a, b) => b.addedAt - a.addedAt), [byId]);
+  return Object.values(byId).sort((a, b) => b.addedAt - a.addedAt);
 }
 
 export function useHasDownloadCollection(collectionId: string) {

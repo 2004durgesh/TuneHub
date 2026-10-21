@@ -57,9 +57,9 @@ export function useHomeData(): UseHomeDataReturn {
     setHomeLoading(false);
   }, [setHome, setHomeLoading, setHomeError]);
 
-  const refresh = useCallback(() => {
+  const refresh = () => {
     void fetchData();
-  }, [fetchData]);
+  };
 
   useEffect(() => {
     // Skip fetch if data is already hydrated in the store

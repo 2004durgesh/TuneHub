@@ -1,5 +1,5 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -9,7 +9,7 @@ import { SongRow } from '@/components/SongRow';
 import { ErrorState } from '@/components/states/ErrorState';
 import { LoadingState } from '@/components/states/LoadingState';
 import { useMiniPlayerInset } from '@/hooks/useMiniPlayerPlacement';
-import { usePlayer } from '@/hooks/usePlayer';
+import { playSongs, useCurrentSongId } from '@/hooks/usePlayer';
 import { getArtist } from '@/services/music/artistService';
 import { useSettingsStore } from '@/store/settingsStore';
 import { colors, radii, screenPadding, spacing, typography } from '@/theme';
@@ -24,49 +24,54 @@ export default function ArtistScreen() {
   const miniPlayerInset = useMiniPlayerInset();
   const router = useRouter();
   const audioQuality = useSettingsStore((s) => s.audioQuality);
-  const { playSongs, currentSong } = usePlayer();
+  const currentSongId = useCurrentSongId();
 
   const [artist, setArtist] = useState<Artist | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [bioExpanded, setBioExpanded] = useState(false);
 
-  const fetchArtist = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await getArtist(id, audioQuality);
-      setArtist(data);
-    } catch {
-      setError('Could not load artist. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  }, [id, audioQuality]);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
-    void fetchArtist();
-  }, [fetchArtist]);
+    let cancelled = false;
+    getArtist(id, audioQuality).then(
+      (data) => {
+        if (cancelled) return;
+        setArtist(data);
+        setError(null);
+        setLoading(false);
+      },
+      () => {
+        if (cancelled) return;
+        setError('Could not load artist. Please try again.');
+        setLoading(false);
+      },
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [id, audioQuality, attempt]);
 
-  const handleSongPress = useCallback(
-    (song: Song) => {
-      if (!artist?.topSongs.length) return;
-      const index = artist.topSongs.findIndex((s) => s.id === song.id);
-      void playSongs(artist.topSongs, Math.max(index, 0));
-    },
-    [artist, playSongs],
-  );
+  const retry = () => {
+    setLoading(true);
+    setError(null);
+    setAttempt((n) => n + 1);
+  };
 
-  const handleAlbumPress = useCallback(
-    (album: AlbumSummary) => {
-      router.push(`/album/${album.id}`);
-    },
-    [router],
-  );
+  const handleSongPress = (song: Song) => {
+    if (!artist?.topSongs.length) return;
+    const index = artist.topSongs.findIndex((s) => s.id === song.id);
+    void playSongs(artist.topSongs, Math.max(index, 0));
+  };
 
-  const handleSeeAllSongs = useCallback(() => {
+  const handleAlbumPress = (album: AlbumSummary) => {
+    router.push(`/album/${album.id}`);
+  };
+
+  const handleSeeAllSongs = () => {
     router.push(`/artist/${id}/songs`);
-  }, [id, router]);
+  };
 
   if (loading) {
     return (
@@ -81,7 +86,7 @@ export default function ArtistScreen() {
     return (
       <>
         <Stack.Screen options={{ title: '', headerTransparent: true, headerBackTitle: '' }} />
-        <ErrorState message={error ?? 'Artist not found'} onRetry={fetchArtist} />
+        <ErrorState message={error ?? 'Artist not found'} onRetry={retry} />
       </>
     );
   }
@@ -137,7 +142,7 @@ export default function ArtistScreen() {
                 key={song.id}
                 song={song}
                 onPress={handleSongPress}
-                isPlaying={currentSong?.id === song.id}
+                isPlaying={currentSongId === song.id}
               />
             ))}
             {artist.topSongs.length > 0 && (

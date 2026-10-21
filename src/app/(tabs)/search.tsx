@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useCallback, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { TextInputRef } from '@expo/ui';
@@ -12,11 +12,12 @@ import { SongActionSheet } from '@/components/SongActionSheet';
 import { SongRow } from '@/components/SongRow';
 import { LoadingState } from '@/components/states/LoadingState';
 import { useMiniPlayerInset } from '@/hooks/useMiniPlayerPlacement';
-import { usePlayer } from '@/hooks/usePlayer';
+import { playSongs } from '@/hooks/usePlayer';
 import { getSongById, searchAll } from '@/services/music';
 import { useMusicStore, useSettingsStore } from '@/store';
 import { colors, radii, spacing, typography } from '@/theme';
 import type { AlbumSummary, ArtistSummary, DiscoveryItem, Song } from '@/types';
+import { profiled } from '@/perf/perfHarness';
 
 const CARD_WIDTH = 140;
 
@@ -77,7 +78,7 @@ function SearchResults({
   onItemPress,
   onArtistPress,
 }: ResultsProps) {
-  const miniPlayerInset = useMiniPlayerInset();
+  const miniPlayerInset = useMiniPlayerInset(true);
   const isEmpty =
     songs.length === 0 && albums.length === 0 && artists.length === 0 && playlists.length === 0;
 
@@ -182,13 +183,12 @@ function SearchResults({
 
 // ── Screen ───────────────────────────────────────────────────────────────────
 
-export default function SearchScreen() {
+function SearchScreen() {
   const { top } = useSafeAreaInsets();
   const router = useRouter();
   const inputRef = useRef<TextInputRef>(null);
   // Bumped to remount the field when its text is set from outside (history chips).
   const [inputKey, setInputKey] = useState(0);
-  const { playSongs } = usePlayer();
   const audioQuality = useSettingsStore((s) => s.audioQuality);
 
   const [query, setQuery] = useState('');
@@ -203,93 +203,42 @@ export default function SearchScreen() {
   const addSearchHistory = useMusicStore((s) => s.addSearchHistory);
   const clearSearchHistory = useMusicStore((s) => s.clearSearchHistory);
 
-  const runSearch = useCallback(
-    async (q: string) => {
-      const trimmed = q.trim();
-      if (!trimmed) return;
-      setLoading(true);
-      setSearchLoading(true);
-      addSearchHistory(trimmed);
-      try {
-        const results = await searchAll(trimmed);
-        setSearchResults(results);
-      } catch {
-        setSearchResults(null);
-      } finally {
-        setLoading(false);
-        setSearchLoading(false);
-      }
-    },
-    [setSearchResults, setSearchLoading, addSearchHistory],
-  );
+  async function runSearch(q: string) {
+    const trimmed = q.trim();
+    if (!trimmed) return;
+    setLoading(true);
+    setSearchLoading(true);
+    addSearchHistory(trimmed);
+    const results = await searchAll(trimmed).catch(() => null);
+    setSearchResults(results);
+    setLoading(false);
+    setSearchLoading(false);
+  }
 
-  const handleChangeText = useCallback(
-    (text: string) => {
-      setQuery(text);
-      if (!text.trim()) {
-        setSearchResults(null);
-      }
-    },
-    [setSearchResults],
-  );
+  function handleChangeText(text: string) {
+    setQuery(text);
+    if (!text.trim()) setSearchResults(null);
+  }
 
-  const handleSubmit = useCallback(
-    (text: string) => {
-      void runSearch(text);
-    },
-    [runSearch],
-  );
+  function handleHistorySelect(q: string) {
+    setQuery(q);
+    setInputKey((k) => k + 1);
+    void runSearch(q);
+  }
 
-  const handleHistorySelect = useCallback(
-    (q: string) => {
-      setQuery(q);
-      setInputKey((k) => k + 1);
-      void runSearch(q);
-    },
-    [runSearch],
-  );
+  async function handleSongPress(song: Song) {
+    try {
+      const full = await getSongById(song.id, audioQuality);
+      if (full == null) return;
+      await playSongs([full], 0);
+    } catch {
+      // ignore; song unavailable
+    }
+  }
 
-  const handleSongPress = useCallback(
-    async (song: Song) => {
-      try {
-        const full = await getSongById(song.id, audioQuality);
-        if (full == null) return;
-        await playSongs([full], 0);
-      } catch {
-        // ignore; song unavailable
-      }
-    },
-    [audioQuality, playSongs],
-  );
-
-  const handleSongLongPress = useCallback((song: Song) => {
-    setSheetSong(song);
-  }, []);
-
-  const handleAlbumPress = useCallback(
-    (album: AlbumSummary) => {
-      router.push(`/album/${album.id}`);
-    },
-    [router],
-  );
-
-  const handleItemPress = useCallback(
-    (item: DiscoveryItem) => {
-      if (item.kind === 'album') {
-        router.push(`/album/${item.id}`);
-      } else {
-        router.push(`/playlist/${item.id}`);
-      }
-    },
-    [router],
-  );
-
-  const handleArtistPress = useCallback(
-    (artist: ArtistSummary) => {
-      router.push(`/artist/${artist.id}`);
-    },
-    [router],
-  );
+  function handleItemPress(item: DiscoveryItem) {
+    router.push(item.kind === 'album' ? `/album/${item.id}` : `/playlist/${item.id}`);
+  }
 
   const showHistory = query.trim() === '' && !searchResults;
   const showResults = !loading && searchResults !== null;
@@ -305,7 +254,7 @@ export default function SearchScreen() {
           containerStyle={styles.input}
           defaultValue={query}
           onChangeText={handleChangeText}
-          onSubmitEditing={handleSubmit}
+          onSubmitEditing={(text) => void runSearch(text)}
           placeholder="Songs, artists, albums…"
           returnKeyType="search"
           autoCorrect={false}
@@ -346,10 +295,10 @@ export default function SearchScreen() {
             artists={searchResults.artists}
             playlists={searchResults.playlists}
             onSongPress={handleSongPress}
-            onSongLongPress={handleSongLongPress}
-            onAlbumPress={handleAlbumPress}
+            onSongLongPress={setSheetSong}
+            onAlbumPress={(album) => router.push(`/album/${album.id}`)}
             onItemPress={handleItemPress}
-            onArtistPress={handleArtistPress}
+            onArtistPress={(artist) => router.push(`/artist/${artist.id}`)}
           />
         )}
       </View>
@@ -451,3 +400,5 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
 });
+
+export default profiled('Search tab', SearchScreen);

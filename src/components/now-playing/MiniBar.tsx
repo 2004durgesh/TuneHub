@@ -6,15 +6,12 @@ import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-na
 import { AppIcon } from '@/components/app-icon';
 import { useLikedSongs } from '@/hooks/useLikedSongs';
 import { MINI_PLAYER_HEIGHT } from '@/hooks/useMiniPlayerPlacement';
-import { usePlayer } from '@/hooks/usePlayer';
-import { usePlayerStore, useSettingsStore } from '@/store';
+import { getPlayedFraction, subscribePlayedFraction, usePlayer } from '@/hooks/usePlayer';
+import { useSettingsStore } from '@/store';
 import { colors, hexColors, spacing, timings, typography } from '@/theme';
 import type { ArtworkColors } from '@/types';
 
 const PROGRESS_HEIGHT = 2;
-
-const playedFraction = ({ position, duration }: { position: number; duration: number }) =>
-  position / Math.max(duration, 1);
 
 // NowPlaying draws the (morphing) artwork over this empty slot, so these must match the layout.
 export const MINI_ART_SIZE = 48;
@@ -35,26 +32,18 @@ export function MiniBar({ width, palette, onExpand }: Props) {
   const dynamicAtmosphere = useSettingsStore((s) => s.dynamicAtmosphere);
 
   // Fed straight from the store: the per-second position ticks never re-render the bar.
-  const progress = useSharedValue(playedFraction(usePlayerStore.getState()));
+  const progress = useSharedValue(getPlayedFraction());
   const trackWidth = useSharedValue(0);
   useEffect(
-    () =>
-      usePlayerStore.subscribe((state, prev) => {
-        if (state.position === prev.position && state.duration === prev.duration) return;
-        progress.set(withTiming(playedFraction(state), timings.fast));
-      }),
+    () => subscribePlayedFraction((fraction) => progress.set(withTiming(fraction, timings.fast))),
     [progress],
   );
   const progressStyle = useAnimatedStyle(() => ({ width: trackWidth.value * progress.value }));
 
-  const tint = useSharedValue<string>(hexColors.surface);
-  useEffect(() => {
-    tint.value =
-      dynamicAtmosphere && palette
-        ? withTiming(palette.primary, timings.atmosphere)
-        : hexColors.surface;
-  }, [palette, dynamicAtmosphere, tint]);
-  const tintStyle = useAnimatedStyle(() => ({ backgroundColor: tint.value }));
+  const tint = dynamicAtmosphere && palette ? palette.primary : null;
+  const tintStyle = useAnimatedStyle(() => ({
+    backgroundColor: tint ? withTiming(tint, timings.atmosphere) : hexColors.surface,
+  }));
 
   if (!currentSong) return null;
   const liked = isLiked(currentSong.id);
@@ -66,7 +55,7 @@ export function MiniBar({ width, palette, onExpand }: Props) {
       <View
         style={styles.progressTrack}
         onLayout={(e) => {
-          trackWidth.value = e.nativeEvent.layout.width;
+          trackWidth.set(e.nativeEvent.layout.width);
         }}
       >
         <Animated.View style={[styles.progressFill, progressStyle]} />

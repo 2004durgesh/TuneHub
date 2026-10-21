@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -12,9 +12,10 @@ import { useDownloads } from '@/hooks/useDownloads';
 import { useHistory } from '@/hooks/useHistory';
 import { useLikedSongs } from '@/hooks/useLikedSongs';
 import { useMiniPlayerInset } from '@/hooks/useMiniPlayerPlacement';
-import { usePlayer } from '@/hooks/usePlayer';
+import { playSongs } from '@/hooks/usePlayer';
 import { colors, spacing, typography } from '@/theme';
 import type { Song } from '@/types';
+import { profiled } from '@/perf/perfHarness';
 
 // ── Section row (nav entry) ──────────────────────────────────────────────────
 
@@ -44,30 +45,26 @@ function NavRow({ icon, label, count, onPress }: NavRowProps) {
 
 // ── Screen ───────────────────────────────────────────────────────────────────
 
-export default function LibraryScreen() {
+function LibraryScreen() {
   const { top } = useSafeAreaInsets();
-  const miniPlayerInset = useMiniPlayerInset();
+  const miniPlayerInset = useMiniPlayerInset(true);
   const router = useRouter();
   const { likedSongs } = useLikedSongs();
   const { history } = useHistory();
   const { downloads } = useDownloads();
-  const { playSongs } = usePlayer();
   const [sheetSong, setSheetSong] = useState<Song | null>(null);
   const [addToPlaylistSong, setAddToPlaylistSong] = useState<Song | null>(null);
 
-  const handleSongPress = useCallback(
-    (song: Song) => {
-      // Queue the whole history so next/previous move through it (a one-song queue just stops).
-      void playSongs(
-        history,
-        Math.max(
-          0,
-          history.findIndex((s) => s.id === song.id),
-        ),
-      );
-    },
-    [history, playSongs],
-  );
+  const handleSongPress = (song: Song) => {
+    // Queue the whole history so next/previous move through it (a one-song queue just stops).
+    void playSongs(
+      history,
+      Math.max(
+        0,
+        history.findIndex((s) => s.id === song.id),
+      ),
+    );
+  };
 
   const recentSongs = history.slice(0, 3);
 
@@ -209,3 +206,5 @@ const styles = StyleSheet.create({
     color: colors.accent,
   },
 });
+
+export default profiled('Library tab', LibraryScreen);

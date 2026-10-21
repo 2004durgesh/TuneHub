@@ -1,4 +1,4 @@
-import { useCallback, useSyncExternalStore } from 'react';
+import { useSyncExternalStore } from 'react';
 import type { Song } from '@/types';
 import { getLikedSongs, toggleLike as toggleLikeStorage } from '@/services/storage/likedSongs';
 
@@ -17,16 +17,16 @@ function subscribe(cb: () => void) {
   return () => listeners.delete(cb);
 }
 
+function toggleLike(song: Song) {
+  const result = toggleLikeStorage(song);
+  emit();
+  return result.liked;
+}
+
 export function useLikedSongs() {
   const songs = useSyncExternalStore(subscribe, () => snapshot);
 
-  const toggle = useCallback((song: Song) => {
-    const result = toggleLikeStorage(song);
-    emit();
-    return result.liked;
-  }, []);
+  const isLiked = (id: string) => songs.some((s) => s.id === id);
 
-  const isLiked = useCallback((id: string) => songs.some((s) => s.id === id), [songs]);
-
-  return { likedSongs: songs, toggleLike: toggle, isLiked };
+  return { likedSongs: songs, toggleLike, isLiked };
 }

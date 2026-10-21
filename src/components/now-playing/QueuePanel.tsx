@@ -3,13 +3,13 @@ import Animated from 'react-native-reanimated';
 import { EdgeFadeItem, useEdgeFade } from '@/components/EdgeFade';
 import { SONG_LIST_WINDOW, SongRow, songRowLayout } from '@/components/SongRow';
 import { EmptyState } from '@/components/states/EmptyState';
-import { usePlayer } from '@/hooks/usePlayer';
+import { playSongs, useCurrentSongId } from '@/hooks/usePlayer';
 import { useQueue } from '@/services/player';
 
 /** The live queue, shown in place of the artwork in the expanded player. */
 export function QueuePanel() {
   const { queue } = useQueue();
-  const { currentSong, playSongs } = usePlayer();
+  const currentSongId = useCurrentSongId();
   const fade = useEdgeFade();
 
   if (queue.length === 0) {
@@ -31,7 +31,7 @@ export function QueuePanel() {
           <SongRow
             song={item}
             onPress={() => void playSongs(queue, index)}
-            isPlaying={currentSong?.id === item.id}
+            isPlaying={currentSongId === item.id}
           />
         </EdgeFadeItem>
       )}

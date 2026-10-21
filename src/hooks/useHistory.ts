@@ -1,4 +1,4 @@
-import { useCallback, useSyncExternalStore } from 'react';
+import { useSyncExternalStore } from 'react';
 import type { Song } from '@/types';
 import {
   getHistory,
@@ -25,13 +25,13 @@ export function recordPlay(song: Song) {
   emit();
 }
 
+function clearHistory() {
+  clearHistoryStorage();
+  emit();
+}
+
 export function useHistory() {
   const history = useSyncExternalStore(subscribe, () => snapshot);
 
-  const clear = useCallback(() => {
-    clearHistoryStorage();
-    emit();
-  }, []);
-
-  return { history, clearHistory: clear };
+  return { history, clearHistory };
 }

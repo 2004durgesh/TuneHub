@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -14,11 +14,12 @@ import { LoadingState } from '@/components/states/LoadingState';
 import { useHistory } from '@/hooks/useHistory';
 import { useHomeData } from '@/hooks/useHomeData';
 import { useMiniPlayerInset } from '@/hooks/useMiniPlayerPlacement';
-import { usePlayer } from '@/hooks/usePlayer';
+import { playSongs } from '@/hooks/usePlayer';
 import { getSongById } from '@/services/music';
 import { useSettingsStore } from '@/store';
 import { colors, radii, spacing, typography } from '@/theme';
 import type { ArtistSummary, DiscoveryItem, Song } from '@/types';
+import { profiled } from '@/perf/perfHarness';
 
 const CARD_WIDTH = 148;
 const ARTIST_CARD_WIDTH = 96;
@@ -164,52 +165,42 @@ function HomeHeader() {
 
 // ── Screen ──────────────────────────────────────────────────────────────────
 
-export default function HomeScreen() {
+function HomeScreen() {
   const { top } = useSafeAreaInsets();
-  const miniPlayerInset = useMiniPlayerInset();
+  const miniPlayerInset = useMiniPlayerInset(true);
   const router = useRouter();
   const { charts, newReleases, featuredPlaylists, topArtists, loading, error, refresh } =
     useHomeData();
   const { history } = useHistory();
-  const { playSongs } = usePlayer();
   const audioQuality = useSettingsStore((s) => s.audioQuality);
   const [sheetSong, setSheetSong] = useState<Song | null>(null);
   const [addToPlaylistSong, setAddToPlaylistSong] = useState<Song | null>(null);
 
-  const handleDiscoveryPress = useCallback(
-    async (item: DiscoveryItem) => {
-      if (item.kind === 'song') {
-        const song = await getSongById(item.id, audioQuality).catch(() => null);
-        if (song) await playSongs([song], 0);
-      } else if (item.kind === 'album') {
-        router.push(`/album/${item.id}`);
-      } else {
-        router.push(`/playlist/${item.id}`);
-      }
-    },
-    [router, audioQuality, playSongs],
-  );
+  const handleDiscoveryPress = async (item: DiscoveryItem) => {
+    if (item.kind === 'song') {
+      const song = await getSongById(item.id, audioQuality).catch(() => null);
+      if (song) await playSongs([song], 0);
+    } else if (item.kind === 'album') {
+      router.push(`/album/${item.id}`);
+    } else {
+      router.push(`/playlist/${item.id}`);
+    }
+  };
 
-  const handleArtistPress = useCallback(
-    (artist: ArtistSummary) => {
-      router.push(`/artist/${artist.id}`);
-    },
-    [router],
-  );
+  const handleArtistPress = (artist: ArtistSummary) => {
+    router.push(`/artist/${artist.id}`);
+  };
 
-  const handleSongPress = useCallback(
-    (song: Song) => {
-      // Queue the whole history so next/previous move through it (a one-song queue just stops).
-      void playSongs(
-        history,
-        Math.max(
-          0,
-          history.findIndex((s) => s.id === song.id),
-        ),
-      );
-    },
-    [history, playSongs],
-  );
+  const handleSongPress = (song: Song) => {
+    // Queue the whole history so next/previous move through it (a one-song queue just stops).
+    void playSongs(
+      history,
+      Math.max(
+        0,
+        history.findIndex((s) => s.id === song.id),
+      ),
+    );
+  };
 
   if (loading && charts.length === 0) {
     return <LoadingState message="Loading music…" />;
@@ -337,3 +328,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 });
+
+export default profiled('Home tab', HomeScreen);

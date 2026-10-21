@@ -1,5 +1,5 @@
 import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { Stack, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppIcon } from '@/components/app-icon';
@@ -9,7 +9,7 @@ import { AddToPlaylistSheet } from '@/components/AddToPlaylistSheet';
 import { EmptyState } from '@/components/states/EmptyState';
 import { useHistory } from '@/hooks/useHistory';
 import { useMiniPlayerInset } from '@/hooks/useMiniPlayerPlacement';
-import { usePlayer } from '@/hooks/usePlayer';
+import { playSongs } from '@/hooks/usePlayer';
 import { colors, spacing, typography } from '@/theme';
 import type { Song } from '@/types';
 
@@ -18,34 +18,30 @@ export default function HistoryScreen() {
   const miniPlayerInset = useMiniPlayerInset();
   const router = useRouter();
   const { history, clearHistory } = useHistory();
-  const { playSongs } = usePlayer();
   const [selectedSong, setSelectedSong] = useState<Song | null>(null);
   const [addToPlaylistSong, setAddToPlaylistSong] = useState<Song | null>(null);
 
-  const handleClearPress = useCallback(() => {
+  const handleClearPress = () => {
     Alert.alert('Clear History', 'Remove all recently played songs?', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Clear', style: 'destructive', onPress: clearHistory },
     ]);
-  }, [clearHistory]);
+  };
 
-  const handleSongPress = useCallback(
-    (song: Song) => {
-      // Queue the whole history so next/previous move through it (a one-song queue just stops).
-      void playSongs(
-        history,
-        Math.max(
-          0,
-          history.findIndex((s) => s.id === song.id),
-        ),
-      );
-    },
-    [history, playSongs],
-  );
+  const handleSongPress = (song: Song) => {
+    // Queue the whole history so next/previous move through it (a one-song queue just stops).
+    void playSongs(
+      history,
+      Math.max(
+        0,
+        history.findIndex((s) => s.id === song.id),
+      ),
+    );
+  };
 
-  const handleLongPress = useCallback((song: Song) => {
+  const handleLongPress = (song: Song) => {
     setSelectedSong(song);
-  }, []);
+  };
 
   return (
     <View style={[styles.container, { paddingTop: top }]}>

@@ -7,7 +7,7 @@ import type { IconName } from '@/components/app-icon';
 import { SheetModal } from '@/components/SheetModal';
 import { downloadSong, removeDownload, useDownload } from '@/hooks/useDownloads';
 import { useLikedSongs } from '@/hooks/useLikedSongs';
-import { usePlayer } from '@/hooks/usePlayer';
+import { playSongs } from '@/hooks/usePlayer';
 import { colors, spacing, typography } from '@/theme';
 
 type Props = {
@@ -46,7 +46,6 @@ function ActionRow({
 export function SongActionSheet({ song, onClose, onAddToPlaylist }: Props) {
   const router = useRouter();
   const { toggleLike, isLiked } = useLikedSongs();
-  const { playSongs } = usePlayer();
   const download = useDownload(song?.id);
 
   const liked = song != null ? isLiked(song.id) : false;

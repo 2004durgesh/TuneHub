@@ -107,14 +107,13 @@ export function PlayerBackdrop({ palette, animate }: Props) {
 
   // The drift is slow and the blobs are soft, so it only advances DRIFT_FPS times a second.
   // (A JS timer instead costs more: every step crosses from the JS thread to the UI thread.)
-  const drift = useFrameCallback(({ timeSinceFirstFrame }) => {
+  // `animate` never changes while mounted (it's set in Settings, which collapses the player and
+  // unmounts this), so the autostart flag is enough.
+  useFrameCallback(({ timeSinceFirstFrame }) => {
     if (timeSinceFirstFrame - lastTick.get() < DRIFT_FRAME_MS) return;
     lastTick.set(timeSinceFirstFrame);
     clock.set((timeSinceFirstFrame % DRIFT_MS) / DRIFT_MS);
   }, animate);
-  useEffect(() => {
-    drift.setActive(animate);
-  }, [animate, drift]);
 
   const uniforms = useDerivedValue(() => ({
     res: [width, height],

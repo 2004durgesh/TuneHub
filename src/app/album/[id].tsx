@@ -1,5 +1,5 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -10,7 +10,7 @@ import { SONG_LIST_WINDOW, SongRow } from '@/components/SongRow';
 import { ErrorState } from '@/components/states/ErrorState';
 import { LoadingState } from '@/components/states/LoadingState';
 import { useMiniPlayerInset } from '@/hooks/useMiniPlayerPlacement';
-import { usePlayer } from '@/hooks/usePlayer';
+import { playSongs, useCurrentSongId } from '@/hooks/usePlayer';
 import { getAlbum } from '@/services/music/albumService';
 import { useSettingsStore } from '@/store/settingsStore';
 import { colors, radii, screenPadding, spacing, typography } from '@/theme';
@@ -21,50 +21,58 @@ export default function AlbumScreen() {
   const { top } = useSafeAreaInsets();
   const miniPlayerInset = useMiniPlayerInset();
   const audioQuality = useSettingsStore((s) => s.audioQuality);
-  const { playSongs, currentSong } = usePlayer();
+  const currentSongId = useCurrentSongId();
 
   const [album, setAlbum] = useState<Album | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchAlbum = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await getAlbum(id, audioQuality);
-      setAlbum(data);
-    } catch {
-      setError('Could not load album. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  }, [id, audioQuality]);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
-    void fetchAlbum();
-  }, [fetchAlbum]);
+    let cancelled = false;
+    getAlbum(id, audioQuality).then(
+      (data) => {
+        if (cancelled) return;
+        setAlbum(data);
+        setError(null);
+        setLoading(false);
+      },
+      () => {
+        if (cancelled) return;
+        setError('Could not load album. Please try again.');
+        setLoading(false);
+      },
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [id, audioQuality, attempt]);
 
-  const handleSongPress = useCallback(
-    (song: Song) => {
-      if (!album) return;
-      const index = album.songs.findIndex((s) => s.id === song.id);
-      void playSongs(album.songs, Math.max(index, 0));
-    },
-    [album, playSongs],
-  );
+  const retry = () => {
+    setLoading(true);
+    setError(null);
+    setAttempt((n) => n + 1);
+  };
 
-  const handlePlayAll = useCallback(() => {
+  const handleSongPress = (song: Song) => {
+    if (!album) return;
+    const index = album.songs.findIndex((s) => s.id === song.id);
+    void playSongs(album.songs, Math.max(index, 0));
+  };
+
+  const handlePlayAll = () => {
     if (album?.songs.length) {
       void playSongs(album.songs, 0);
     }
-  }, [album, playSongs]);
+  };
 
-  const handleShuffleAll = useCallback(() => {
+  const handleShuffleAll = () => {
     if (album?.songs.length) {
       const shuffled = [...album.songs].sort(() => Math.random() - 0.5);
       void playSongs(shuffled, 0);
     }
-  }, [album, playSongs]);
+  };
 
   if (loading) {
     return (
@@ -79,7 +87,7 @@ export default function AlbumScreen() {
     return (
       <>
         <Stack.Screen options={{ title: '', headerTransparent: true, headerBackTitle: '' }} />
-        <ErrorState message={error ?? 'Album not found'} onRetry={fetchAlbum} />
+        <ErrorState message={error ?? 'Album not found'} onRetry={retry} />
       </>
     );
   }
@@ -150,7 +158,7 @@ export default function AlbumScreen() {
           </View>
         }
         renderItem={({ item }) => (
-          <SongRow song={item} onPress={handleSongPress} isPlaying={currentSong?.id === item.id} />
+          <SongRow song={item} onPress={handleSongPress} isPlaying={currentSongId === item.id} />
         )}
       />
     </>

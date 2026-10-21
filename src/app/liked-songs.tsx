@@ -1,5 +1,5 @@
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { Stack, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppIcon } from '@/components/app-icon';
@@ -22,17 +22,14 @@ export default function LikedSongsScreen() {
   const [selectedSong, setSelectedSong] = useState<Song | null>(null);
   const [addToPlaylistSong, setAddToPlaylistSong] = useState<Song | null>(null);
 
-  const handleSongPress = useCallback(
-    (song: Song) => {
-      const index = likedSongs.findIndex((s) => s.id === song.id);
-      void playSongs(likedSongs, index >= 0 ? index : 0);
-    },
-    [likedSongs, playSongs],
-  );
+  const handleSongPress = (song: Song) => {
+    const index = likedSongs.findIndex((s) => s.id === song.id);
+    void playSongs(likedSongs, index >= 0 ? index : 0);
+  };
 
-  const handleLongPress = useCallback((song: Song) => {
+  const handleLongPress = (song: Song) => {
     setSelectedSong(song);
-  }, []);
+  };
 
   return (
     <View style={[styles.container, { paddingTop: top }]}>

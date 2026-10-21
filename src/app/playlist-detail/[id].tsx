@@ -9,7 +9,7 @@ import { DownloadAllButton } from '@/components/DownloadAllButton';
 import { SONG_LIST_WINDOW, SongRow } from '@/components/SongRow';
 import { ErrorState } from '@/components/states/ErrorState';
 import { useMiniPlayerInset } from '@/hooks/useMiniPlayerPlacement';
-import { usePlayer } from '@/hooks/usePlayer';
+import { playSongs, useCurrentSongId } from '@/hooks/usePlayer';
 import { getPlaylist, removeSongFromPlaylist, renamePlaylist } from '@/services/player/playerQueue';
 import { trackToSong } from '@/services/player/trackAdapter';
 import { colors, spacing, typography } from '@/theme';
@@ -21,7 +21,7 @@ export default function PlaylistDetailScreen() {
   const { id = '' } = useLocalSearchParams<{ id: string }>();
   const { top } = useSafeAreaInsets();
   const miniPlayerInset = useMiniPlayerInset();
-  const { playSongs, currentSong } = usePlayer();
+  const currentSongId = useCurrentSongId();
 
   // A synchronous native read, so it happens during render instead of in an effect.
   const [loaded, setLoaded] = useState<{ id: string; playlist: Playlist | null }>(() => ({
@@ -121,7 +121,7 @@ export default function PlaylistDetailScreen() {
             song={item}
             onPress={() => handleSongPress(item, index)}
             onLongPress={() => handleRemove(item)}
-            isPlaying={currentSong?.id === item.id}
+            isPlaying={currentSongId === item.id}
             rightElement={
               <Pressable onPress={() => handleRemove(item)} hitSlop={8}>
                 <AppIcon name="trash" size={18} color={colors.textTertiary} />

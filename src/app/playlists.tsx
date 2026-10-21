@@ -23,17 +23,13 @@ export default function PlaylistsScreen() {
   // Bumped on each open so the name field remounts empty.
   const [nameFieldKey, setNameFieldKey] = useState(0);
 
-  const refresh = useCallback(() => {
+  const refresh = () => {
     setPlaylists(getAllPlaylists());
-  }, []);
+  };
 
-  useFocusEffect(
-    useCallback(() => {
-      refresh();
-    }, [refresh]),
-  );
+  useFocusEffect(useCallback(() => setPlaylists(getAllPlaylists()), []));
 
-  const handleCreate = useCallback(() => {
+  const handleCreate = () => {
     if (Platform.OS === 'ios') {
       Alert.prompt(
         'New Playlist',
@@ -50,30 +46,27 @@ export default function PlaylistsScreen() {
       setNameFieldKey((k) => k + 1);
       setShowCreateModal(true);
     }
-  }, [refresh]);
+  };
 
-  const handleCreateConfirm = useCallback(() => {
+  const handleCreateConfirm = () => {
     const trimmed = newName.trim();
     if (!trimmed) return;
     setShowCreateModal(false);
     void createPlaylist(trimmed).then(refresh);
-  }, [newName, refresh]);
+  };
 
-  const handleDelete = useCallback(
-    (playlist: Playlist) => {
-      Alert.alert('Delete Playlist', `Delete "${playlist.name}"? This cannot be undone.`, [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            void deletePlaylist(playlist.id).then(refresh);
-          },
+  const handleDelete = (playlist: Playlist) => {
+    Alert.alert('Delete Playlist', `Delete "${playlist.name}"? This cannot be undone.`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () => {
+          void deletePlaylist(playlist.id).then(refresh);
         },
-      ]);
-    },
-    [refresh],
-  );
+      },
+    ]);
+  };
 
   return (
     <View style={[styles.container, { paddingTop: top }]}>

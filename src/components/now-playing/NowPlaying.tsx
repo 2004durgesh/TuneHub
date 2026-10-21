@@ -20,6 +20,7 @@ import { ArtworkTransition } from '@/components/ArtworkTransition';
 import { PlayerBackdrop } from '@/components/PlayerBackdrop';
 import { useArtworkColors } from '@/hooks/useArtworkColors';
 import { MINI_PLAYER_HEIGHT, useMiniPlayerPlacement } from '@/hooks/useMiniPlayerPlacement';
+import { PerfProfiler, PerfRun } from '@/perf/perfHarness';
 import { usePlayerStore, useSettingsStore } from '@/store';
 import { colors, radii, spacing, springs, timings } from '@/theme';
 import { FullPlayer, fullArtworkSize, fullArtworkTop, type Panel } from './FullPlayer';
@@ -47,7 +48,11 @@ const FULL_BG = colors.background as string;
 export function NowPlaying() {
   const hasSong = usePlayerStore((s) => s.currentSong !== null);
   // Unmounting without a song resets the expanded state for the next one.
-  return hasSong ? <NowPlayingSurface /> : null;
+  return hasSong ? (
+    <PerfProfiler id="NowPlaying">
+      <NowPlayingSurface />
+    </PerfProfiler>
+  ) : null;
 }
 
 function NowPlayingSurface() {
@@ -108,10 +113,10 @@ function NowPlayingSurface() {
     );
   }, [reducedMotion, reveal]);
 
-  const commitLyrics = useCallback(() => {
+  const commitLyrics = () => {
     setPanel('lyrics');
     setPeek(false);
-  }, []);
+  };
 
   const finishCollapse = useCallback(() => {
     setOpen(false);
@@ -299,26 +304,32 @@ function NowPlayingSurface() {
             >
               {dynamicAtmosphere && (
                 <Animated.View style={[StyleSheet.absoluteFill, backdropStyle]}>
-                  <PlayerBackdrop palette={palette} animate={!reducedMotion} />
+                  <PerfProfiler id="PlayerBackdrop">
+                    <PlayerBackdrop palette={palette} animate={!reducedMotion} />
+                  </PerfProfiler>
                 </Animated.View>
               )}
               <Animated.View style={chromeStyle}>
-                <FullPlayer
-                  width={W}
-                  height={H}
-                  panel={panel}
-                  content={panel ?? (peek ? 'lyrics' : null)}
-                  reveal={reveal}
-                  onOpenPanel={openPanel}
-                  onClosePanel={closePanel}
-                  onCollapse={() => animateTo(0)}
-                />
+                <PerfProfiler id="FullPlayer">
+                  <FullPlayer
+                    width={W}
+                    height={H}
+                    panel={panel}
+                    content={panel ?? (peek ? 'lyrics' : null)}
+                    reveal={reveal}
+                    onOpenPanel={openPanel}
+                    onClosePanel={closePanel}
+                    onCollapse={() => animateTo(0)}
+                  />
+                </PerfProfiler>
               </Animated.View>
             </Animated.View>
           )}
 
           <Animated.View style={miniStyle} pointerEvents={expanded ? 'none' : 'auto'}>
-            <MiniBar width={miniWidth} palette={palette} onExpand={() => animateTo(1)} />
+            <PerfProfiler id="MiniBar">
+              <MiniBar width={miniWidth} palette={palette} onExpand={() => animateTo(1)} />
+            </PerfProfiler>
           </Animated.View>
         </Animated.View>
       </GestureDetector>
@@ -327,13 +338,22 @@ function NowPlayingSurface() {
         style={[styles.art, { width: artSize, height: artSize }, artStyle]}
         pointerEvents="none"
       >
-        <ArtworkTransition
-          uri={currentSong?.artworkUrl ?? ''}
-          size={artSize}
-          radius={artRadius}
-          animate={!reducedMotion}
-        />
+        <PerfProfiler id="ArtworkTransition">
+          <ArtworkTransition
+            uri={currentSong?.artworkUrl ?? ''}
+            size={artSize}
+            radius={artRadius}
+            animate={!reducedMotion}
+          />
+        </PerfProfiler>
       </Animated.View>
+
+      <PerfRun
+        expand={() => animateTo(1)}
+        collapse={() => animateTo(0)}
+        openPanel={openPanel}
+        closePanel={closePanel}
+      />
     </Animated.View>
   );
 }

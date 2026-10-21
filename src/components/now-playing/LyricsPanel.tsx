@@ -1,17 +1,17 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, Text } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { EdgeFadeItem, useEdgeFade } from '@/components/EdgeFade';
 import { EmptyState } from '@/components/states/EmptyState';
 import { LoadingState } from '@/components/states/LoadingState';
-import { usePlayer } from '@/hooks/usePlayer';
 import { getCachedLyrics, getLyrics, type Lyrics } from '@/services/music';
+import { usePlayerStore } from '@/store';
 import { colors, spacing, typography } from '@/theme';
 
 /** Lyrics for the current song, shown in place of the artwork in the expanded player. */
 export function LyricsPanel() {
-  const { currentSong } = usePlayer();
+  const currentSong = usePlayerStore((s) => s.currentSong);
   const lyricsId = currentSong ? (currentSong.lyricsId ?? currentSong.id) : null;
   const [result, setResult] = useState<{ id: string; lyrics: Lyrics | null } | null>(null);
 
@@ -56,16 +56,12 @@ export function LyricsPanel() {
 
 function LyricsBody({ lyrics }: { lyrics: Lyrics }) {
   const fade = useEdgeFade();
-  const lines = useMemo(
-    () =>
-      lyrics.text.split(/\n\s*\n/).flatMap((stanza) =>
-        stanza
-          .split('\n')
-          .map((line) => line.trim())
-          .filter(Boolean)
-          .map((text, i) => ({ text, startsStanza: i === 0 })),
-      ),
-    [lyrics.text],
+  const lines = lyrics.text.split(/\n\s*\n/).flatMap((stanza) =>
+    stanza
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((text, i) => ({ text, startsStanza: i === 0 })),
   );
 
   return (

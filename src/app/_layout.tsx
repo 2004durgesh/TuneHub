@@ -1,7 +1,5 @@
 import { DarkTheme, router, Stack, ThemeProvider } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
 import { Platform, Pressable } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
@@ -12,9 +10,8 @@ import { UpdateToast } from '@/components/UpdateToast';
 import { useDownloadsBridge } from '@/hooks/useDownloads';
 import { useOtaUpdates } from '@/hooks/useOtaUpdates';
 import { usePlayerBridge } from '@/hooks/usePlayer';
+import { PerfTour, PerfWindows, perfScreenLayout } from '@/perf/perfHarness';
 import { colors } from '@/theme';
-
-SplashScreen.preventAutoHideAsync();
 
 // iOS keeps its native back button (chevron-only via headerBackButtonDisplayMode);
 // Android's native one is an arrow, so swap in a chevron to match.
@@ -37,15 +34,12 @@ export default function RootLayout() {
   useDownloadsBridge();
   useOtaUpdates();
 
-  useEffect(() => {
-    SplashScreen.hideAsync();
-  }, []);
-
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemeProvider value={DarkTheme}>
         <StatusBar style="light" />
         <Stack
+          screenLayout={perfScreenLayout}
           screenOptions={{
             headerShown: false,
             contentStyle: { backgroundColor: colors.background },
@@ -91,6 +85,8 @@ export default function RootLayout() {
         <NowPlaying />
         <UpdateToast />
         <UpdateAvailableSheet />
+        <PerfWindows />
+        <PerfTour />
       </ThemeProvider>
     </GestureHandlerRootView>
   );

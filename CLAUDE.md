@@ -185,7 +185,8 @@ Other UI building blocks:
 - The collapsed bar's position comes from `useMiniPlayerPlacement` (above the native tab bar on
   tab screens, above the safe area on pushed screens — there's no JS API for the tab-bar height,
   so it's iOS 49 / Android 80 dp). Scrolling screens add `useMiniPlayerInset()` to their bottom
-  padding so the bar never covers the last rows.
+  padding so the bar never covers the last rows — tab screens pass `useMiniPlayerInset(true)`
+  (it doesn't read the current route, which would re-render every mounted screen per navigation).
 - Write Reanimated shared values with `.set()`/`.get()` in callbacks and gestures — React
   Compiler rejects `.value =` assignments outside effects.
 
@@ -202,7 +203,9 @@ Other UI building blocks:
   Position ticks every second, so `usePlayer()` deliberately omits it — otherwise every screen
   using it re-renders each second while music plays. Read it with `usePlaybackProgress()` in the
   smallest component that shows it (`FullPlayer`'s `ProgressRow`), or drive a shared value from
-  `usePlayerStore.subscribe` (`MiniBar`'s progress line).
+  `usePlayerStore.subscribe` (`MiniBar`'s progress line). `usePlayer()` also re-renders on every
+  track and play/pause change, so screens that only start playback import `playSongs`, and rows
+  that highlight the current song use `useCurrentSongId()`.
 - Requires a dev build (`npx expo run:ios` / `run:android`). Won't play in Expo Go or web.
 
 ## Downloads (offline songs)
@@ -282,6 +285,24 @@ getStoredBundlePath(applicationContext)`, `AppDelegate.swift` returns
   (`src/components/ArtworkTransition.tsx`); it starts only after the new image decodes.
 - Gate non-essential animation/atmosphere on `useSettingsStore(s => s.reducedMotion)` and
   `useSettingsStore(s => s.dynamicAtmosphere)`.
+
+## React Compiler & profiling
+
+- React Compiler memoizes every component and hook, so don't add `useCallback`/`useMemo`; keep them
+  only where the value is an effect dependency (or `useFocusEffect`'s callback), as a guard.
+- The compiler silently skips a whole component it can't handle, leaving it unmemoized: a
+  `try … finally` (use `.then`/`.catch`, or code after `try/catch`), or a zustand store referenced
+  as a value in the component body (`usePlayerStore.getState()` — anything named `use…` counts as
+  a hook; put the read in a helper like `getPlayedFraction`). `npx eslint` doesn't report these.
+- Screens fetch in an effect with a `cancelled` flag and set state only in `.then`; Retry resets
+  loading and bumps an `attempt` state that's in the effect's deps (see `album/[id].tsx`).
+- `src/perf/perfHarness.tsx` (debug builds only): React `<Profiler>`s on every root route
+  (`perfScreenLayout`), the tabs (`profiled()`) and the player parts, logged as `[perf]` lines
+  (`adb logcat -d | grep "\[perf\]"`). `npm run perf` logs each 2 s window while you use the app;
+  `npm run perf:player` plays a scripted player session (mini / full / paused / next track /
+  lyrics / queue, 10 s each); `npm run perf:tour` opens almost every screen in turn with music
+  playing (open 5 s, then idle 3 s, which should log nothing). The env var is inlined at bundle
+  time, so these start their own Metro with `--clear`.
 
 ## Audio quality
 

@@ -22,10 +22,11 @@ export function useMiniPlayerPlacement(): Placement {
 
 /**
  * Extra bottom padding a scrolling screen needs so its last rows can scroll clear of the
- * MiniPlayer. 0 when nothing is playing.
+ * MiniPlayer. 0 when nothing is playing. Tab screens pass `inTabs`: a screen never moves between
+ * the tabs and the stack, and reading the current route would re-render every mounted screen on
+ * each navigation.
  */
-export function useMiniPlayerInset(): number {
-  const { inTabs } = useMiniPlayerPlacement();
+export function useMiniPlayerInset(inTabs = false): number {
   const { bottom: safeBottom } = useSafeAreaInsets();
   const hasSong = usePlayerStore((s) => s.currentSong !== null);
   if (!hasSong) return 0;

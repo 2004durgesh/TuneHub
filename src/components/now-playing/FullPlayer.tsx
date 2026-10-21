@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, type SharedValue, useAnimatedStyle } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,6 +8,7 @@ import { AppIcon } from '@/components/app-icon';
 import { SeekSlider } from '@/components/native/SeekSlider';
 import { SongActionSheet } from '@/components/SongActionSheet';
 import { useLikedSongs } from '@/hooks/useLikedSongs';
+import { PerfProfiler } from '@/perf/perfHarness';
 import { usePlaybackProgress, usePlayer } from '@/hooks/usePlayer';
 import { setRepeat as setRepeatService, shuffleUpcoming } from '@/services/player';
 import { usePlayerStore } from '@/store';
@@ -105,17 +106,17 @@ export function FullPlayer({
     transform: [{ translateY: (1 - reveal.value) * spacing.xl }],
   }));
 
-  const handleRepeat = useCallback(async () => {
+  const handleRepeat = async () => {
     const nextMode = REPEAT_CYCLE[(REPEAT_CYCLE.indexOf(repeat) + 1) % REPEAT_CYCLE.length];
     setRepeatStore(nextMode);
     await setRepeatService(nextMode);
-  }, [repeat, setRepeatStore]);
+  };
 
-  const handleShuffle = useCallback(() => {
+  const handleShuffle = () => {
     const enabling = !shuffle;
     toggleShuffle();
     if (enabling) void shuffleUpcoming();
-  }, [shuffle, toggleShuffle]);
+  };
 
   const handleQueue = () => (panel === 'queue' ? onClosePanel() : onOpenPanel('queue'));
 
@@ -155,7 +156,9 @@ export function FullPlayer({
               </Pressable>
             </View>
             <Animated.View key={content} style={styles.panel} entering={FadeIn.duration(200)}>
-              {content === 'lyrics' ? <LyricsPanel /> : <QueuePanel />}
+              <PerfProfiler id={content === 'lyrics' ? 'LyricsPanel' : 'QueuePanel'}>
+                {content === 'lyrics' ? <LyricsPanel /> : <QueuePanel />}
+              </PerfProfiler>
             </Animated.View>
           </Animated.View>
         )}
@@ -210,7 +213,9 @@ export function FullPlayer({
         </View>
       </View>
 
-      <ProgressRow onSeek={seek} />
+      <PerfProfiler id="ProgressRow">
+        <ProgressRow onSeek={seek} />
+      </PerfProfiler>
 
       <View style={styles.mainControls}>
         <Pressable style={styles.iconBtn} onPress={previous} hitSlop={8}>
