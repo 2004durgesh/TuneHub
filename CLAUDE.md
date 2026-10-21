@@ -265,6 +265,11 @@ Other UI building blocks:
   native module, smoke-test a release APK (launch, play, download) for stripped classes. Native
   code is built for ARM only (`reactNativeArchitectures`); x86 emulators need
   `-PreactNativeArchitectures=x86_64`.
+- `react-native-nitro-player` (≤ 1.7.0-alpha.6) declares `android/consumer-rules.pro` but doesn't
+  publish it. AGP 9 (SDK 58) fails release builds on the missing file, and the file holds keep
+  rules for its Google Cast options provider (created by reflection, so R8 would strip it).
+  `patches/react-native-nitro-player+*.patch` restores upstream's file via `postinstall`; drop
+  the patch once a release ships the file.
 - nitro-ota's native hooks are applied by hand to the committed native projects (its Expo plugin is
   in `app.json` for future prebuilds): `MainApplication.kt` passes `jsBundleFilePath =
 getStoredBundlePath(applicationContext)`, `AppDelegate.swift` returns
