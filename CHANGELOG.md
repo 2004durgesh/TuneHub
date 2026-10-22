@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.1](https://github.com/2004durgesh/TuneHub/compare/v1.2.0...v1.2.1) (2026-10-22)
+
+### Bug Fixes
+
+- **android:** keep Room and Nitro classes from R8 so release builds launch ([625fc32](https://github.com/2004durgesh/TuneHub/commit/625fc32b7793b6078f42505346e29fb26cd5b94f))
+
 ## [1.2.0](https://github.com/2004durgesh/TuneHub/compare/v1.1.0...v1.2.0) (2026-10-21)
 
 ### Features

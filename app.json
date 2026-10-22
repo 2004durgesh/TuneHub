@@ -2,7 +2,7 @@
   "expo": {
     "name": "tunehub",
     "slug": "tunehub",
-    "version": "1.2.0",
+    "version": "1.2.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "tunehub",
@@ -10,7 +10,7 @@
     "ios": {
       "icon": "./assets/expo.icon",
       "bundleIdentifier": "com.anonymous.tunehub",
-      "buildNumber": "3"
+      "buildNumber": "4"
     },
     "android": {
       "adaptiveIcon": {
@@ -21,7 +21,7 @@
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.anonymous.tunehub",
-      "versionCode": 3
+      "versionCode": 4
     },
     "plugins": [
       "expo-router",
