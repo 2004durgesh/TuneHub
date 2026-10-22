@@ -284,7 +284,8 @@ getStoredBundlePath(applicationContext)`, `AppDelegate.swift` returns
   directly. For an SDK upgrade, `npx expo prebuild --clean` and then re-apply the hand edits:
   `android/app/build.gradle` ABI `splits` + release APK naming (`applicationVariants`), and in
   `android/gradle.properties` `android.enableShrinkResourcesInReleaseBuilds=true` and ARM-only
-  `reactNativeArchitectures`. nitro-ota's plugin regenerates its native hooks itself. Keep
+  `reactNativeArchitectures`, and the Room + Nitro keep rules in `android/app/proguard-rules.pro`
+  (without them a release build crashes at launch). nitro-ota's plugin regenerates its native hooks itself. Keep
   `android/local.properties` (gitignored) and run `pod install` with `LANG=en_US.UTF-8`.
 - The SDK 58 binary must ship as a new version: OTAs on `v1.1.0` are SDK 57 bundles, and a
   1.1.0 binary on SDK 58 would download them.

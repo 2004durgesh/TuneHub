@@ -12,3 +12,11 @@
 -keep class com.facebook.react.turbomodule.** { *; }
 
 # Add any project specific keep options here:
+
+# Room (via WorkManager, used by nitro-player and nitro-ota) creates its generated database by
+# reflection; Room's own rule keeps the class but not its constructor under R8 full mode, so the
+# app crashed at launch (NoSuchMethodException: WorkDatabase_Impl.<init>).
+-keep class * extends androidx.room.RoomDatabase { <init>(); }
+# Nitro creates its Kotlin hybrid objects from C++ over JNI, which R8 can't see; without this the
+# optimizing preset nulls their fields (NPE in NitroOta.getStoredOtaVersion at launch).
+-keep class com.margelo.nitro.** { *; }
