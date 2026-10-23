@@ -1,5 +1,5 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -13,53 +13,22 @@ import { SONG_ROW_HEIGHT, SongRow } from '@/components/SongRow';
 import { LazyList } from '@/components/native/LazyList';
 import { ErrorState } from '@/components/states/ErrorState';
 import { LoadingState } from '@/components/states/LoadingState';
+import { usePlaylist } from '@/hooks/queries';
 import { useMiniPlayerInset } from '@/hooks/useMiniPlayerPlacement';
 import { playSongs, useCurrentSongId } from '@/hooks/usePlayer';
-import { getPlaylist } from '@/services/music/playlistService';
-import { useSettingsStore } from '@/store/settingsStore';
 import { colors, radii, screenPadding, spacing, typography } from '@/theme';
-import type { RemotePlaylist, Song } from '@/types';
+import type { Song } from '@/types';
 
 export default function PlaylistScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { top } = useSafeAreaInsets();
   const miniPlayerInset = useMiniPlayerInset();
-  const audioQuality = useSettingsStore((s) => s.audioQuality);
   const currentSongId = useCurrentSongId();
 
-  const [playlist, setPlaylist] = useState<RemotePlaylist | null>(null);
+  const playlistQuery = usePlaylist(id);
+  const playlist = playlistQuery.data;
   const [menuSong, setMenuSong] = useState<Song | null>(null);
   const [adding, setAdding] = useState<{ songs: readonly Song[]; name?: string } | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const [attempt, setAttempt] = useState(0);
-
-  useEffect(() => {
-    let cancelled = false;
-    getPlaylist(id, 1, 50, audioQuality).then(
-      (data) => {
-        if (cancelled) return;
-        setPlaylist(data);
-        setError(null);
-        setLoading(false);
-      },
-      () => {
-        if (cancelled) return;
-        setError('Could not load playlist. Please try again.');
-        setLoading(false);
-      },
-    );
-    return () => {
-      cancelled = true;
-    };
-  }, [id, audioQuality, attempt]);
-
-  const retry = () => {
-    setLoading(true);
-    setError(null);
-    setAttempt((n) => n + 1);
-  };
 
   const handleSongPress = (song: Song) => {
     if (!playlist?.songs.length) return;
@@ -73,20 +42,18 @@ export default function PlaylistScreen() {
     }
   };
 
-  if (loading) {
+  if (!playlist) {
     return (
       <>
         <Stack.Screen options={{ title: '', headerTransparent: true, headerBackTitle: '' }} />
-        <LoadingState message="Loading playlist…" />
-      </>
-    );
-  }
-
-  if (error || !playlist) {
-    return (
-      <>
-        <Stack.Screen options={{ title: '', headerTransparent: true, headerBackTitle: '' }} />
-        <ErrorState message={error ?? 'Playlist not found'} onRetry={retry} />
+        {playlistQuery.isError && !playlistQuery.isFetching ? (
+          <ErrorState
+            message="Could not load playlist. Please try again."
+            onRetry={() => void playlistQuery.refetch()}
+          />
+        ) : (
+          <LoadingState message="Loading playlist…" />
+        )}
       </>
     );
   }

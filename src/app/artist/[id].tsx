@@ -1,5 +1,5 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -10,12 +10,11 @@ import { SongActionSheet } from '@/components/SongActionSheet';
 import { SongRow } from '@/components/SongRow';
 import { ErrorState } from '@/components/states/ErrorState';
 import { LoadingState } from '@/components/states/LoadingState';
+import { useArtist } from '@/hooks/queries';
 import { useMiniPlayerInset } from '@/hooks/useMiniPlayerPlacement';
 import { playSongs, useCurrentSongId } from '@/hooks/usePlayer';
-import { getArtist } from '@/services/music/artistService';
-import { useSettingsStore } from '@/store/settingsStore';
 import { colors, radii, screenPadding, spacing, typography } from '@/theme';
-import type { AlbumSummary, Artist, Song } from '@/types';
+import type { AlbumSummary, Song } from '@/types';
 
 const ALBUM_CARD_WIDTH = 128;
 const TOP_SONGS_LIMIT = 5;
@@ -25,43 +24,13 @@ export default function ArtistScreen() {
   const { top } = useSafeAreaInsets();
   const miniPlayerInset = useMiniPlayerInset();
   const router = useRouter();
-  const audioQuality = useSettingsStore((s) => s.audioQuality);
   const currentSongId = useCurrentSongId();
 
-  const [artist, setArtist] = useState<Artist | null>(null);
+  const artistQuery = useArtist(id);
+  const artist = artistQuery.data;
   const [menuSong, setMenuSong] = useState<Song | null>(null);
   const [addingSong, setAddingSong] = useState<Song | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [bioExpanded, setBioExpanded] = useState(false);
-
-  const [attempt, setAttempt] = useState(0);
-
-  useEffect(() => {
-    let cancelled = false;
-    getArtist(id, audioQuality).then(
-      (data) => {
-        if (cancelled) return;
-        setArtist(data);
-        setError(null);
-        setLoading(false);
-      },
-      () => {
-        if (cancelled) return;
-        setError('Could not load artist. Please try again.');
-        setLoading(false);
-      },
-    );
-    return () => {
-      cancelled = true;
-    };
-  }, [id, audioQuality, attempt]);
-
-  const retry = () => {
-    setLoading(true);
-    setError(null);
-    setAttempt((n) => n + 1);
-  };
 
   const handleSongPress = (song: Song) => {
     if (!artist?.topSongs.length) return;
@@ -77,20 +46,18 @@ export default function ArtistScreen() {
     router.push({ pathname: '/artist/[id]/songs', params: { id, name: artist?.name ?? '' } });
   };
 
-  if (loading) {
+  if (!artist) {
     return (
       <>
         <Stack.Screen options={{ title: '', headerTransparent: true, headerBackTitle: '' }} />
-        <LoadingState message="Loading artist…" />
-      </>
-    );
-  }
-
-  if (error || !artist) {
-    return (
-      <>
-        <Stack.Screen options={{ title: '', headerTransparent: true, headerBackTitle: '' }} />
-        <ErrorState message={error ?? 'Artist not found'} onRetry={retry} />
+        {artistQuery.isError && !artistQuery.isFetching ? (
+          <ErrorState
+            message="Could not load artist. Please try again."
+            onRetry={() => void artistQuery.refetch()}
+          />
+        ) : (
+          <LoadingState message="Loading artist…" />
+        )}
       </>
     );
   }

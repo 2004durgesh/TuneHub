@@ -1,3 +1,4 @@
+import { QueryClientProvider } from '@tanstack/react-query';
 import { DarkTheme, router, Stack, ThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Platform, Pressable } from 'react-native';
@@ -12,6 +13,7 @@ import { useDownloadsBridge } from '@/hooks/useDownloads';
 import { useOtaUpdates } from '@/hooks/useOtaUpdates';
 import { usePlayerBridge } from '@/hooks/usePlayer';
 import { PerfTour, PerfWindows, perfScreenLayout } from '@/perf/perfHarness';
+import { queryClient } from '@/services/query/client';
 import { colors } from '@/theme';
 
 // iOS keeps its native back button (chevron-only via headerBackButtonDisplayMode);
@@ -36,69 +38,71 @@ export default function RootLayout() {
   useOtaUpdates();
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <ThemeProvider value={DarkTheme}>
-        <StatusBar style="light" />
-        <Stack
-          screenLayout={perfScreenLayout}
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: colors.background },
-            headerBackButtonDisplayMode: 'minimal',
-            headerLeft: Platform.OS === 'android' ? androidBackButton : undefined,
-          }}
-        >
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen
-            name="album/[id]"
-            options={{ headerShown: true, headerTransparent: true, headerTintColor: colors.text }}
-          />
-          <Stack.Screen
-            name="artist/[id]"
-            options={{ headerShown: true, headerTransparent: true, headerTintColor: colors.text }}
-          />
-          <Stack.Screen
-            name="artist/[id]/songs"
-            options={{
-              headerShown: true,
-              headerStyle: { backgroundColor: colors.background },
-              headerTintColor: colors.text,
-              headerShadowVisible: false,
+    <QueryClientProvider client={queryClient}>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <ThemeProvider value={DarkTheme}>
+          <StatusBar style="light" />
+          <Stack
+            screenLayout={perfScreenLayout}
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: colors.background },
+              headerBackButtonDisplayMode: 'minimal',
+              headerLeft: Platform.OS === 'android' ? androidBackButton : undefined,
             }}
-          />
-          <Stack.Screen
-            name="playlist/[id]"
-            options={{ headerShown: true, headerTransparent: true, headerTintColor: colors.text }}
-          />
-          <Stack.Screen
-            name="playlist-detail/[id]"
-            options={{ headerShown: true, headerTransparent: true, headerTintColor: colors.text }}
-          />
-          <Stack.Screen name="liked-songs" />
-          <Stack.Screen name="history" />
-          <Stack.Screen name="playlists" />
-          <Stack.Screen name="downloads" />
-          <Stack.Screen
-            name="settings/index"
-            options={{
-              headerShown: true,
-              title: '',
-              headerStyle: { backgroundColor: colors.background },
-              headerTintColor: colors.text,
-              headerShadowVisible: false,
-            }}
-          />
-          <Stack.Screen name="settings/playback" options={{ headerShown: true }} />
-          <Stack.Screen name="settings/about" options={{ headerShown: true }} />
-        </Stack>
-        {/* Mini player and full player as one morphing surface above every screen. */}
-        <NowPlaying />
-        <Toast />
-        <UpdateToast />
-        <UpdateAvailableSheet />
-        <PerfWindows />
-        <PerfTour />
-      </ThemeProvider>
-    </GestureHandlerRootView>
+          >
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen
+              name="album/[id]"
+              options={{ headerShown: true, headerTransparent: true, headerTintColor: colors.text }}
+            />
+            <Stack.Screen
+              name="artist/[id]"
+              options={{ headerShown: true, headerTransparent: true, headerTintColor: colors.text }}
+            />
+            <Stack.Screen
+              name="artist/[id]/songs"
+              options={{
+                headerShown: true,
+                headerStyle: { backgroundColor: colors.background },
+                headerTintColor: colors.text,
+                headerShadowVisible: false,
+              }}
+            />
+            <Stack.Screen
+              name="playlist/[id]"
+              options={{ headerShown: true, headerTransparent: true, headerTintColor: colors.text }}
+            />
+            <Stack.Screen
+              name="playlist-detail/[id]"
+              options={{ headerShown: true, headerTransparent: true, headerTintColor: colors.text }}
+            />
+            <Stack.Screen name="liked-songs" />
+            <Stack.Screen name="history" />
+            <Stack.Screen name="playlists" />
+            <Stack.Screen name="downloads" />
+            <Stack.Screen
+              name="settings/index"
+              options={{
+                headerShown: true,
+                title: '',
+                headerStyle: { backgroundColor: colors.background },
+                headerTintColor: colors.text,
+                headerShadowVisible: false,
+              }}
+            />
+            <Stack.Screen name="settings/playback" options={{ headerShown: true }} />
+            <Stack.Screen name="settings/about" options={{ headerShown: true }} />
+          </Stack>
+          {/* Mini player and full player as one morphing surface above every screen. */}
+          <NowPlaying />
+          <Toast />
+          <UpdateToast />
+          <UpdateAvailableSheet />
+          <PerfWindows />
+          <PerfTour />
+        </ThemeProvider>
+      </GestureHandlerRootView>
+    </QueryClientProvider>
   );
 }

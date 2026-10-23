@@ -1,6 +1,6 @@
-import { useCallback, useEffect } from 'react';
-import { getCharts, getFeaturedPlaylists, getNewReleases, getTopArtists } from '@/services/music';
-import { useMusicStore } from '@/store';
+import { useQuery } from '@tanstack/react-query';
+
+import { homeQueries } from '@/hooks/queries';
 import type { ArtistSummary, DiscoveryItem } from '@/types';
 
 type UseHomeDataReturn = {
@@ -13,60 +13,32 @@ type UseHomeDataReturn = {
   refresh: () => void;
 };
 
+// One shared empty list, so a missing section doesn't hand its row a new array every render.
+const EMPTY: never[] = [];
+
 export function useHomeData(): UseHomeDataReturn {
-  const charts = useMusicStore((s) => s.charts);
-  const newReleases = useMusicStore((s) => s.newReleases);
-  const featuredPlaylists = useMusicStore((s) => s.featuredPlaylists);
-  const topArtists = useMusicStore((s) => s.topArtists);
-  const loading = useMusicStore((s) => s.homeLoading);
-  const error = useMusicStore((s) => s.homeError);
-  const setHome = useMusicStore((s) => s.setHome);
-  const setHomeLoading = useMusicStore((s) => s.setHomeLoading);
-  const setHomeError = useMusicStore((s) => s.setHomeError);
+  const charts = useQuery(homeQueries.charts);
+  const newReleases = useQuery(homeQueries.newReleases);
+  const featuredPlaylists = useQuery(homeQueries.featuredPlaylists);
+  const topArtists = useQuery(homeQueries.topArtists);
+  const sections = [charts, newReleases, featuredPlaylists, topArtists];
 
-  const fetchData = useCallback(async () => {
-    setHomeLoading(true);
-    setHomeError(null);
+  // The screen only waits or fails as a whole: any section with data is shown.
+  const hasData = sections.some((section) => section.data !== undefined);
+  const loading =
+    !hasData &&
+    sections.some((section) => section.isLoading || (section.isError && section.isFetching));
+  const failed = !hasData && !loading;
 
-    const [chartsRes, newReleasesRes, playlistsRes, artistsRes] = await Promise.allSettled([
-      getCharts(),
-      getNewReleases(),
-      getFeaturedPlaylists(),
-      getTopArtists(),
-    ]);
-
-    const results = [chartsRes, newReleasesRes, playlistsRes, artistsRes];
-    const allFailed = results.every((r) => r.status === 'rejected');
-
-    if (allFailed) {
-      const reason = (chartsRes as PromiseRejectedResult).reason;
-      setHomeError(reason instanceof Error ? reason.message : 'Failed to load home data');
-    }
-
-    // Read current store state to keep existing values for any failed sections
-    const current = useMusicStore.getState();
-    setHome({
-      charts: chartsRes.status === 'fulfilled' ? chartsRes.value : current.charts,
-      newReleases:
-        newReleasesRes.status === 'fulfilled' ? newReleasesRes.value : current.newReleases,
-      featuredPlaylists:
-        playlistsRes.status === 'fulfilled' ? playlistsRes.value : current.featuredPlaylists,
-      topArtists: artistsRes.status === 'fulfilled' ? artistsRes.value : current.topArtists,
-    });
-
-    setHomeLoading(false);
-  }, [setHome, setHomeLoading, setHomeError]);
-
-  const refresh = () => {
-    void fetchData();
+  return {
+    charts: charts.data ?? EMPTY,
+    newReleases: newReleases.data ?? EMPTY,
+    featuredPlaylists: featuredPlaylists.data ?? EMPTY,
+    topArtists: topArtists.data ?? EMPTY,
+    loading,
+    error: failed ? (charts.error?.message ?? 'Failed to load home data') : null,
+    refresh: () => {
+      for (const section of sections) void section.refetch();
+    },
   };
-
-  useEffect(() => {
-    // Skip fetch if data is already hydrated in the store
-    if (useMusicStore.getState().charts.length === 0) {
-      void fetchData();
-    }
-  }, [fetchData]);
-
-  return { charts, newReleases, featuredPlaylists, topArtists, loading, error, refresh };
 }

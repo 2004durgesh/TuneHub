@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
 import { StyleSheet, Text } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { EdgeFadeItem, useEdgeFade } from '@/components/EdgeFade';
 import { EmptyState } from '@/components/states/EmptyState';
 import { LoadingState } from '@/components/states/LoadingState';
-import { getCachedLyrics, getLyrics, type Lyrics } from '@/services/music';
+import { useLyrics } from '@/hooks/queries';
+import type { Lyrics } from '@/services/music';
 import { usePlayerStore } from '@/store';
 import { colors, spacing, typography } from '@/theme';
 
@@ -13,34 +13,9 @@ import { colors, spacing, typography } from '@/theme';
 export function LyricsPanel() {
   const currentSong = usePlayerStore((s) => s.currentSong);
   const lyricsId = currentSong ? (currentSong.lyricsId ?? currentSong.id) : null;
-  const [result, setResult] = useState<{ id: string; lyrics: Lyrics | null } | null>(null);
+  const { data: lyrics, isLoading } = useLyrics(lyricsId);
 
-  // Already-fetched lyrics render on the first frame, so re-opening the panel doesn't refetch.
-  const cached = lyricsId ? getCachedLyrics(lyricsId) : undefined;
-
-  useEffect(() => {
-    if (!lyricsId || getCachedLyrics(lyricsId) !== undefined) return;
-    let active = true;
-    getLyrics(lyricsId)
-      .then((lyrics) => {
-        if (active) setResult({ id: lyricsId, lyrics });
-      })
-      .catch(() => {
-        if (active) setResult({ id: lyricsId, lyrics: null });
-      });
-    return () => {
-      active = false;
-    };
-  }, [lyricsId]);
-
-  const lyrics = !lyricsId
-    ? null
-    : cached !== undefined
-      ? cached
-      : result?.id === lyricsId
-        ? result.lyrics
-        : undefined;
-  if (lyrics === undefined) return <LoadingState />;
+  if (isLoading) return <LoadingState />;
   if (!lyrics) {
     return (
       <EmptyState

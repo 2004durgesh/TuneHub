@@ -7,10 +7,12 @@ import {
 } from 'react';
 import { router, type Href } from 'expo-router';
 
+import { homeQueries } from '@/hooks/queries';
 import { next, pause, play, playNow } from '@/services/player';
 import { getAllPlaylists } from '@/services/player/playerQueue';
+import { queryClient } from '@/services/query/client';
 import { getHistory } from '@/services/storage/history';
-import { useMusicStore, usePlayerStore } from '@/store';
+import { usePlayerStore } from '@/store';
 
 /**
  * Render measurements for TuneHub's screens and player, off unless Metro is started with
@@ -168,7 +170,7 @@ type TourStop = { label: string; href: string; pushed: boolean };
 // and the first user playlist. Stops without one are skipped.
 function tourStops(): TourStop[] {
   const song = getHistory()[0];
-  const chart = useMusicStore.getState().charts[0];
+  const chart = queryClient.getQueryData(homeQueries.charts.queryKey)?.[0];
   const playlist = getAllPlaylists()[0];
   const stops: (TourStop | null)[] = [
     { label: 'Search', href: '/search', pushed: false },

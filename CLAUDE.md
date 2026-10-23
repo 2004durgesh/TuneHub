@@ -6,7 +6,8 @@ React Native + Expo (SDK 58, RN 0.88) music player. JioSaavn SDK as the data/aud
 `@/theme` `colors` tokens (Material 3 on both platforms — see Colors). Reach for
 raw React Native primitives only for custom layout/animation that `@expo/ui` can't
 express. `expo-symbols` for icons, Reanimated for animations, `react-native-nitro-player`
-for audio, `react-native-mmkv` for local storage, zustand for state.
+for audio, `react-native-mmkv` for local storage, TanStack Query for remote data, zustand for app
+state.
 
 No account, no login — local-first. Dark-first UI.
 
@@ -29,12 +30,38 @@ lazy `require`s or web fallbacks.
   decoded) and has `songApi.getLyrics(id)` — `lyricsService` wraps it. Fix SDK bugs upstream
   rather than with local patches.
 - UI code NEVER imports `react-native-nitro-player` (type-only imports like `Playlist` excepted). Only `src/services/player/` may; the live queue reaches the UI through `useQueue()` (`src/services/player/queue.ts`).
-- Zustand stores in `src/store/`: `playerStore`, `musicStore`, `settingsStore`, `downloadStore`,
-  `otaStore`. Don't mix concerns.
+- Zustand stores in `src/store/`: `playerStore`, `musicStore` (search history only),
+  `settingsStore`, `downloadStore`, `otaStore`. Don't mix concerns. Remote music data lives in
+  TanStack Query, never in a store (see Remote data).
 - UI code NEVER imports `expo-file-system` (only `src/services/downloads/`) or
   `react-native-nitro-ota` / `expo-application` (only `src/services/ota/`).
 - Stores are pure state; screens/hooks call services then feed results into stores via setters. Stores don't call services.
 - MMKV via `src/services/storage/mmkv.ts` (exports `storage`). Liked songs + history + settings + search history persist here.
+  The query cache has its own instance (`query-cache`).
+
+## Remote data (TanStack Query)
+
+- `src/services/query/client.ts` owns the `QueryClient` (`retry: 1`, 5 min `staleTime`), its MMKV
+  persistence and `focusManager` (AppState `active` = focused, so stale queries with a mounted
+  screen refetch when the app returns). `src/hooks/queries.ts` has every query: `homeQueries`,
+  `useAlbum`, `usePlaylist`, `useArtist`, `useArtistSongs`, `useSearch`, `useLyrics`. Screens use
+  these hooks, never raw keys. Keys that build stream URLs include `audioQuality`.
+- Only the `home` queries are saved to disk (instant, offline cold start). The cache is restored
+  synchronously on import — the library's async restore renders persisted queries as pending
+  first — and is busted per binary + OTA bundle. Persisted queries need `gcTime` ≥
+  `PERSIST_MAX_AGE`. Don't persist large or per-item queries: the persister re-serializes the
+  whole persisted set after every cache change (throttled to 1 s).
+- A screen renders its data whenever it has some. Without data it shows `ErrorState` (Try again
+  = `refetch`) when `isError && !isFetching`, else `LoadingState` — so a failed background
+  refetch never replaces content and Try again shows loading. Read `isFetching`/`isError` only on
+  that no-data path (keep the result as `albumQuery`, not destructured): results are tracked per
+  property, so a background refetch with unchanged data then renders nothing.
+- Fallbacks for missing data use a module-level `EMPTY` constant, and `select` functions live at
+  module level — `?? []` or an inline `select` makes a new value every render and defeats React
+  Compiler memoization.
+- `useArtistSongs` is an infinite query with `staleTime: Infinity`: a refetch reloads every loaded
+  page one after another. `useLyrics` is memory-only (`staleTime: Infinity`, 30 min `gcTime`);
+  `getLyrics` returns null for "no lyrics" (cached) and throws on network errors (retried).
 
 ## UI: `@expo/ui` (native components)
 
@@ -318,9 +345,10 @@ getStoredBundlePath(applicationContext)`, `AppDelegate.swift` returns
   song twice). Fast Refresh doesn't update content inside `header`; reload the app to see it.
   `footer` renders after the rows. There's no scroll callback, so `onEndReached` fires when the
   recycler mounts the last row (`EndReached`), i.e. once the end is within the overscan window.
-- `/artist/[id]/songs` ("See all songs") pages through `getArtistSongs`: pages start at 0, vary in
-  size and the reported total overshoots, so it loads until a page adds no new songs; a failed
-  page shows a retry footer. Pushed with the artist `name` param for its title.
+- `/artist/[id]/songs` ("See all songs") pages through `getArtistSongs` (`useArtistSongs`): pages
+  start at 0, vary in size and the reported total overshoots, so `getNextPageParam` stops at a page
+  that adds no new songs and `select` dedupes; a failed page shows a retry footer and blocks
+  further loads until tapped. Pushed with the artist `name` param for its title.
 - Screens with a transparent header over a hero (album, playlist, artist) keep `title: ''` — the
   name is already in the hero, and a header title overlaps the artwork.
 - The other song lists (queue panel, downloads) are `FlatList`/`SectionList`: `SongRow` has a
@@ -344,8 +372,8 @@ getStoredBundlePath(applicationContext)`, `AppDelegate.swift` returns
   `try … finally` (use `.then`/`.catch`, or code after `try/catch`), or a zustand store referenced
   as a value in the component body (`usePlayerStore.getState()` — anything named `use…` counts as
   a hook; put the read in a helper like `getPlayedFraction`). `npx eslint` doesn't report these.
-- Screens fetch in an effect with a `cancelled` flag and set state only in `.then`; Retry resets
-  loading and bumps an `attempt` state that's in the effect's deps (see `album/[id].tsx`).
+- Screens get remote data from the TanStack Query hooks (see Remote data), not from effects with
+  local loading state; Retry is the query's `refetch`.
 - `src/perf/perfHarness.tsx` (debug builds only): React `<Profiler>`s on every root route
   (`perfScreenLayout`), the tabs (`profiled()`) and the player parts, logged as `[perf]` lines
   (`adb logcat -d | grep "\[perf\]"`). `npm run perf` logs each 2 s window while you use the app;

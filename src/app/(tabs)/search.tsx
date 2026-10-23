@@ -12,8 +12,9 @@ import { SongActionSheet } from '@/components/SongActionSheet';
 import { SongRow } from '@/components/SongRow';
 import { LoadingState } from '@/components/states/LoadingState';
 import { useMiniPlayerInset } from '@/hooks/useMiniPlayerPlacement';
+import { useSearch } from '@/hooks/queries';
 import { playSongs } from '@/hooks/usePlayer';
-import { getSongById, searchAll } from '@/services/music';
+import { getSongById } from '@/services/music';
 import { useMusicStore, useSettingsStore } from '@/store';
 import { colors, radii, spacing, typography } from '@/theme';
 import type { AlbumSummary, ArtistSummary, DiscoveryItem, Song } from '@/types';
@@ -192,38 +193,34 @@ function SearchScreen() {
   const audioQuality = useSettingsStore((s) => s.audioQuality);
 
   const [query, setQuery] = useState('');
-  const [loading, setLoading] = useState(false);
+  // The last query sent with the search key; results stay up while the field is edited.
+  const [submitted, setSubmitted] = useState('');
   const [sheetSong, setSheetSong] = useState<Song | null>(null);
   const [addToPlaylistSong, setAddToPlaylistSong] = useState<Song | null>(null);
 
-  const searchResults = useMusicStore((s) => s.searchResults);
+  const search = useSearch(submitted);
+  const searchResults = search.data;
+  const loading = search.isLoading || (search.isError && search.isFetching);
   const searchHistory = useMusicStore((s) => s.searchHistory);
-  const setSearchResults = useMusicStore((s) => s.setSearchResults);
-  const setSearchLoading = useMusicStore((s) => s.setSearchLoading);
   const addSearchHistory = useMusicStore((s) => s.addSearchHistory);
   const clearSearchHistory = useMusicStore((s) => s.clearSearchHistory);
 
-  async function runSearch(q: string) {
+  function runSearch(q: string) {
     const trimmed = q.trim();
     if (!trimmed) return;
-    setLoading(true);
-    setSearchLoading(true);
     addSearchHistory(trimmed);
-    const results = await searchAll(trimmed).catch(() => null);
-    setSearchResults(results);
-    setLoading(false);
-    setSearchLoading(false);
+    setSubmitted(trimmed);
   }
 
   function handleChangeText(text: string) {
     setQuery(text);
-    if (!text.trim()) setSearchResults(null);
+    if (!text.trim()) setSubmitted('');
   }
 
   function handleHistorySelect(q: string) {
     setQuery(q);
     setInputKey((k) => k + 1);
-    void runSearch(q);
+    runSearch(q);
   }
 
   async function handleSongPress(song: Song) {
@@ -241,7 +238,7 @@ function SearchScreen() {
   }
 
   const showHistory = query.trim() === '' && !searchResults;
-  const showResults = !loading && searchResults !== null;
+  const showResults = !loading && searchResults !== undefined;
 
   return (
     <View style={[styles.container, { paddingTop: top + spacing.sm }]}>
@@ -254,7 +251,7 @@ function SearchScreen() {
           containerStyle={styles.input}
           defaultValue={query}
           onChangeText={handleChangeText}
-          onSubmitEditing={(text) => void runSearch(text)}
+          onSubmitEditing={runSearch}
           placeholder="Songs, artists, albums…"
           returnKeyType="search"
           autoCorrect={false}
@@ -265,7 +262,7 @@ function SearchScreen() {
             onPress={() => {
               inputRef.current?.clear();
               setQuery('');
-              setSearchResults(null);
+              setSubmitted('');
               inputRef.current?.focus();
             }}
             hitSlop={8}

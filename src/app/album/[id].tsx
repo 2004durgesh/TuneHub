@@ -1,5 +1,5 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -13,53 +13,22 @@ import { SONG_ROW_HEIGHT, SongRow } from '@/components/SongRow';
 import { LazyList } from '@/components/native/LazyList';
 import { ErrorState } from '@/components/states/ErrorState';
 import { LoadingState } from '@/components/states/LoadingState';
+import { useAlbum } from '@/hooks/queries';
 import { useMiniPlayerInset } from '@/hooks/useMiniPlayerPlacement';
 import { playSongs, useCurrentSongId } from '@/hooks/usePlayer';
-import { getAlbum } from '@/services/music/albumService';
-import { useSettingsStore } from '@/store/settingsStore';
 import { colors, radii, screenPadding, spacing, typography } from '@/theme';
-import type { Album, Song } from '@/types';
+import type { Song } from '@/types';
 
 export default function AlbumScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { top } = useSafeAreaInsets();
   const miniPlayerInset = useMiniPlayerInset();
-  const audioQuality = useSettingsStore((s) => s.audioQuality);
   const currentSongId = useCurrentSongId();
 
-  const [album, setAlbum] = useState<Album | null>(null);
+  const albumQuery = useAlbum(id);
+  const album = albumQuery.data;
   const [menuSong, setMenuSong] = useState<Song | null>(null);
   const [adding, setAdding] = useState<{ songs: readonly Song[]; name?: string } | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const [attempt, setAttempt] = useState(0);
-
-  useEffect(() => {
-    let cancelled = false;
-    getAlbum(id, audioQuality).then(
-      (data) => {
-        if (cancelled) return;
-        setAlbum(data);
-        setError(null);
-        setLoading(false);
-      },
-      () => {
-        if (cancelled) return;
-        setError('Could not load album. Please try again.');
-        setLoading(false);
-      },
-    );
-    return () => {
-      cancelled = true;
-    };
-  }, [id, audioQuality, attempt]);
-
-  const retry = () => {
-    setLoading(true);
-    setError(null);
-    setAttempt((n) => n + 1);
-  };
 
   const handleSongPress = (song: Song) => {
     if (!album) return;
@@ -80,20 +49,18 @@ export default function AlbumScreen() {
     }
   };
 
-  if (loading) {
+  if (!album) {
     return (
       <>
         <Stack.Screen options={{ title: '', headerTransparent: true, headerBackTitle: '' }} />
-        <LoadingState message="Loading album…" />
-      </>
-    );
-  }
-
-  if (error || !album) {
-    return (
-      <>
-        <Stack.Screen options={{ title: '', headerTransparent: true, headerBackTitle: '' }} />
-        <ErrorState message={error ?? 'Album not found'} onRetry={retry} />
+        {albumQuery.isError && !albumQuery.isFetching ? (
+          <ErrorState
+            message="Could not load album. Please try again."
+            onRetry={() => void albumQuery.refetch()}
+          />
+        ) : (
+          <LoadingState message="Loading album…" />
+        )}
       </>
     );
   }
