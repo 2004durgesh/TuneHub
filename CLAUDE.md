@@ -240,6 +240,17 @@ Other UI building blocks:
   `shuffleUpcoming()`: the current track moves first and keeps playing, every other track is
   shuffled behind it. Shuffle is a mode — while it's on, `playNow` shuffles new lists the same way.
 - Equalizer settings apply through `src/services/player/equalizer.ts` (`setEqualizerEnabled`, `applyEqualizerPreset`); persisted EQ re-applies on player setup.
+- The last session survives restarts. nitro-player saves the `__nowplaying__` playlist natively;
+  `usePlayerBridge` saves the rest to MMKV `playback_session` (`src/services/storage/session.ts`:
+  track id, position every progress tick, shuffle, repeat) through a `playerStore` subscription. On
+  launch `restoreNowPlaying` loads that playlist at the track, paused, and seeks (a track within 5 s
+  of its end starts over). If the player already has a track — the JS restarted (reload, OTA)
+  while it kept playing — it adopts that one instead. Loading prepares ExoPlayer, which buffers the
+  stream from the saved position on every cold start.
+- nitro-player (≤ 1.7.0-alpha.6) saves Android playlist artwork as its variant's `toString()`,
+  `Second(value=<url>)`, nested once per save, so every track read back from disk (restored queue,
+  user playlists) carries it. `trackToSong` unwraps it; the native side (media notification) still
+  gets the bad URL until nitro-player's `PlaylistManager.saveToFile` writes `asSecondOrNull()`.
 - Player state reaches the UI through `src/hooks/usePlayer.ts` (bridges nitro-player events → `playerStore`).
   Position ticks every second, so `usePlayer()` deliberately omits it — otherwise every screen
   using it re-renders each second while music plays. Read it with `usePlaybackProgress()` in the
@@ -281,22 +292,29 @@ Other UI building blocks:
 - New binaries: `UpdateAvailableSheet` (root layout) checks GitHub's latest release 3s after launch
   and offers it when newer than the installed app; Not Now / swipe-away skips that version (MMKV
   `update_skipped_version`), a later release prompts again.
-- `npm run release` (release-it, needs `GITHUB_TOKEN`): conventional changelog, bump, then the
+- `yarn release` (release-it, needs `GITHUB_TOKEN`): conventional changelog, bump, then the
   `after:bump` hooks — `scripts/sync-versions.js` copies the version into `app.json`,
   `android/app/build.gradle` and `ios/tunehub/Info.plist` (and bumps the build number),
-  `npm run build-android` builds per-ABI release APKs (`tunehub-<abi>-v<version>.apk`, signed with
-  the debug keystore) and `npm run build-ios` an unsigned sideload `.ipa` — then commits, tags
+  `yarn build-android` builds per-ABI release APKs (`tunehub-<abi>-v<version>.apk`, signed with
+  the debug keystore) and `yarn build-ios` an unsigned sideload `.ipa` — then commits, tags
   `v<version>` and creates the GitHub release with the APKs and IPA attached. JS-only updates for
-  that binary: `npm run ota` (`scripts/publish-ota.sh`, needs `GITHUB_TOKEN`).
+  that binary: `yarn ota` (`scripts/publish-ota.sh`; `GITHUB_TOKEN` from the environment or
+  `.env`). It refuses to publish when any installed package with native code (`android/`, `ios/` or
+  a root `.podspec`) isn't a version the `v<version>` tag's lockfile lists (`yarn.lock`;
+  `package-lock.json` for v1.2.1 and older) — that bundle would run on native code it wasn't built
+  for. Yarn only: `yarn.lock` is the one lockfile (`package-lock.json` is gitignored; npm would also
+  ignore `resolutions`). Never delete it: a reinstall without it moves every native module to the
+  newest version its range allows (`^1.7.0-alpha.5` → 1.7.0).
 - Android release builds run R8 + resource shrinking (`android/gradle.properties`); after adding a
   native module, smoke-test a release APK (launch, play, download) for stripped classes. Native
   code is built for ARM only (`reactNativeArchitectures`); x86 emulators need
   `-PreactNativeArchitectures=x86_64`.
-- `react-native-nitro-player` (≤ 1.7.0-alpha.6) declares `android/consumer-rules.pro` but doesn't
-  publish it. AGP 9 (SDK 58) fails release builds on the missing file, and the file holds keep
-  rules for its Google Cast options provider (created by reflection, so R8 would strip it).
+- `react-native-nitro-player` (≤ 1.7.0, stable included) declares `android/consumer-rules.pro` but
+  doesn't publish it. AGP 9 (SDK 58) fails release builds on the missing file, and the file holds
+  keep rules for its Google Cast options provider (created by reflection, so R8 would strip it).
   `patches/react-native-nitro-player+*.patch` restores upstream's file via `postinstall`; drop
-  the patch once a release ships the file.
+  the patch once a release ships the file. A release build failing at
+  `mergeReleaseConsumerProguardFiles` means the patch isn't applied — run `yarn postinstall`.
 - nitro-ota's native hooks are applied by hand to the committed native projects (its Expo plugin is
   in `app.json` for future prebuilds): `MainApplication.kt` passes `jsBundleFilePath =
 getStoredBundlePath(applicationContext)`, `AppDelegate.swift` returns
@@ -304,9 +322,10 @@ getStoredBundlePath(applicationContext)`, `AppDelegate.swift` returns
   `pod "NitroOtaBundleManager"`.
 - nitro-ota (≤ 0.14.1) pins `react-native-nitro-modules` to exactly `0.35.1`, but RN 0.88 on iOS
   needs ≥ 0.36.2 (it only calls `installJSIBindingsWithRuntime:callInvoker:`; 0.35.x crashes at launch
-  with "installJSIBindingsWithRuntime: was not called"). `package.json` `overrides` forces 0.37.1
-  onto nitro-ota; drop the override once nitro-ota supports it. Test OTA in a release build after
-  changing Nitro. `overrides` also pins `react-dom` to React's version (it's only an optional peer).
+  with "installJSIBindingsWithRuntime: was not called"). `package.json` `resolutions` forces 0.37.1
+  onto nitro-ota (keep it equal to the `react-native-nitro-modules` dependency); drop it once
+  nitro-ota supports it. Test OTA in a release build after changing Nitro. `resolutions` also pins
+  `react-dom` to React's version (it's only an optional peer).
 - `npx expo prebuild` regenerates (wipes) `ios/` and `android/` — avoid it; edit native files
   directly. For an SDK upgrade, `npx expo prebuild --clean` and then re-apply the hand edits:
   `android/app/build.gradle` ABI `splits` + release APK naming (`applicationVariants`), and in
@@ -376,9 +395,9 @@ getStoredBundlePath(applicationContext)`, `AppDelegate.swift` returns
   local loading state; Retry is the query's `refetch`.
 - `src/perf/perfHarness.tsx` (debug builds only): React `<Profiler>`s on every root route
   (`perfScreenLayout`), the tabs (`profiled()`) and the player parts, logged as `[perf]` lines
-  (`adb logcat -d | grep "\[perf\]"`). `npm run perf` logs each 2 s window while you use the app;
-  `npm run perf:player` plays a scripted player session (mini / full / paused / next track /
-  lyrics / queue, 10 s each); `npm run perf:tour` opens almost every screen in turn with music
+  (`adb logcat -d | grep "\[perf\]"`). `yarn perf` logs each 2 s window while you use the app;
+  `yarn perf:player` plays a scripted player session (mini / full / paused / next track /
+  lyrics / queue, 10 s each); `yarn perf:tour` opens almost every screen in turn with music
   playing (open 5 s, then idle 3 s, which should log nothing). The env var is inlined at bundle
   time, so these start their own Metro with `--clear`.
 
@@ -389,6 +408,6 @@ getStoredBundlePath(applicationContext)`, `AppDelegate.swift` returns
 
 ## Commands
 
-- `npm start` — Metro. `npm run ios` / `npm run android` — dev client. `npm run lint`.
+- `yarn start` — Metro. `yarn ios` / `yarn android` — dev client. `yarn lint`.
 - Typecheck: `npx tsc --noEmit`.
-- `npm run release` — new binary version. `npm run ota` — publish a JS-only update for it.
+- `yarn release` — new binary version. `yarn ota` — publish a JS-only update for it.
