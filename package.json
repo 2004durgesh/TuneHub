@@ -20,7 +20,7 @@
     "expo-status-bar": "~58.0.3",
     "expo-symbols": "~58.0.4",
     "expo-system-ui": "~58.0.6",
-    "jiosaavn-sdk": "^1.1.0",
+    "jiosaavn-sdk": "^1.1.1",
     "react": "19.3.0",
     "react-native": "0.88.0",
     "react-native-gesture-handler": "~3.3.0",
@@ -67,8 +67,8 @@
     "ota": "bash scripts/publish-ota.sh"
   },
   "private": true,
-  "overrides": {
+  "resolutions": {
     "react-dom": "19.3.0",
-    "react-native-nitro-modules": "$react-native-nitro-modules"
+    "react-native-nitro-modules": "0.37.1"
   }
 }

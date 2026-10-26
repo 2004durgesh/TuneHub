@@ -18,8 +18,8 @@
   "hooks": {
     "after:bump": [
       "node scripts/sync-versions.js ${version}",
-      "npm run build-android",
-      "npm run build-ios"
+      "yarn build-android",
+      "yarn build-ios"
     ]
   },
   "plugins": {

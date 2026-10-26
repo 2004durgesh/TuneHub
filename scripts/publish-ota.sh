@@ -1,21 +1,26 @@
 #!/bin/bash
 # Publishes an OTA JS bundle for the current app version (react-native-nitro-ota, GitHub hosting).
 #
-#   npm run ota                                # android + ios
-#   npm run ota -- --platform android          # one platform
-#   npm run ota -- --notes "Fix X" --dry-run
+#   yarn ota                         # android + ios
+#   yarn ota --platform android      # one platform
+#   yarn ota --notes "Fix X" --dry-run
 #
-# Bundles are assets on the app's own GitHub release, v<version> (created by `npm run release`), which the
+# Bundles are assets on the app's own GitHub release, v<version> (created by `yarn release`), which the
 # app reads (see src/services/ota/index.ts):
 #   ota-<platform>.json              manifest: version, targetVersions, patches
 #   ota-<platform>.zip               full bundle + assets
 #   ota-<platform>-<from>-<to>.zip   bsdiff patch from the previous OTA
-# Each publish replaces the manifest and full zip and drops older patches. Versions are <version>-ota.<n>.
+# Each publish replaces the manifest and full zip and drops older patches, so the release only ever holds
+# the latest OTA. Versions are <version>-ota.<n>, counting up per binary version.
 #
-# Needs GITHUB_TOKEN with write access to releases; --dry-run works without it.
+# The manifest's asset label carries its version, and the last build published from this machine is kept in
+# node_modules/.cache/tunehub-ota as the patch base, so a publish normally downloads nothing from the release.
+#
+# Needs GITHUB_TOKEN with write access to releases (the token release-it uses), from the environment or the gitignored
+# .env, so a plain `yarn ota` works; --dry-run works without it.
 #
 # Only publish JS-only changes: the bundle must work with the native code already in the installed
-# <version> binary. New native modules or native config need a new release (`npm run release`).
+# <version> binary. New native modules or native config need a new release (`yarn release`).
 set -euo pipefail
 
 GREEN='\033[0;32m'
@@ -45,9 +50,87 @@ done
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
+if [[ -z "${GITHUB_TOKEN:-}" && -f .env ]]; then
+  GITHUB_TOKEN="$(sed -n 's/^GITHUB_TOKEN=//p' .env)"
+  export GITHUB_TOKEN
+fi
 VERSION="$(node -p "require('./package.json').version")"
 # Same tag format as release-it's git.tagName
 TAG="v${VERSION}"
+
+# The bundle runs on the native code of the binaries released as ${TAG}. An installed package with native code at
+# another version than those binaries were built with (an upgrade, or a reinstall without the lockfile) can crash every
+# installed copy, so refuse until there's a new release to publish against. Reads the released versions from the
+# tag's lockfile (any version it lists for the package, since npm and yarn hoist differently) and compares what's
+# installed, not package.json ranges, which a reinstall moves silently.
+native_drift() {
+  node -e '
+    const fs = require("fs");
+    const path = require("path");
+    const lockName = process.argv[1];
+    const isNative = (dir) =>
+      ["android", "ios"].some((d) => fs.existsSync(path.join(dir, d))) ||
+      fs.readdirSync(dir).some((f) => f.endsWith(".podspec"));
+    const installed = new Map();
+    for (const entry of fs.readdirSync("node_modules")) {
+      const names = entry.startsWith("@")
+        ? fs.readdirSync(path.join("node_modules", entry)).map((n) => `${entry}/${n}`)
+        : [entry];
+      for (const name of names) {
+        const dir = path.join("node_modules", name);
+        const manifest = path.join(dir, "package.json");
+        if (fs.existsSync(manifest) && isNative(dir)) {
+          installed.set(name, JSON.parse(fs.readFileSync(manifest, "utf8")).version);
+        }
+      }
+    }
+    const released = new Map();
+    const add = (name, version) => {
+      if (!released.has(name)) released.set(name, new Set());
+      released.get(name).add(version);
+    };
+    let lock = "";
+    process.stdin.on("data", (d) => (lock += d)).on("end", () => {
+      if (lockName === "yarn.lock") {
+        let names = [];
+        for (const line of lock.split("\n")) {
+          if (/^[^\s#].*:$/.test(line)) {
+            names = line
+              .slice(0, -1)
+              .split(", ")
+              .map((spec) => spec.replace(/^"|"$/g, ""))
+              .map((spec) => spec.slice(0, spec.lastIndexOf("@")));
+          } else {
+            const version = line.match(/^  version "(.+)"$/)?.[1];
+            if (version) for (const name of names) add(name, version);
+          }
+        }
+      } else {
+        for (const [key, entry] of Object.entries(JSON.parse(lock).packages)) {
+          const at = key.lastIndexOf("node_modules/");
+          if (at >= 0) add(key.slice(at + "node_modules/".length), entry.version);
+        }
+      }
+      for (const [name, version] of installed) {
+        const shipped = released.get(name);
+        if (!shipped?.has(version)) {
+          console.log(`  ${name}: ${version} here, ${shipped ? [...shipped].join(" / ") : "absent"} in the release`);
+        }
+      }
+    });' "$1"
+}
+if git rev-parse -q --verify "refs/tags/${TAG}" >/dev/null; then
+  # Releases from before the switch to yarn only have package-lock.json
+  RELEASE_LOCK=yarn.lock
+  git cat-file -e "${TAG}:yarn.lock" 2>/dev/null || RELEASE_LOCK=package-lock.json
+  DRIFT="$(git show "${TAG}:${RELEASE_LOCK}" | native_drift "$RELEASE_LOCK")"
+  if [[ -n "$DRIFT" ]]; then
+    echo "Refusing to publish: native packages differ from the ${TAG} binaries:" >&2
+    echo "$DRIFT" >&2
+    echo "Install the versions ${TAG} was built with (yarn install --frozen-lockfile), or release a new native build (yarn release)." >&2
+    exit 1
+  fi
+fi
 # owner/repo from either https://github.com/o/r(.git) or git@github.com:o/r(.git)
 REPO_SLUG="$(git remote get-url origin | sed -E 's#^(https://github\.com/|git@github\.com:)##; s#\.git$##')"
 API="https://api.github.com/repos/${REPO_SLUG}"
@@ -81,7 +164,7 @@ json() {
 }
 
 RELEASE_JSON="$(github "$API/releases/tags/${TAG}")" || {
-  echo "No GitHub release ${TAG}: OTAs attach to the binary's release, so run \`npm run release\` first." >&2
+  echo "No GitHub release ${TAG}: OTAs attach to the binary's release, so run \`yarn release\` first." >&2
   exit 1
 }
 if [[ "$(json draft <<<"$RELEASE_JSON")" != false ]]; then
