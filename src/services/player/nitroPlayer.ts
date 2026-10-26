@@ -1,5 +1,5 @@
 import { PlayerQueue, TrackPlayer } from 'react-native-nitro-player';
-import type { RepeatMode, Song } from '@/types';
+import type { PlaybackState, RepeatMode, Song } from '@/types';
 import { songToTrack, trackToSong } from './trackAdapter';
 
 // ---------------------------------------------------------------------------
@@ -102,6 +102,47 @@ export async function playNow(songs: Song[], startIndex = 0, shuffle = false): P
   // Once loaded, the tapped song is the current track, which the shuffle pins first.
   if (shuffle) await PlayerQueue.shufflePlaylist(nowPlayingId);
   await TrackPlayer.play();
+}
+
+export type RestoredPlayback = {
+  song: Song;
+  position: number;
+  duration: number;
+  state: PlaybackState;
+};
+
+/**
+ * Reopens the last queue after a cold start: loads the saved now-playing playlist (nitro-player
+ * persists playlists) at `trackId`, paused at `position`. When the player still has a track — the
+ * JS restarted (reload, OTA) while playback carried on — that one is returned, untouched.
+ */
+export async function restoreNowPlaying(
+  trackId: string | null,
+  position: number,
+): Promise<RestoredPlayback | null> {
+  const state = await TrackPlayer.getState();
+  if (state.currentTrack) {
+    return {
+      song: trackToSong(state.currentTrack),
+      position: state.currentPosition,
+      duration: state.totalDuration,
+      state: state.currentState,
+    };
+  }
+  if (!trackId) return null;
+
+  const playlist = PlayerQueue.getAllPlaylists().find((p) => p.name === NOW_PLAYING_NAME);
+  const index = playlist ? playlist.tracks.findIndex((track) => track.id === trackId) : -1;
+  if (!playlist || index < 0) return null;
+  const track = playlist.tracks[index];
+
+  nowPlayingId = playlist.id;
+  // Loads without playing: only playNow starts playback.
+  await PlayerQueue.loadPlaylist(playlist.id, index);
+  // A track that had (nearly) finished starts over.
+  const start = position < track.duration - 5 ? position : 0;
+  if (start > 0) await TrackPlayer.seek(start);
+  return { song: trackToSong(track), position: start, duration: track.duration, state: 'paused' };
 }
 
 /**

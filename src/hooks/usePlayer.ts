@@ -1,12 +1,15 @@
 import { useEffect } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import type { Song } from '@/types';
+import { getPlaybackSession, savePlaybackSession } from '@/services/storage/session';
 import { usePlayerStore, useSettingsStore } from '@/store';
 import { loadArtworkImage } from './useArtworkImage';
 import { recordPlay } from './useHistory';
 import {
   getUpNextSong,
+  restoreNowPlaying,
   setupPlayer,
+  setRepeat as setRepeatService,
   subscribePlayback,
   playNow as playNowService,
   play as playService,
@@ -26,7 +29,10 @@ import {
 export function usePlayerBridge() {
   useEffect(() => {
     const { setCurrentSong, setPlaybackState, setProgress } = usePlayerStore.getState();
-    setupPlayer();
+    void setupPlayer()
+      .then(restorePlayback)
+      .catch(() => {});
+    const stopSaving = saveSessionOnChange();
     // Apply any persisted equalizer settings once the player is up.
     const { equalizerEnabled, equalizerPreset } = useSettingsStore.getState();
     if (equalizerEnabled) {
@@ -46,8 +52,52 @@ export function usePlayerBridge() {
       onStateChange: setPlaybackState,
       onProgress: setProgress,
     });
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+      stopSaving();
+    };
   }, []);
+}
+
+// Reopens the last queue, paused where it stopped, so a restart doesn't come back empty.
+async function restorePlayback() {
+  const session = getPlaybackSession();
+  const { setCurrentSong, setPlaybackState, setProgress, setRepeat, setShuffle } =
+    usePlayerStore.getState();
+  if (session) {
+    setShuffle(session.shuffle);
+    setRepeat(session.repeat);
+    if (session.repeat !== 'off') await setRepeatService(session.repeat);
+  }
+  const restored = await restoreNowPlaying(session?.trackId ?? null, session?.position ?? 0);
+  if (!restored) return;
+  setCurrentSong(restored.song);
+  setProgress(restored.position, restored.duration);
+  setPlaybackState(restored.state);
+}
+
+// Saves the session as it changes: the track, its position (every progress tick) and the modes.
+function saveSessionOnChange() {
+  return usePlayerStore.subscribe((state, prev) => {
+    const song = state.currentSong;
+    if (!song) return;
+    const sameSong = song.id === prev.currentSong?.id;
+    if (
+      sameSong &&
+      state.position === prev.position &&
+      state.shuffle === prev.shuffle &&
+      state.repeat === prev.repeat
+    ) {
+      return;
+    }
+    savePlaybackSession({
+      trackId: song.id,
+      // A new track still carries the previous one's position until its first progress report.
+      position: sameSong ? state.position : 0,
+      shuffle: state.shuffle,
+      repeat: state.repeat,
+    });
+  });
 }
 
 // Shuffle is a mode: with it on, a new list starts at the tapped song and the rest play shuffled.

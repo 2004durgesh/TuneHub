@@ -20,6 +20,7 @@ type PlayerStore = PlayerState & {
   setPlaybackState: (state: PlaybackState) => void;
   setProgress: (position: number, duration: number) => void;
   setRepeat: (mode: RepeatMode) => void;
+  setShuffle: (shuffle: boolean) => void;
   toggleShuffle: () => void;
   setArtworkColors: (colors: ArtworkColors | null) => void;
   reset: () => void;
@@ -42,6 +43,7 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
   setPlaybackState: (playbackState) => set({ playbackState }),
   setProgress: (position, duration) => set({ position, duration }),
   setRepeat: (repeat) => set({ repeat }),
+  setShuffle: (shuffle) => set({ shuffle }),
   toggleShuffle: () => set({ shuffle: !get().shuffle }),
   setArtworkColors: (artworkColors) => set({ artworkColors }),
   reset: () => set({ ...initialState }),

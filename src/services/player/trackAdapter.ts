@@ -31,13 +31,21 @@ export function songToTrack(song: Song): TrackItem {
 
 const text = (value: unknown): string | null => (typeof value === 'string' ? value : null);
 
+// nitro-player (≤ 1.7.0-alpha.6) saves Android playlists with the artwork variant's toString(),
+// `Second(value=<url>)`, nested once per save, so tracks read back from disk carry it.
+function artworkUrl(raw: string | null | undefined): string {
+  let url = raw ?? '';
+  while (url.startsWith('Second(value=') && url.endsWith(')')) url = url.slice(13, -1);
+  return url;
+}
+
 /**
  * Reconstruct a Song from a TrackItem, reading back the fields `songToTrack` stashed on
  * `extraPayload` (artist/album ids, lyrics). Tracks without a payload get sensible defaults.
  */
 export function trackToSong(track: TrackItem): Song {
   const extra = track.extraPayload ?? {};
-  const artwork = track.artwork ?? '';
+  const artwork = artworkUrl(track.artwork);
   return {
     id: track.id,
     title: track.title,

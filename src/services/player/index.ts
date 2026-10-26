@@ -14,7 +14,9 @@ export {
   addToQueue,
   shuffleUpcoming,
   getUpNextSong,
+  restoreNowPlaying,
 } from './nitroPlayer';
+export type { RestoredPlayback } from './nitroPlayer';
 
 export { setEqualizerEnabled, applyEqualizerPreset, getEqualizerPresets } from './equalizer';
 
